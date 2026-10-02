@@ -136,6 +136,14 @@ svg.body text{fill:var(--mute);font:600 11px 'Chakra Petch';letter-spacing:.25em
 .confetti i{position:absolute;top:-14px;width:7px;height:12px;border-radius:2px;animation:fall 2.4s ease-in forwards}
 @keyframes fall{to{transform:translateY(620px) rotate(640deg);opacity:0}}
 .decay-tag{font:600 9px Inter;letter-spacing:.04em;color:var(--mute);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+.thumb.photo,.mini.photo{padding:0;overflow:hidden;background:#fff}
+.thumb.photo img{display:block;width:100%;height:48px;object-fit:cover}
+.mini.photo img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
+.photos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 12px}
+.photos figure{margin:0;background:#fff;border-radius:12px;overflow:hidden;position:relative}
+.photos img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
+.photos figcaption{position:absolute;left:6px;bottom:6px;font:700 10px 'Chakra Petch';letter-spacing:.12em;background:rgba(11,10,18,.8);color:var(--text);padding:2px 6px;border-radius:5px;text-transform:uppercase}
+details.steps{margin:0 0 12px}details.steps summary{cursor:pointer;color:var(--teal);font-weight:600;font-size:14px;margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -149,6 +157,7 @@ svg.body text{fill:var(--mute);font:600 11px 'Chakra Petch';letter-spacing:.25em
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
+<script src="exercises.js"></script>
 <script>
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
@@ -386,8 +395,16 @@ X('ab_machine','Ab Crunch Machine','mc','core',['abs'],[],'Hold handles, feet lo
 X('torso_rotation','Torso Rotation Machine','mc','obliq',['obliques'],['abs'],'Hips locked in place|Rotate from your torso|Each side = 1 rep'),
 X('captains_chair','Captain\'s Chair Leg Raise','bw','core',['abs'],['obliques'],'Back against pad, forearms on rests|Raise knees or legs up|No swinging',.3)
 ];
+/* ---- Imported library (Free Exercise DB, public domain) ---- */
+const IMG_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
+const LEVELS = {b:'Beginner', i:'Intermediate', e:'Expert'};
+const CATS = {str:'Strength', stretch:'Stretching', cardio:'Cardio', plyo:'Plyometrics', power:'Powerlifting', oly:'Olympic', strong:'Strongman'};
+for (const [id, [img, steps, level, n]] of Object.entries(window.FX_MATCH || {})){ const e = EXL.find(x => x.id === id); if (e){ if (n) e.img = img; e.steps = steps; e.level = level; } }
+for (const [id, name, eq, cat, level, p, s, steps, n, bw, nx] of (window.FX_EXTRA || []))
+  EXL.push({id:'fx_' + id, name, eq, pat:'x', p, s, cue:'', bw, cat, level, steps, img: n ? id : null, nx: !!nx});
 const EX = Object.fromEntries(EXL.map(e => [e.id, e]));
-const EQN = {bb:'Barbell',db:'Dumbbell',mc:'Machine',cb:'Cable',bw:'Bodyweight'};
+const EQN = {bb:'Barbell',db:'Dumbbell',mc:'Machine',cb:'Cable',bw:'Bodyweight',kb:'Kettlebell',ez:'EZ Bar',band:'Bands',mb:'Medicine Ball',sball:'Stability Ball',foam:'Foam Roller',other:'Other',none:'No equipment'};
+const photo = (ex, i = 0) => ex.img ? IMG_BASE + ex.img + '/' + i + '.jpg' : '';
 
 /* ============ STATE ============ */
 const KEY = 'gymdom_v1';
@@ -416,7 +433,7 @@ const effW = (ex, s) => (+s.w || 0) + (ex.bw ? state.profile.bw * ex.bw : 0);
 function workoutXP(w){
   const xp = {};
   for (const e of w.entries){
-    const ex = EX[e.ex]; if (!ex) continue;
+    const ex = EX[e.ex]; if (!ex || ex.nx) continue;
     const base = e.sets.reduce((a,s) => a + effW(ex,s) * (+s.r||0), 0) / 10;
     ex.p.forEach(m => xp[m] = (xp[m]||0) + base);
     ex.s.forEach(m => xp[m] = (xp[m]||0) + base * .5);
@@ -468,6 +485,7 @@ function bestBefore(exId, ts = Infinity){
 // Progressive overload: look at last session and suggest the next small step
 function overloadHint(e){
   const ex = EX[e.ex], last = lastSets(e.ex);
+  if (ex.nx) return `${CATS[ex.cat]} — logged for tracking, earns no XP`;
   if (!last || !last.length) return 'First time — pick a weight you can control for every rep';
   const m = String(e.target || '').match(/×\s*(\d+)(?:\s*-\s*(\d+))?/);
   const hi = m ? +(m[2] || m[1]) : 12;
@@ -630,7 +648,7 @@ function confirmBox(msg, ok='Confirm'){
 }
 const chipsHtml = (act, cur) => `<button class="chip${!cur?' on':''}" data-act="${act}" data-m="">All</button>` +
   Object.entries(MUSCLES).map(([k,v]) => `<button class="chip${cur===k?' on':''}" data-act="${act}" data-m="${k}">${v}</button>`).join('');
-const thumb = ex => `<div class="thumb">${bodySVG(exColor(ex), {labels:false})}</div>`;
+const thumb = ex => ex.img ? `<div class="thumb photo"><img loading="lazy" src="${photo(ex)}" alt=""></div>` : `<div class="thumb">${bodySVG(exColor(ex), {labels:false})}</div>`;
 
 /* ============ TABS ============ */
 const TABS = [
@@ -733,7 +751,7 @@ function renderTrain(){
         <input type="number" inputmode="numeric" data-e="${i}" data-s="${j}" data-f="r" value="${esc(s.r)}" placeholder="${p ? p.r : ''}">
         <button class="icon-btn sm" data-act="rmSet" data-i="${i}" data-s="${j}">−</button></div>`; }).join('')}
       <div class="ex-actions"><button class="btn ghost sm" data-act="addSet" data-i="${i}">+ Add set</button>
-      ${ex.eq === 'bb' ? `<button class="btn ghost sm" data-act="plates" data-w="${esc(lastW)}">Plates</button>` : ''}
+      ${ex.eq === 'bb' || ex.eq === 'ez' ? `<button class="btn ghost sm" data-act="plates" data-w="${esc(lastW)}">Plates</button>` : ''}
       ${i < a.entries.length - 1 ? `<button class="btn ghost sm" data-act="ssToggle" data-i="${i}">${e.ss ? 'Unlink superset' : '⛓ Superset with next'}</button>` : ''}</div></div>`;
   });
   h += `<button class="btn ghost block" data-act="addEx">+ Add exercise</button>
@@ -812,13 +830,27 @@ function renderSplits(){
 
 /* ============ LIBRARY VIEW ============ */
 function renderLibrary(){
-  return `<h2>Library</h2><input id="libq" placeholder="Search ${EXL.length} exercises" value="${esc(ui.libQ)}"><div class="chips" style="margin:10px 0 8px">${chipsHtml('libMuscle', ui.libM)}</div><div class="chips" style="margin:0 0 12px">${[['','All equipment'],...Object.entries(EQN)].map(([k,v]) => `<button class="chip gold${(ui.libEq||'')===k?' on':''}" data-act="libEq" data-v="${k}">${v}</button>`).join('')}</div><div id="libList" class="lib-grid"></div>`;
+  const chip = (act, k, v, cur, gold) => `<button class="chip${gold ? ' gold' : ''}${(cur || '') === k ? ' on' : ''}" data-act="${act}" data-v="${k}">${v}</button>`;
+  return `<h2>Library</h2><input id="libq" placeholder="Search ${EXL.length} exercises" value="${esc(ui.libQ)}">
+    <div class="chips" style="margin:10px 0 8px">${chipsHtml('libMuscle', ui.libM)}</div>
+    <div class="chips" style="margin:0 0 8px">${[['','All equipment'], ...Object.entries(EQN)].map(([k, v]) => chip('libEq', k, v, ui.libEq, 1)).join('')}</div>
+    <div class="chips" style="margin:0 0 12px">${[['','All types'], ...Object.entries(CATS)].map(([k, v]) => chip('libCat', k, v, ui.libCat)).join('')}</div>
+    <div id="libCount" class="mute" style="font-size:12px;margin-bottom:8px"></div><div id="libList" class="lib-grid"></div><div id="libMore"></div>`;
 }
-function filterEx(q, m){ q = q.trim().toLowerCase(); return EXL.filter(e => (!m || e.p.includes(m) || e.s.includes(m)) && (!q || e.name.toLowerCase().includes(q))).sort((a,b) => m ? (b.p.includes(m)-a.p.includes(m)) : 0); }
+function filterEx(q, m, eq, cat){
+  q = q.trim().toLowerCase();
+  const words = q.split(/\s+/).filter(Boolean);
+  return EXL.filter(e => (!m || e.p.includes(m) || e.s.includes(m)) && (!eq || e.eq === eq) && (!cat || (e.cat || 'str') === cat)
+      && words.every(w => e.name.toLowerCase().includes(w)))
+    .sort((a, b) => (m ? b.p.includes(m) - a.p.includes(m) : 0) || (!a.id.startsWith('fx_') ? -1 : 0) - (!b.id.startsWith('fx_') ? -1 : 0));
+}
+const PAGE = 40;
 function renderLibList(){
   const el = $('#libList'); if (!el) return;
-  const list = filterEx(ui.libQ, ui.libM).filter(e => !ui.libEq || e.eq === ui.libEq);
-  el.innerHTML = list.length ? list.map(e => `<div class="lcard" data-act="exInfo" data-id="${e.id}"><div class="mini">${bodySVG(exColor(e), {labels:false})}</div><b>${e.name}</b><small>${EQN[e.eq]}</small></div>`).join('') : `<p class="mute">No matches.</p>`;
+  const list = filterEx(ui.libQ, ui.libM, ui.libEq, ui.libCat), n = ui.libN || PAGE;
+  $('#libCount').textContent = `${list.length} exercise${list.length === 1 ? '' : 's'}`;
+  el.innerHTML = list.length ? list.slice(0, n).map(e => `<div class="lcard" data-act="exInfo" data-id="${e.id}">${e.img ? `<div class="mini photo"><img loading="lazy" src="${photo(e)}" alt=""></div>` : `<div class="mini">${bodySVG(exColor(e), {labels:false})}</div>`}<b>${e.name}</b><small>${EQN[e.eq]}${e.nx ? ' · No XP' : ''}</small></div>`).join('') : `<p class="mute">No matches.</p>`;
+  $('#libMore').innerHTML = list.length > n ? `<button class="btn ghost block" style="margin-top:12px" data-act="libMore">Show more (${list.length - n} left)</button>` : '';
 }
 function exInfo(id){
   const ex = EX[id], st = exStats(id);
@@ -827,23 +859,28 @@ function exInfo(id){
     const pts = st.pts.map((v,i) => `${(i/(n-1)*300).toFixed(1)},${(55 - (mx===mn ? .5 : (v-mn)/(mx-mn))*50).toFixed(1)}`).join(' ');
     spark = `<svg class="spark" viewBox="0 0 300 60" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${TEAL}" stroke-width="2.5" vector-effect="non-scaling-stroke"/></svg><small class="mute">Best estimated 1RM per session</small>`; }
   openSheet(`<div class="row between"><h2 style="margin:0">${ex.name}</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
-    <div style="margin:8px 0"><span class="tag">${EQN[ex.eq]}</span>${ex.p.map(m => `<span class="tag p">${MUSCLES[m]}</span>`).join('')}${ex.s.map(m => `<span class="tag s">${MUSCLES[m]}</span>`).join('')}</div>
-    <div style="max-width:320px;margin:0 auto">${bodySVG(exColor(ex))}</div>
+    <div style="margin:8px 0"><span class="tag">${EQN[ex.eq]}</span>${ex.cat && ex.cat !== 'str' ? `<span class="tag">${CATS[ex.cat]}</span>` : ''}${ex.level ? `<span class="tag">${LEVELS[ex.level]}</span>` : ''}${ex.p.map(m => `<span class="tag p">${MUSCLES[m]}</span>`).join('')}${ex.s.map(m => `<span class="tag s">${MUSCLES[m]}</span>`).join('')}</div>
+    ${ex.img ? `<div class="photos"><figure><img src="${photo(ex, 0)}" alt="Start position"><figcaption>Start</figcaption></figure><figure><img src="${photo(ex, 1)}" alt="Finish position"><figcaption>Finish</figcaption></figure></div>` : ''}
+    ${ex.nx ? `<div class="hint">${CATS[ex.cat]} moves are logged for tracking and don't earn XP.</div>` : ''}
+    <div style="max-width:${ex.img ? 240 : 320}px;margin:0 auto">${bodySVG(exColor(ex))}</div>
     <div class="legend"><span><i style="background:${GOLD}"></i>Primary · full XP</span><span><i style="background:${TEAL}"></i>Secondary · half XP</span></div>
-    <h3 style="margin-top:16px">Form cues</h3><ol class="cues">${ex.cue.split('|').map(c => `<li>${c}</li>`).join('')}</ol>
+    ${ex.cue ? `<h3 style="margin-top:16px">Form cues</h3><ol class="cues">${ex.cue.split('|').map(c => `<li>${c}</li>`).join('')}</ol>` : ''}
+    ${ex.steps && ex.steps.length ? (ex.cue ? `<details class="steps"><summary>Step-by-step instructions</summary><ol class="cues">${ex.steps.map(c => `<li>${esc(c)}</li>`).join('')}</ol></details>` : `<h3 style="margin-top:16px">How to do it</h3><ol class="cues">${ex.steps.map(c => `<li>${esc(c)}</li>`).join('')}</ol>`) : ''}
     <h3>Your progress</h3>${st.count ? `<p style="margin:0 0 6px">Logged ${st.count}× · Best set <b>${ex.bw && !st.best.w ? 'BW' : st.best.w}×${st.best.r}</b> · Est. 1RM <b>${fmt(st.best.rm)} lb</b></p>${spark}` : `<p class="mute">Not logged yet.</p>`}
     ${ex.bw ? `<p class="mute" style="font-size:12px">Bodyweight move: XP uses ${Math.round(ex.bw*100)}% of your bodyweight plus any added weight.</p>` : ''}
     ${state.active ? `<button class="btn block" style="margin-top:12px" data-act="addToWorkout" data-id="${id}">Add to current workout</button>` : ''}`);
 }
 function openPicker(cb){
-  ui.pick = {cb, q:'', m:''};
+  ui.pick = {cb, q:'', m:'', n:PAGE};
   openSheet(`<div class="row between"><h3 style="margin:0">Add exercise</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
     <input id="pickq" placeholder="Search exercises" style="margin-top:12px"><div class="chips" id="pickChips" style="margin:10px 0">${chipsHtml('pickM','')}</div><div id="pickList"></div>`);
   renderPickList();
 }
 function renderPickList(){
   const p = ui.pick; if (!p) return;
-  $('#pickList').innerHTML = filterEx(p.q, p.m).map(e => `<div class="prow-pick" data-act="pick" data-id="${e.id}">${thumb(e)}<div><b>${e.name}</b><br><small class="mute">${EQN[e.eq]} · ${e.p.map(m => MUSCLES[m]).join(', ')}</small></div></div>`).join('');
+  const list = filterEx(p.q, p.m);
+  $('#pickList').innerHTML = list.slice(0, p.n).map(e => `<div class="prow-pick" data-act="pick" data-id="${e.id}">${thumb(e)}<div><b>${e.name}</b><br><small class="mute">${EQN[e.eq]} · ${e.p.map(m => MUSCLES[m]).join(', ')}</small></div></div>`).join('')
+    + (list.length > p.n ? `<button class="btn ghost block" style="margin-top:10px" data-act="pickMore">Show more (${list.length - p.n} left)</button>` : '');
 }
 
 /* ============ COACH ============ */
@@ -1009,9 +1046,12 @@ const ACT = {
   saveSplit: () => { const e = ui.edit; if (!e.name.trim()) return toast('Give your split a name');
     delete e.isNew; const i = state.splits.findIndex(s => s.id === e.id); if (i >= 0) state.splits[i] = e; else state.splits.push(e);
     ui.edit = null; save(); render(); toast('Split saved'); },
-  libMuscle: d => { ui.libM = d.m; render(); },
-  libEq: d => { ui.libEq = d.v; render(); },
-  pickM: (d, b) => { ui.pick.m = d.m; document.querySelectorAll('#pickChips .chip').forEach(c => c.classList.toggle('on', c === b)); renderPickList(); },
+  libMuscle: d => { ui.libM = d.m; ui.libN = PAGE; render(); },
+  libEq: d => { ui.libEq = d.v; ui.libN = PAGE; render(); },
+  libCat: d => { ui.libCat = d.v; ui.libN = PAGE; render(); },
+  libMore: () => { ui.libN = (ui.libN || PAGE) + PAGE; renderLibList(); },
+  pickMore: () => { ui.pick.n += PAGE; renderPickList(); },
+  pickM: (d, b) => { ui.pick.m = d.m; ui.pick.n = PAGE; document.querySelectorAll('#pickChips .chip').forEach(c => c.classList.toggle('on', c === b)); renderPickList(); },
   pick: d => { const cb = ui.pick.cb; closeSheet(); cb(d.id); },
   coachOpt: d => { ui.coach[d.k] = /^\d+$/.test(d.v) ? +d.v : d.v; render(); },
   coachFocus: d => { const f = ui.coach.focus, i = f.indexOf(d.m); i >= 0 ? f.splice(i,1) : f.push(d.m); render(); },
@@ -1050,8 +1090,8 @@ document.addEventListener('input', e => {
   else if (t.id === 'wname' && state.active){ state.active.name = t.value; save(); }
   else if (d.sf && ui.edit){ const day = ui.edit.days[+d.d]; if (d.sf === 'dayName') day.name = t.value; else day.items[+d.i][d.sf] = d.sf === 'sets' ? +t.value || '' : t.value; }
   else if (t.id === 'splitName' && ui.edit){ ui.edit.name = t.value; }
-  else if (t.id === 'libq'){ ui.libQ = t.value; renderLibList(); }
-  else if (t.id === 'pickq' && ui.pick){ ui.pick.q = t.value; renderPickList(); }
+  else if (t.id === 'libq'){ ui.libQ = t.value; ui.libN = PAGE; renderLibList(); }
+  else if (t.id === 'pickq' && ui.pick){ ui.pick.q = t.value; ui.pick.n = PAGE; renderPickList(); }
 });
 $('#importFile').addEventListener('change', async e => {
   const f = e.target.files[0]; if (!f) return;
