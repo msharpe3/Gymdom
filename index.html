@@ -183,12 +183,12 @@ select{font:16px Inter;background:var(--panel2);color:var(--text);border:1px sol
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.02.6"></script>
+<script src="exercises.js?v=2026.10.02.7"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.02.6';
+const APP_VERSION = '2026.10.02.7';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -738,21 +738,21 @@ function renderFood(){
   if (g){
     const left = g.kcal - t.k;
     h += `<div class="row between"><span class="mute" style="font-size:13px">Calories</span><button class="btn ghost sm" data-act="foodTargets">Targets</button></div>
-      <div style="font:700 28px 'Chakra Petch';margin:2px 0">${fmt(t.k)} <small class="mute" style="font:500 14px Inter">/ ${fmt(g.kcal)} cal</small></div>
+      <div style="font:700 28px 'Chakra Petch';margin:2px 0">${fmt(t.k)} <small class="mute" style="font:500 14px Inter">/ ${fmt(g.kcal)} Cal</small></div>
       <div class="bar"><i style="width:${Math.min(100, t.k / g.kcal * 100)}%"></i></div>
       <small class="mute">${left >= 0 ? `${fmt(left)} left` : `${fmt(-left)} over`}</small>
       <div class="macros">${MAC.map(([k, n, col]) => `<div><div class="row between"><small><b>${n}</b></small><small class="mute">${Math.round(t[k])} / ${g[k]} g</small></div><div class="bar"><i style="width:${Math.min(100, t[k] / g[k] * 100)}%;background:${col}"></i></div></div>`).join('')}</div>`;
   } else {
     h += `<div class="empty" style="padding:8px"><h3>Set your daily targets</h3><p class="mute" style="font-size:14px">I'll estimate calories and macros from your stats and goal. You can adjust them after.</p><button class="btn gold" data-act="foodTargets">Calculate targets</button></div>`;
-    if (t.k) h += `<div style="font:700 22px 'Chakra Petch'">${fmt(t.k)} cal <small class="mute" style="font:500 13px Inter">· P ${Math.round(t.p)} · C ${Math.round(t.c)} · F ${Math.round(t.f)}</small></div>`;
+    if (t.k) h += `<div style="font:700 22px 'Chakra Petch'">${fmt(t.k)} Cal <small class="mute" style="font:500 13px Inter">· P ${Math.round(t.p)} · C ${Math.round(t.c)} · F ${Math.round(t.f)}</small></div>`;
   }
   h += `${t.k ? macroSplit(t) : ''}</div>`;
   h += waterCard();
   for (const [m, name] of MEALS){
     const list = day[m] || [], mt = sumEntries(list);
-    h += `<div class="card"><div class="row between"><h3 style="margin:0">${name}</h3>${list.length ? `<span class="xp" style="color:var(--text)">${fmt(mt.k)} cal</span>` : ''}</div>
+    h += `<div class="card"><div class="row between"><h3 style="margin:0">${name}</h3>${list.length ? `<span class="xp" style="color:var(--text)">${fmt(mt.k)} Cal</span>` : ''}</div>
       ${list.length ? `<small class="mute">Protein ${Math.round(mt.p)} g · Carbs ${Math.round(mt.c)} g · Fat ${Math.round(mt.f)} g</small>${macroSplit(mt)}` : ''}
-      ${list.map((e, i) => `<div class="frow" data-act="foodEdit" data-m="${m}" data-i="${i}"><span><b>${esc(e.n)}</b><br><small class="mute">${esc(e.a || '')}</small></span><span class="fk">${fmt(e.k)}<small> cal</small><br><small class="mute">${Math.round(e.p)}P · ${Math.round(e.c)}C · ${Math.round(e.f)}F</small></span></div>`).join('')}
+      ${list.map((e, i) => `<div class="frow" data-act="foodEdit" data-m="${m}" data-i="${i}"><span><b>${esc(e.n)}</b><br><small class="mute">${esc(e.a || '')}</small></span><span class="fk">${fmt(e.k)}<small> Cal</small><br><small class="mute">${Math.round(e.p)}P · ${Math.round(e.c)}C · ${Math.round(e.f)}F</small></span></div>`).join('')}
       <div class="ex-actions" style="margin-top:8px"><button class="btn ghost sm" data-act="foodAdd" data-m="${m}">+ Add food</button>${list.length ? `<button class="btn ghost sm" data-act="mealSave" data-m="${m}">Save meal</button>` : ''}</div></div>`;
   }
   return h;
@@ -768,7 +768,7 @@ function openAddFood(meal, mode){
     <div id="foodArea"></div>`);
   ({search:foodSearchUI, scan:startScan, meals:savedMealsUI, manual:() => manualUI(), recent:recentUI})[ui.foodMode]();
 }
-const foodRow = (f, i, list) => `<div class="frow" data-act="foodPick" data-list="${list}" data-i="${i}"><span><b>${esc(f.name)}</b><br><small class="mute">${f.sv && f.sv[0] ? esc(f.sv[0][0]) + ' · ' + Math.round(f.per.k * f.sv[0][1] / 100) + ' cal' : Math.round(f.per.k) + ' cal / 100 g'}</small></span><span class="sr">+</span></div>`;
+const foodRow = (f, i, list) => `<div class="frow" data-act="foodPick" data-list="${list}" data-i="${i}"><span><b>${esc(f.name)}</b><br><small class="mute">${f.sv && f.sv[0] ? esc(f.sv[0][0]) + ' · ' + Math.round(f.per.k * f.sv[0][1] / 100) + ' Cal' : Math.round(f.per.k) + ' Cal / 100 g'}</small></span><span class="sr">+</span></div>`;
 function foodSearchUI(){
   $('#foodArea').innerHTML = `<input id="foodQ" placeholder="Search foods (e.g. chicken, rice, banana)" value="${esc(ui.foodQ || '')}"><div id="foodRes" style="margin-top:8px"></div>`;
   renderFoodRes();
@@ -803,7 +803,7 @@ async function offSearch(){
 function recentUI(){
   ui.recentList = state.foodRecent;
   $('#foodArea').innerHTML = state.foodRecent.length ? state.foodRecent.map((f, i) => f.fixed
-    ? `<div class="frow" data-act="foodPick" data-list="recent" data-i="${i}"><span><b>${esc(f.name)}</b><br><small class="mute">Manual · ${Math.round(f.fixed.k)} cal</small></span><span class="sr">+</span></div>`
+    ? `<div class="frow" data-act="foodPick" data-list="recent" data-i="${i}"><span><b>${esc(f.name)}</b><br><small class="mute">Manual · ${Math.round(f.fixed.k)} Cal</small></span><span class="sr">+</span></div>`
     : foodRow(f, i, 'recent')).join('') : '<p class="mute">Foods you add will show up here for quick re-adding.</p>';
 }
 function manualUI(pre = {}){
@@ -826,7 +826,7 @@ function openAmount(food, edit){
     <div id="amtPrev" style="margin-top:14px"></div>
     <button class="btn gold block" style="margin-top:14px" data-act="amtSave">${edit ? 'Save changes' : 'Add to ' + MEALS.find(x => x[0] === ui.foodMeal)[1]}</button>
     ${edit ? `<button class="btn danger block" style="margin-top:8px" data-act="foodDel">Delete</button>` : ''}
-    <p class="mute" style="font-size:11px;margin:10px 0 0">Per 100 g: ${Math.round(food.per.k)} cal · ${r1(food.per.p)}P · ${r1(food.per.c)}C · ${r1(food.per.f)}F${food.src === 'off' ? ' · from Open Food Facts' : ''}</p>`);
+    <p class="mute" style="font-size:11px;margin:10px 0 0">Per 100 g: ${Math.round(food.per.k)} Cal · ${r1(food.per.p)}P · ${r1(food.per.c)}C · ${r1(food.per.f)}F${food.src === 'off' ? ' · from Open Food Facts' : ''}</p>`);
   amtPreview();
 }
 function amtGrams(){ const {food, unit, qty} = ui.amt; const q = +qty || 0; return unit === 'g' ? q : unit === 'oz' ? q * 28.35 : q * (food.sv[+unit.slice(1)] || [0, 0])[1]; }
@@ -834,7 +834,7 @@ function amtLabel(){ const {food, unit, qty} = ui.amt; return unit === 'g' ? `${
 function amtPreview(){
   const g = amtGrams(), f = ui.amt.food.per, t = {k:f.k * g / 100, p:f.p * g / 100, c:f.c * g / 100, f:f.f * g / 100};
   ui.amt.tot = t;
-  const el = $('#amtPrev'); if (el) el.innerHTML = `<div class="row between"><b style="font:700 24px 'Chakra Petch'">${Math.round(t.k)} cal</b><small class="mute">${Math.round(g)} g</small></div>
+  const el = $('#amtPrev'); if (el) el.innerHTML = `<div class="row between"><b style="font:700 24px 'Chakra Petch'">${Math.round(t.k)} Cal</b><small class="mute">${Math.round(g)} g</small></div>
     <div class="mrow3">${MAC.map(([k, n, col]) => `<div><small class="mute">${n}</small><b>${r1(t[k])} g</b></div>`).join('')}</div>${macroSplit(t)}`;
 }
 function rememberFood(food){
@@ -914,7 +914,7 @@ function readTp(){ const fp = ui.tp; fp.age = $('#tpAge').value; fp.lb = $('#tpL
 function savedMealsUI(){
   const ms = state.savedMeals;
   $('#foodArea').innerHTML = ms.length ? ms.map((m, i) => { const t = sumEntries(m.items);
-    return `<div class="frow" data-act="mealUse" data-i="${i}"><span><b>${esc(m.name)}</b><br><small class="mute">${m.items.length} item${m.items.length === 1 ? '' : 's'} · ${fmt(t.k)} cal · ${Math.round(t.p)}P ${Math.round(t.c)}C ${Math.round(t.f)}F</small></span>
+    return `<div class="frow" data-act="mealUse" data-i="${i}"><span><b>${esc(m.name)}</b><br><small class="mute">${m.items.length} item${m.items.length === 1 ? '' : 's'} · ${fmt(t.k)} Cal · ${Math.round(t.p)}P ${Math.round(t.c)}C ${Math.round(t.f)}F</small></span>
       <span class="row gap"><span class="sr">+</span><button class="icon-btn sm" data-act="mealDel" data-i="${i}" aria-label="Delete saved meal">✕</button></span></div>`; }).join('')
     : '<p class="mute">No saved meals yet. Log a meal, then tap <b>Save meal</b> on it to reuse it here with one tap.</p>';
 }
@@ -923,7 +923,7 @@ function openSaveMeal(m){
   ui.saveMealFrom = m;
   openSheet(`<div class="row between"><h3 style="margin:0">Save meal</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
     <label class="lbl">Name</label><input id="smName" placeholder="e.g. Usual breakfast" value="${esc('My ' + MEALS.find(x => x[0] === m)[1].toLowerCase())}">
-    <div style="margin-top:10px">${list.map(e => `<div class="mini-row"><span>${esc(e.n)} <small class="mute">${esc(e.a || '')}</small></span><span>${fmt(e.k)} cal</span></div>`).join('')}</div>
+    <div style="margin-top:10px">${list.map(e => `<div class="mini-row"><span>${esc(e.n)} <small class="mute">${esc(e.a || '')}</small></span><span>${fmt(e.k)} Cal</span></div>`).join('')}</div>
     <button class="btn gold block" style="margin-top:14px" data-act="mealSaveGo">Save</button>`);
 }
 
