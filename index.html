@@ -164,8 +164,7 @@ select{font:16px Inter;background:var(--panel2);color:var(--text);border:1px sol
 :root{--water:#5fa8f5}
 .btn.water{background:var(--water);color:#06182b}
 .drops{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
-.drops span{width:14px;height:18px;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;border:2px solid var(--water);opacity:.35}
-.drops span.on{background:var(--water);opacity:1}
+.drops .cup{width:22px;height:30px;display:block}
 .lbrow{display:grid;grid-template-columns:32px 1fr auto;gap:8px;align-items:center;padding:9px 6px;border-bottom:1px solid var(--line);font-size:14px}
 .lbrow:last-of-type{border-bottom:0}.lbrow.me{background:rgba(79,209,197,.08);border-radius:10px}
 .lbrank{font:700 15px 'Chakra Petch';text-align:center}.lbval{font:700 14px 'Chakra Petch';color:var(--gold)}
@@ -183,12 +182,12 @@ select{font:16px Inter;background:var(--panel2);color:var(--text);border:1px sol
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.02.8"></script>
+<script src="exercises.js?v=2026.10.02.9"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.02.8';
+const APP_VERSION = '2026.10.02.9';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1123,12 +1122,21 @@ function openSaveMeal(m){
 
 /* ============ WATER ============ */
 const GLASS = 8; // oz per tap
+// Tapered drinking glass, filled from the bottom (fill 0..1)
+function cupSVG(fill, i){
+  const W = '#5fa8f5', top = 3, bot = 24, h = bot - top, y = bot - h * fill;
+  const glass = 'M2.5,3 L17.5,3 L15.6,23 Q15.4,24.5 13.8,24.5 L6.2,24.5 Q4.6,24.5 4.4,23 Z';
+  return `<svg class="cup" viewBox="0 0 20 27" aria-hidden="true"><defs><clipPath id="cupc${i}"><path d="${glass}"/></clipPath></defs>`
+    + (fill > 0 ? `<rect x="0" y="${y.toFixed(1)}" width="20" height="${(27 - y).toFixed(1)}" fill="${W}" clip-path="url(#cupc${i})"/>` + (fill < 1 ? `<path d="M3,${y.toFixed(1)} q2.5,-1.4 5,0 t5,0 t5,0" fill="none" stroke="#9fcbff" stroke-width=".8" clip-path="url(#cupc${i})"/>` : '') : '')
+    + `<path d="${glass}" fill="none" stroke="${W}" stroke-width="1.6" stroke-linejoin="round"/>`
+    + `<path d="M5,6 L6.2,19" stroke="#fff" stroke-opacity=".25" stroke-width="1.2" stroke-linecap="round"/></svg>`;
+}
 function waterCard(){
   const day = foodDay(), oz = day.water || 0, goal = state.waterGoal, glasses = Math.ceil(goal / GLASS), full = Math.floor(oz / GLASS);
   return `<div class="card"><div class="row between"><h3 style="margin:0">Water</h3><button class="btn ghost sm" data-act="waterGoal">Goal</button></div>
     <div style="font:700 24px 'Chakra Petch';margin:4px 0">${oz} <small class="mute" style="font:500 14px Inter">/ ${goal} oz</small></div>
     <div class="bar"><i style="width:${Math.min(100, oz / goal * 100)}%;background:var(--water)"></i></div>
-    <div class="drops" aria-label="${full} of ${glasses} glasses">${Array.from({length:Math.min(glasses, 16)}, (_, i) => `<span class="${i < full ? 'on' : ''}"></span>`).join('')}</div>
+    <div class="drops" aria-label="${r1(oz / GLASS)} of ${glasses} glasses">${Array.from({length:Math.min(glasses, 16)}, (_, i) => cupSVG(Math.max(0, Math.min(1, oz / GLASS - i)), i)).join('')}</div>
     <div class="row gap"><button class="btn ghost sm" data-act="water" data-v="-${GLASS}" aria-label="Remove a glass">−</button><button class="btn sm water" data-act="water" data-v="${GLASS}">+ ${GLASS} oz</button><button class="btn sm water" data-act="water" data-v="16">+ 16 oz</button></div></div>`;
 }
 
