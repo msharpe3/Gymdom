@@ -160,6 +160,7 @@ select{font:16px Inter;background:var(--panel2);color:var(--text);border:1px sol
 .scanbox video{width:100%;height:100%;object-fit:cover;display:block}
 .scanline{position:absolute;left:10%;right:10%;top:50%;height:2px;background:var(--red);box-shadow:0 0 12px var(--red);animation:scan 1.8s ease-in-out infinite}
 @keyframes scan{0%,100%{transform:translateY(-60px)}50%{transform:translateY(60px)}}
+#updBar{position:fixed;left:12px;right:12px;top:calc(62px + env(safe-area-inset-top));z-index:40;display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--panel2);border:1px solid var(--gold);border-radius:14px;padding:10px 12px;font-size:14px;box-shadow:0 8px 30px rgba(0,0,0,.5);max-width:536px;margin:0 auto}
 </style>
 </head>
 <body>
@@ -173,8 +174,12 @@ select{font:16px Inter;background:var(--panel2);color:var(--text);border:1px sol
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js"></script>
+<script src="exercises.js?v=2026.10.02.1"></script>
 <script>
+/* ============ VERSION ============
+   Bump APP_VERSION and version.json together on every release. The app checks version.json
+   (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
+const APP_VERSION = '2026.10.02.1';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1258,7 +1263,8 @@ function openSettings(){
     <label class="lbl">Sync code</label><input id="sCode" value="${esc(state.profile.syncCode)}" placeholder="Same code on every device"><small class="mute">${esc(syncStatus)}</small>
     <button class="btn block" style="margin-top:14px" data-act="saveSettings">Save</button>
     <label class="lbl">Backup</label><div class="row gap"><button class="btn ghost" style="flex:1" data-act="exportData">Export</button><button class="btn ghost" style="flex:1" data-act="importData">Import</button></div>
-    <button class="btn danger block" style="margin-top:18px" data-act="resetAll">Reset all data</button>`);
+    <button class="btn danger block" style="margin-top:18px" data-act="resetAll">Reset all data</button>
+    <p class="mute" style="font-size:11px;text-align:center;margin:14px 0 0">Version ${APP_VERSION}</p>`);
 }
 
 /* ============ ACTIONS ============ */
@@ -1384,6 +1390,20 @@ setInterval(() => { const el = $('#elapsed'); if (el && state.active){ const s =
 if (state.active) ui.tab = 'train';
 render();
 initSync();
+async function checkForUpdate(){
+  try {
+    const r = await fetch('version.json?t=' + Date.now(), {cache:'no-store'});
+    const {v} = await r.json();
+    if (v && v !== APP_VERSION && !document.getElementById('updBar')){
+      const b = document.createElement('div'); b.id = 'updBar';
+      b.innerHTML = `<span>A new version of Gymdom is ready</span><button class="btn gold sm" id="updGo">Update</button>`;
+      document.body.appendChild(b);
+      document.getElementById('updGo').onclick = () => location.replace(location.pathname + '?v=' + encodeURIComponent(v));
+    }
+  } catch(e){}
+}
+checkForUpdate();
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForUpdate(); });
 </script>
 </body>
 </html>
