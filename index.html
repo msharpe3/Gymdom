@@ -225,17 +225,16 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 @keyframes burst{0%{opacity:1;transform:translate(-50%,-50%) scale(0)}100%{opacity:0;transform:translate(-50%,-50%) scale(40)}}
 .loot.open{border-color:var(--rc);box-shadow:0 0 24px color-mix(in srgb,var(--rc) 35%,transparent)}
 .armory-btn{position:relative;z-index:1;flex:none}
-.nf{background:#fff;color:#000;border:1px solid #000;border-radius:6px;padding:8px 10px;font:13px/1.25 Arial,Helvetica,sans-serif}
-.nf-h{font:900 30px/1 'Arial Black',Arial,sans-serif;letter-spacing:-.5px;border-bottom:1px solid #000;padding-bottom:3px}
-.nf-sv{display:flex;justify-content:space-between;gap:10px;padding:4px 0 2px;font-size:14px}.nf-sv b{text-align:right}
-.nf-thick{height:9px;background:#000;margin:3px 0}.nf-med{height:5px;background:#000;margin:2px 0}
-.nf-am{font-weight:700;font-size:11px}.nf-cal{display:flex;justify-content:space-between;align-items:flex-end;font:900 26px/1.1 Arial,sans-serif}
-.nf-dvh{text-align:right;font-size:11px;border-bottom:1px solid #000;padding:2px 0}
-.nf-r{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid #000;padding:3px 0}
-.nf-r.i1{padding-left:14px}.nf-r.i2{padding-left:28px}
-.nf-more summary{cursor:pointer;font-weight:700;padding:5px 0;border-bottom:1px solid #000;list-style:none}
-.nf-more summary::after{content:' ▾'}.nf-more[open] summary::after{content:' ▴'}
-.nf-foot{font-size:10px;line-height:1.35;padding-top:5px;border-top:4px solid #000;margin-top:4px}
+.nbars{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px}
+.nb-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}.nb-head small{color:var(--mute);font-size:11px}
+.nb-g{padding:6px 0;border-top:1px solid var(--line)}.nb-g:first-of-type{border-top:0}
+.nb-gt{font:700 10px 'Chakra Petch';letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin:2px 0 4px}
+.nb-r{padding:5px 0}.nb-r.sub{padding-left:12px}.nb-r.sub .nb-t span:first-child{color:var(--mute)}
+.nb-t{display:flex;justify-content:space-between;gap:8px;font-size:13px}.nb-t b{font-weight:600}.nb-t small{color:var(--mute);font-size:11px;margin-left:6px;display:inline-block;min-width:30px;text-align:right}
+.nb-bar{height:6px;border-radius:99px;background:var(--bg);overflow:hidden;margin-top:4px}.nb-bar i{display:block;height:100%;border-radius:99px}
+.nb-more summary{cursor:pointer;color:var(--teal);font-weight:600;font-size:13px;padding:8px 0 4px;border-top:1px solid var(--line);list-style:none}
+.nb-more summary::after{content:' ▾'}.nb-more[open] summary::after{content:' ▴'}.nb-more .nb-g{border-top:0}
+.nb-foot{font-size:11px;color:var(--mute);margin-top:6px;line-height:1.4}
 .fsrc{display:inline-block;font:600 9px Inter;letter-spacing:.06em;text-transform:uppercase;padding:1px 5px;border-radius:4px;margin-left:6px;vertical-align:1px}
 .fsrc.usda{background:rgba(79,209,197,.15);color:var(--teal)}.fsrc.quick{background:var(--panel2);color:var(--mute)}.fsrc.off{background:rgba(242,201,76,.15);color:var(--gold)}
 .mextra summary{cursor:pointer;color:var(--teal);font-weight:600;font-size:14px;margin:14px 0 4px}
@@ -252,12 +251,12 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.02.13"></script>
+<script src="exercises.js?v=2026.10.02.14"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.02.13';
+const APP_VERSION = '2026.10.02.14';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1051,18 +1050,22 @@ function nfVal(v, u){
   if (u === 'mg') return (v < 10 ? r1(v) : Math.round(v)) + 'mg';
   return (v < 10 ? r1(v) : Math.round(v)) + 'µg';
 }
+// Nutrient bars in the app's style (bar = % of FDA daily value)
+const NB_COLOR = {fat:'#a78bfa', sat:'#a78bfa', chol:'#f2667a', na:'#f2667a', carb:'#f2c94c', fib:'#f2c94c', asug:'#f2c94c', pro:'#4fd1c5'};
+const NB_GROUPS = [['Fats',['fat','sat','trans','mono','poly']],['Carbs',['carb','fib','sug','asug']],['Protein',['pro']],['Heart',['chol','na']],
+  ['Vitamins & minerals',['vd','ca','fe','pot']]];
 function factsLabel(serving, kcal, tot, miss = {}, items = 1){
-  const row = ([k, label, u, dv, ind]) => { const v = tot[k], m = miss[k] && v != null;
-    return `<div class="nf-r i${ind}"><span>${ind ? label : `<b>${label}</b>`} ${nfVal(v, u)}${m ? '*' : ''}</span><b>${dv && v != null ? Math.round(v / dv * 100) + '%' : ''}</b></div>`; };
-  const anyMiss = NUTS.some(([k]) => miss[k] && tot[k] != null);
-  return `<div class="nf"><div class="nf-h">Nutrition Facts</div>
-    <div class="nf-sv"><span>Serving size</span><b>${esc(serving)}</b></div><div class="nf-thick"></div>
-    <div class="nf-am">Amount per serving</div><div class="nf-cal"><b>Calories</b><b>${Math.round(kcal)}</b></div><div class="nf-med"></div>
-    <div class="nf-dvh"><b>% Daily Value*</b></div>
-    ${NUTS.filter(n => n[5] === 'core').map(row).join('')}<div class="nf-thick"></div>
-    ${NUTS.filter(n => n[5] === 'vit').map(row).join('')}
-    <details class="nf-more"><summary>More nutrients</summary>${NUTS.filter(n => n[5] === 'more').map(row).join('')}</details>
-    <div class="nf-foot">* The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.${anyMiss ? `<br>* after a value: ${items > 1 ? 'some foods here are' : 'this food is'} missing data for that nutrient, so the real total is likely higher.` : ''}${NUTS.some(([k]) => tot[k] == null) ? '<br>— means no data for that nutrient.' : ''}</div></div>`;
+  const def = Object.fromEntries(NUTS.map(n => [n[0], n]));
+  const row = k => { const [, label, u, dv, ind] = def[k], v = tot[k], m = miss[k] && v != null, pct = dv && v != null ? Math.round(v / dv * 100) : null;
+    const sub = ['sat','trans','mono','poly','fib','sug','asug'].includes(k);
+    return `<div class="nb-r${sub ? ' sub' : ''}"><div class="nb-t"><span>${label}</span><span><b>${nfVal(v, u).replace(/(\d)(g|mg|µg)$/, '$1 $2')}${m ? '*' : ''}</b>${pct != null ? `<small>${pct}%</small>` : ''}</span></div>
+      ${dv ? `<div class="nb-bar"><i style="width:${Math.min(100, pct || 0)}%;background:${NB_COLOR[k] || 'var(--water)'}"></i></div>` : ''}</div>`; };
+  const more = NUTS.filter(n => n[5] === 'more' && !['mono','poly'].includes(n[0])).map(n => n[0]);
+  const anyMiss = NUTS.some(([k]) => miss[k] && tot[k] != null), anyNone = NUTS.some(([k]) => tot[k] == null);
+  return `<div class="nbars"><div class="nb-head"><b>Nutrients</b><small>amount · % daily value</small></div>
+    ${NB_GROUPS.map(([g, keys]) => `<div class="nb-g"><div class="nb-gt">${g}</div>${keys.map(row).join('')}</div>`).join('')}
+    <details class="nb-more"><summary>More vitamins & minerals</summary><div class="nb-g">${more.map(row).join('')}</div></details>
+    <div class="nb-foot">% daily value is based on a 2,000 Cal diet.${anyMiss ? ` * Some ${items > 1 ? 'foods here are' : 'of this food is'} missing data for that nutrient, so the real total is likely higher.` : ''}${anyNone ? ' — means no data.' : ''}</div></div>`;
 }
 function openFacts(scope){
   const day = foodDay(), list = scope === 'day' ? MEALS.flatMap(([m]) => day[m] || []) : (day[scope] || []);
@@ -1070,7 +1073,10 @@ function openFacts(scope){
   const {tot, miss} = sumNuts(list), k = list.reduce((a, e) => a + e.k, 0);
   const title = scope === 'day' ? (dkey(ui.foodDate || Date.now()) === dkey(Date.now()) ? 'Today' : new Date(ui.foodDate).toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric'})) : MEALS.find(x => x[0] === scope)[1];
   openSheet(`<div class="row between"><h3 style="margin:0">${title}</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
-    <div style="margin-top:12px">${factsLabel(`${list.length} item${list.length === 1 ? '' : 's'}`, k, tot, miss, list.length)}</div>`);
+    <div class="row between" style="margin-top:10px"><b style="font:700 24px 'Chakra Petch'">${fmt(k)} Cal</b><small class="mute">${list.length} item${list.length === 1 ? '' : 's'}</small></div>
+    <div class="mrow3">${MAC.map(([kk, n]) => `<div><small class="mute">${n}</small><b>${r1(tot[{p:'pro', c:'carb', f:'fat'}[kk]] || 0)} g</b></div>`).join('')}</div>
+    ${macroSplit({p:tot.pro || 0, c:tot.carb || 0, f:tot.fat || 0})}
+    <div style="margin-top:12px">${factsLabel('', k, tot, miss, list.length)}</div>`);
 }
 
 /* ---- USDA database (loaded on first search) ---- */
