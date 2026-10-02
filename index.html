@@ -245,6 +245,12 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 .icon-tile{background:none;border:2px solid transparent;border-radius:16px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--text);cursor:pointer;font:inherit}
 .icon-tile img{width:52px;height:52px;border-radius:12px;display:block}.icon-tile small{font-size:10px;color:var(--mute);text-align:center;line-height:1.2}
 .icon-tile.on{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 10%,transparent)}
+.icon-more{margin-top:18px;border-top:1px solid var(--line);padding-top:10px}
+.icon-more summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;color:var(--mute);font-size:13px}
+.icon-more summary::-webkit-details-marker{display:none}
+.icon-more summary img{width:26px;height:26px;border-radius:7px;opacity:.85}
+.icon-more summary small{margin-left:auto;font-size:12px}.icon-more summary small::after{content:' ▾'}.icon-more[open] summary small::after{content:' ▴'}
+.icon-more .icons-grid{margin-top:10px}
 </style>
 </head>
 <body>
@@ -258,12 +264,12 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.02.17"></script>
+<script src="exercises.js?v=2026.10.02.18"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.02.17';
+const APP_VERSION = '2026.10.02.18';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1598,12 +1604,13 @@ function openArmory(){
     <div style="max-width:250px;margin:4px auto 0">${bodySVG(m => rankOf(lvl(t[m]))[2], {labels:false, skin:sk})}</div>
     <label class="lbl">Title</label><div class="chips wrap">${got.map(([n]) => `<button class="chip${n === cur ? ' on' : ''}" data-act="eqTitle" data-v="${esc(n)}">${esc(n)}</button>`).join('')}</div>
     <small class="mute">${tl.length - got.length} more to unlock through levels, trophies and loot</small>
-    <label class="lbl">App icon</label><div class="icons-grid">${APP_ICONS.map(([id, n]) => `<button class="icon-tile${iconId() === id ? ' on' : ''}" data-act="eqIcon" data-v="${id}"><img src="icons/${id}-180.png" alt="" loading="lazy"><small>${n}</small></button>`).join('')}</div>
-    <button class="btn ghost sm block" style="margin-top:8px" data-act="iconHelp">Update Home Screen icon</button>
     <label class="lbl">Theme</label><div class="themes">${THEMES.map(([id, n, u, c]) => { const ok = isUnlocked(id, u, L), on = (state.cosmetics.theme || 'classic') === id;
       return `<button class="theme-tile${on ? ' on' : ''}${ok ? '' : ' locked'}" data-act="eqTheme" data-v="${id}" style="--a:${c[0]};--b:${c[1]};--p:${c[2]}"><span class="sw"><i></i><i></i></span><b>${n}</b><small>${ok ? (on ? 'Equipped' : 'Unlocked') : '🔒 ' + unlockLabel(u)}</small></button>`; }).join('')}</div>
     ${SLOTS.map(([slot, sn]) => `<label class="lbl">${sn}</label><div class="chips wrap"><button class="chip${!sk[slot] ? ' on' : ''}" data-act="eqSkin" data-s="${slot}" data-v="">None</button>${SKINS.filter(s => s[2] === slot).map(([id, n, , u]) => { const ok = isUnlocked(id, u, L);
-      return `<button class="chip${sk[slot] === id ? ' on' : ''}${ok ? '' : ' locked'}" data-act="eqSkin" data-s="${slot}" data-v="${id}">${ok ? '' : '🔒 '}${n}${ok ? '' : ` <small>${unlockLabel(u)}</small>`}</button>`; }).join('')}</div>`).join('')}`);
+      return `<button class="chip${sk[slot] === id ? ' on' : ''}${ok ? '' : ' locked'}" data-act="eqSkin" data-s="${slot}" data-v="${id}">${ok ? '' : '🔒 '}${n}${ok ? '' : ` <small>${unlockLabel(u)}</small>`}</button>`; }).join('')}</div>`).join('')}
+    <details class="icon-more"${ui.iconOpen ? ' open' : ''}><summary><img src="icons/${iconId()}-180.png" alt=""><span>App icon</span><small>${APP_ICONS.find(x => x[0] === iconId())[1]}</small></summary>
+      <div class="icons-grid">${APP_ICONS.map(([id, n]) => `<button class="icon-tile${iconId() === id ? ' on' : ''}" data-act="eqIcon" data-v="${id}"><img src="icons/${id}-180.png" alt="" loading="lazy"><small>${n}</small></button>`).join('')}</div>
+      <button class="btn ghost sm block" style="margin-top:8px" data-act="iconHelp">Update Home Screen icon</button></details>`);
 }
 /* ============ UI HELPERS ============ */
 function openSheet(html){ $('#sheet').innerHTML = html; $('#sheetWrap').classList.add('open'); $('#sheet').scrollTop = 0; }
@@ -2120,7 +2127,7 @@ const ACT = {
     state.friends = state.friends.filter(f => f !== d.id); ui.lb = (ui.lb || []).filter(p => p.id !== d.id); save(); openFriends(); render(); },
   armory: openArmory,
   eqTitle: d => { state.cosmetics.title = d.v === autoTitle(curLevel()) ? '' : d.v; save(); render(); openArmory(); publishStats(true); },
-  eqIcon: d => { state.cosmetics.icon = d.v; save(); applyIcon(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; toast('Icon picked: tap "Update Home Screen icon" to apply it'); },
+  eqIcon: d => { ui.iconOpen = true; state.cosmetics.icon = d.v; save(); applyIcon(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; toast('Icon picked: tap "Update Home Screen icon" to apply it'); },
   iconHelp: openIconHelp,
   eqTheme: d => { const th = THEMES.find(t => t[0] === d.v); if (!isUnlocked(d.v, th[2])) return toast(`Unlocks with ${unlockLabel(th[2])}`); state.cosmetics.theme = d.v; save(); applyTheme(); render(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; },
   eqSkin: d => { const it = SKINS.find(s => s[0] === d.v); if (it && !isUnlocked(d.v, it[3])) return toast(`Unlocks with ${unlockLabel(it[3])}`); state.cosmetics[d.s] = d.v; save(); render(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; },
