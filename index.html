@@ -225,6 +225,20 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 @keyframes burst{0%{opacity:1;transform:translate(-50%,-50%) scale(0)}100%{opacity:0;transform:translate(-50%,-50%) scale(40)}}
 .loot.open{border-color:var(--rc);box-shadow:0 0 24px color-mix(in srgb,var(--rc) 35%,transparent)}
 .armory-btn{position:relative;z-index:1;flex:none}
+.nf{background:#fff;color:#000;border:1px solid #000;border-radius:6px;padding:8px 10px;font:13px/1.25 Arial,Helvetica,sans-serif}
+.nf-h{font:900 30px/1 'Arial Black',Arial,sans-serif;letter-spacing:-.5px;border-bottom:1px solid #000;padding-bottom:3px}
+.nf-sv{display:flex;justify-content:space-between;gap:10px;padding:4px 0 2px;font-size:14px}.nf-sv b{text-align:right}
+.nf-thick{height:9px;background:#000;margin:3px 0}.nf-med{height:5px;background:#000;margin:2px 0}
+.nf-am{font-weight:700;font-size:11px}.nf-cal{display:flex;justify-content:space-between;align-items:flex-end;font:900 26px/1.1 Arial,sans-serif}
+.nf-dvh{text-align:right;font-size:11px;border-bottom:1px solid #000;padding:2px 0}
+.nf-r{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid #000;padding:3px 0}
+.nf-r.i1{padding-left:14px}.nf-r.i2{padding-left:28px}
+.nf-more summary{cursor:pointer;font-weight:700;padding:5px 0;border-bottom:1px solid #000;list-style:none}
+.nf-more summary::after{content:' ▾'}.nf-more[open] summary::after{content:' ▴'}
+.nf-foot{font-size:10px;line-height:1.35;padding-top:5px;border-top:4px solid #000;margin-top:4px}
+.fsrc{display:inline-block;font:600 9px Inter;letter-spacing:.06em;text-transform:uppercase;padding:1px 5px;border-radius:4px;margin-left:6px;vertical-align:1px}
+.fsrc.usda{background:rgba(79,209,197,.15);color:var(--teal)}.fsrc.quick{background:var(--panel2);color:var(--mute)}.fsrc.off{background:rgba(242,201,76,.15);color:var(--gold)}
+.mextra summary{cursor:pointer;color:var(--teal);font-weight:600;font-size:14px;margin:14px 0 4px}
 </style>
 </head>
 <body>
@@ -238,12 +252,12 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.02.12"></script>
+<script src="exercises.js?v=2026.10.02.13"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.02.12';
+const APP_VERSION = '2026.10.02.13';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -997,40 +1011,145 @@ function renderFood(){
     h += `<div class="empty" style="padding:8px"><h3>Set your daily targets</h3><p class="mute" style="font-size:14px">I'll estimate calories and macros from your stats and goal. You can adjust them after.</p><button class="btn gold" data-act="foodTargets">Calculate targets</button></div>`;
     if (t.k) h += `<div style="font:700 22px 'Chakra Petch'">${fmt(t.k)} Cal <small class="mute" style="font:500 13px Inter">· P ${Math.round(t.p)} · C ${Math.round(t.c)} · F ${Math.round(t.f)}</small></div>`;
   }
-  h += `${t.k ? macroSplit(t) : ''}</div>`;
+  h += `${t.k ? macroSplit(t) : ''}${all.length ? `<button class="btn ghost sm" style="margin-top:10px" data-act="facts" data-v="day">Nutrition facts</button>` : ''}</div>`;
   h += waterCard();
   for (const [m, name] of MEALS){
     const list = day[m] || [], mt = sumEntries(list);
     h += `<div class="card"><div class="row between"><h3 style="margin:0">${name}</h3>${list.length ? `<span class="xp" style="color:var(--text)">${fmt(mt.k)} Cal</span>` : ''}</div>
       ${list.length ? `<small class="mute">Protein ${Math.round(mt.p)} g · Carbs ${Math.round(mt.c)} g · Fat ${Math.round(mt.f)} g</small>${macroSplit(mt)}` : ''}
       ${list.map((e, i) => `<div class="frow" data-act="foodEdit" data-m="${m}" data-i="${i}"><span><b>${esc(e.n)}</b><br><small class="mute">${esc(e.a || '')}</small></span><span class="fk">${fmt(e.k)}<small> Cal</small><br><small class="mute">${Math.round(e.p)}P · ${Math.round(e.c)}C · ${Math.round(e.f)}F</small></span></div>`).join('')}
-      <div class="ex-actions" style="margin-top:8px"><button class="btn ghost sm" data-act="foodAdd" data-m="${m}">+ Add food</button>${list.length ? `<button class="btn ghost sm" data-act="mealSave" data-m="${m}">Save meal</button>` : ''}</div></div>`;
+      <div class="ex-actions" style="margin-top:8px"><button class="btn ghost sm" data-act="foodAdd" data-m="${m}">+ Add food</button>${list.length ? `<button class="btn ghost sm" data-act="facts" data-v="${m}">Facts</button><button class="btn ghost sm" data-act="mealSave" data-m="${m}">Save meal</button>` : ''}</div></div>`;
   }
   return h;
 }
 
+/* ---- Full nutrition facts ---- */
+// [key, label, unit, FDA daily value, indent, section] — fat/carb/pro come from each food's f/c/p
+const NUTS = [
+  ['fat','Total Fat','g',78,0,'core'],['sat','Saturated Fat','g',20,1,'core'],['trans','Trans Fat','g',null,1,'core'],
+  ['chol','Cholesterol','mg',300,0,'core'],['na','Sodium','mg',2300,0,'core'],
+  ['carb','Total Carbohydrate','g',275,0,'core'],['fib','Dietary Fiber','g',28,1,'core'],['sug','Total Sugars','g',null,1,'core'],['asug','Added Sugars','g',50,2,'core'],
+  ['pro','Protein','g',50,0,'core'],
+  ['vd','Vitamin D','µg',20,0,'vit'],['ca','Calcium','mg',1300,0,'vit'],['fe','Iron','mg',18,0,'vit'],['pot','Potassium','mg',4700,0,'vit'],
+  ['mono','Monounsaturated Fat','g',null,0,'more'],['poly','Polyunsaturated Fat','g',null,0,'more'],
+  ['va','Vitamin A','µg',900,0,'more'],['vc','Vitamin C','mg',90,0,'more'],['ve','Vitamin E','mg',15,0,'more'],['vk','Vitamin K','µg',120,0,'more'],
+  ['b1','Thiamin (B1)','mg',1.2,0,'more'],['b2','Riboflavin (B2)','mg',1.3,0,'more'],['b3','Niacin (B3)','mg',16,0,'more'],['b6','Vitamin B6','mg',1.7,0,'more'],
+  ['fol','Folate','µg',400,0,'more'],['b12','Vitamin B12','µg',2.4,0,'more'],['mg','Magnesium','mg',420,0,'more'],['ph','Phosphorus','mg',1250,0,'more'],
+  ['zn','Zinc','mg',11,0,'more'],['caf','Caffeine','mg',null,0,'more']
+];
+const EXTRA_KEYS = NUTS.map(n => n[0]).filter(k => !['fat','carb','pro'].includes(k));
+const scaleN = (n, g) => { const o = {}; for (const k in n || {}) o[k] = Math.round(n[k] * g / 100 * 1000) / 1000; return o; };
+const entryNuts = e => ({fat:e.f, carb:e.c, pro:e.p, ...(e.x || {})});
+function sumNuts(list){
+  const tot = {}, miss = {};
+  for (const e of list){ const n = entryNuts(e); for (const [k] of NUTS){ if (n[k] == null) miss[k] = (miss[k] || 0) + 1; else tot[k] = (tot[k] || 0) + n[k]; } }
+  return {tot, miss};
+}
+function nfVal(v, u){
+  if (v == null) return '—';
+  if (u === 'g') return (v < 1 && v > 0 ? (v < 0.5 ? '<1' : r1(v)) : Math.round(v)) + 'g';
+  if (u === 'mg') return (v < 10 ? r1(v) : Math.round(v)) + 'mg';
+  return (v < 10 ? r1(v) : Math.round(v)) + 'µg';
+}
+function factsLabel(serving, kcal, tot, miss = {}, items = 1){
+  const row = ([k, label, u, dv, ind]) => { const v = tot[k], m = miss[k] && v != null;
+    return `<div class="nf-r i${ind}"><span>${ind ? label : `<b>${label}</b>`} ${nfVal(v, u)}${m ? '*' : ''}</span><b>${dv && v != null ? Math.round(v / dv * 100) + '%' : ''}</b></div>`; };
+  const anyMiss = NUTS.some(([k]) => miss[k] && tot[k] != null);
+  return `<div class="nf"><div class="nf-h">Nutrition Facts</div>
+    <div class="nf-sv"><span>Serving size</span><b>${esc(serving)}</b></div><div class="nf-thick"></div>
+    <div class="nf-am">Amount per serving</div><div class="nf-cal"><b>Calories</b><b>${Math.round(kcal)}</b></div><div class="nf-med"></div>
+    <div class="nf-dvh"><b>% Daily Value*</b></div>
+    ${NUTS.filter(n => n[5] === 'core').map(row).join('')}<div class="nf-thick"></div>
+    ${NUTS.filter(n => n[5] === 'vit').map(row).join('')}
+    <details class="nf-more"><summary>More nutrients</summary>${NUTS.filter(n => n[5] === 'more').map(row).join('')}</details>
+    <div class="nf-foot">* The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.${anyMiss ? `<br>* after a value: ${items > 1 ? 'some foods here are' : 'this food is'} missing data for that nutrient, so the real total is likely higher.` : ''}${NUTS.some(([k]) => tot[k] == null) ? '<br>— means no data for that nutrient.' : ''}</div></div>`;
+}
+function openFacts(scope){
+  const day = foodDay(), list = scope === 'day' ? MEALS.flatMap(([m]) => day[m] || []) : (day[scope] || []);
+  if (!list.length) return toast('Nothing logged yet');
+  const {tot, miss} = sumNuts(list), k = list.reduce((a, e) => a + e.k, 0);
+  const title = scope === 'day' ? (dkey(ui.foodDate || Date.now()) === dkey(Date.now()) ? 'Today' : new Date(ui.foodDate).toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric'})) : MEALS.find(x => x[0] === scope)[1];
+  openSheet(`<div class="row between"><h3 style="margin:0">${title}</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    <div style="margin-top:12px">${factsLabel(`${list.length} item${list.length === 1 ? '' : 's'}`, k, tot, miss, list.length)}</div>`);
+}
+
+/* ---- USDA database (loaded on first search) ---- */
+let USDA = null, USDA_BY_ID = null;
+const COMMON_USDA = ['05064','01132','20045','09040','08120','01079','11090','15237','01256','16398','18075','09003','23563','09037','11674','20121','01009','11508'];
+async function ensureUSDA(){
+  if (USDA) return USDA;
+  if (!window.USDA_RAW) await loadScript('usda-foods.js?v=' + APP_VERSION);
+  USDA = window.USDA_RAW.split('\n').map(line => { const i = line.indexOf('|'), j = line.indexOf('|', i + 1); return {id: line.slice(0, i), line, nl: line.slice(i + 1, j).toLowerCase()}; });
+  USDA_BY_ID = Object.fromEntries(USDA.map(x => [x.id, x]));
+  return USDA;
+}
+function usdaFood(line){
+  const [id, name, grp, main, ex, sv] = line.split('|');
+  const [k, p, c, f] = main.split(',').map(Number), n = {};
+  ex.split(',').forEach((v, i) => { if (v !== '') n[window.USDA_KEYS[i]] = +v; });
+  return {name, per:{k, p, c, f}, n, sv: sv ? sv.split(';').map(s => { const i = s.lastIndexOf(':'); return [s.slice(0, i), +s.slice(i + 1)]; }) : [], src:'usda', code:id};
+}
+// Lower is better: favor plain whole foods whose name starts with the first word, over deli, fast food and mixed dishes
+const PROCESSED_GROUPS = {'0700':25, '2100':20, '2200':25, '3600':20, '0300':40, '2500':10};
+// Everyday words → the USDA's naming
+const FOOD_SYN = {oatmeal:['oatmeal','oats'], fries:['fries','french fr'], ketchup:['ketchup','catsup'], soda:['soda','carbonated beverage'], burger:['burger','hamburger'], hamburger:['hamburger','burger'], pop:['carbonated beverage'], chips:['chips','potato chips'], oj:['orange juice']};
+const synMatch = (nl, w) => (FOOD_SYN[w] || [w]).some(a => nl.includes(a));
+const stem = w => w.length > 3 ? w.replace(/(ies)$/, 'y').replace(/(es|s)$/, '') : w;
+function usdaScore(x, words){
+  if (!x.grp){ const parts = x.line.split('|'); x.grp = parts[2]; x.brand = /[A-Z]{4,}/.test(parts[1]); }
+  const segs = x.nl.split(',').map(t => t.trim()), first = segs[0], st = words.map(stem);
+  const segHas = (t, w) => t === w || t.startsWith(w) || t.split(/[\s-]/).some(p => stem(p) === w);
+  let s = st.some(w => segHas(first, w)) ? 0 : segs.slice(1).some(t => st.some(w => segHas(t, w))) ? 30 : 60;
+  if (st.some(w => stem(first) === w)) s -= 15;
+  s += st.filter(w => !segs.some(t => segHas(t, w))).length * 6;
+  s += (PROCESSED_GROUPS[x.grp] || 0) + (x.brand ? 15 : 0);
+  if (/\braw\b|\bcooked\b|roasted|baked|boiled|scrambled|plain/.test(x.nl)) s -= 4;
+  return s + x.nl.length * 0.12;
+}
+// Open Food Facts reports most nutrients in grams per 100 g; convert to label units
+const OFF_MAP = [['sat','saturated-fat',1],['trans','trans-fat',1],['mono','monounsaturated-fat',1],['poly','polyunsaturated-fat',1],['chol','cholesterol',1000],['na','sodium',1000],
+  ['fib','fiber',1],['sug','sugars',1],['asug','added-sugars',1],['vd','vitamin-d',1e6],['ca','calcium',1000],['fe','iron',1000],['pot','potassium',1000],['va','vitamin-a',1e6],
+  ['vc','vitamin-c',1000],['ve','vitamin-e',1000],['vk','vitamin-k',1e6],['b1','vitamin-b1',1000],['b2','vitamin-b2',1000],['b3','vitamin-pp',1000],['b6','vitamin-b6',1000],
+  ['fol','folates',1e6],['b12','vitamin-b12',1e6],['mg','magnesium',1000],['ph','phosphorus',1000],['zn','zinc',1000],['caf','caffeine',1000]];
+const offNuts = n => { const o = {}; for (const [k, key, mul] of OFF_MAP){ const v = n[key + '_100g']; if (v != null && v !== '' && isFinite(+v)) o[k] = +v * mul; } return o; };
+const MANUAL_EXTRA = [['sat','Saturated fat','g'],['trans','Trans fat','g'],['chol','Cholesterol','mg'],['na','Sodium','mg'],['fib','Fiber','g'],['sug','Total sugars','g'],['asug','Added sugars','g'],['vd','Vitamin D','µg'],['ca','Calcium','mg'],['fe','Iron','mg'],['pot','Potassium','mg']];
+
 /* ---- Add food: search, scan, manual, recent ---- */
 function openAddFood(meal, mode){
   stopScan();
-  ui.foodMeal = meal; ui.foodMode = mode || ui.foodMode || 'search';
+  ui.foodMeal = meal; ui.foodMode = mode || ui.foodMode || 'search'; ui.foodEditRef = null;
   const mn = MEALS.find(x => x[0] === meal)[1];
   openSheet(`<div class="row between"><h3 style="margin:0">Add to ${mn}</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
     <div class="chips" style="margin:12px 0">${[['search','Search'],['scan','Scan barcode'],['meals','Saved meals'],['recent','Recent'],['manual','Manual']].map(([k, v]) => `<button class="chip${ui.foodMode === k ? ' on' : ''}" data-act="foodMode" data-v="${k}">${v}</button>`).join('')}</div>
     <div id="foodArea"></div>`);
   ({search:foodSearchUI, scan:startScan, meals:savedMealsUI, manual:() => manualUI(), recent:recentUI})[ui.foodMode]();
 }
-const foodRow = (f, i, list) => `<div class="frow" data-act="foodPick" data-list="${list}" data-i="${i}"><span><b>${esc(f.name)}</b><br><small class="mute">${f.sv && f.sv[0] ? esc(f.sv[0][0]) + ' · ' + Math.round(f.per.k * f.sv[0][1] / 100) + ' Cal' : Math.round(f.per.k) + ' Cal / 100 g'}</small></span><span class="sr">+</span></div>`;
+const SRC_TAG = {usda:['usda','USDA'], local:['quick','Macros only'], off:['off','Packaged']};
+const foodRow = (f, i, list) => `<div class="frow" data-act="foodPick" data-list="${list}" data-i="${i}"><span><b>${esc(f.name)}</b>${SRC_TAG[f.src] ? `<span class="fsrc ${SRC_TAG[f.src][0]}">${SRC_TAG[f.src][1]}</span>` : ''}<br><small class="mute">${f.sv && f.sv[0] ? esc(f.sv[0][0]) + ' · ' + Math.round(f.per.k * f.sv[0][1] / 100) + ' Cal' : Math.round(f.per.k) + ' Cal / 100 g'}</small></span><span class="sr">+</span></div>`;
 function foodSearchUI(){
   $('#foodArea').innerHTML = `<input id="foodQ" placeholder="Search foods (e.g. chicken, rice, banana)" value="${esc(ui.foodQ || '')}"><div id="foodRes" style="margin-top:8px"></div>`;
   renderFoodRes();
 }
 function renderFoodRes(){
-  const q = (ui.foodQ || '').trim().toLowerCase(), words = q.split(/\s+/).filter(Boolean);
-  ui.foodList = words.length ? FOODS.filter(f => words.every(w => f.name.toLowerCase().includes(w))) : FOODS.slice(0, 12);
   const el = $('#foodRes'); if (!el) return;
-  el.innerHTML = (words.length ? '' : '<small class="mute">Common foods</small>') + ui.foodList.map((f, i) => foodRow(f, i, 'local')).join('')
+  const q = (ui.foodQ || '').trim().toLowerCase(), words = q.split(/\s+/).filter(Boolean);
+  if (!USDA){
+    el.innerHTML = '<p class="mute">Loading food database…</p>';
+    ensureUSDA().then(renderFoodRes).catch(() => { USDA = []; USDA_BY_ID = {}; renderFoodRes(); });
+    return;
+  }
+  const n = ui.foodN || 30;
+  let hits = [];
+  if (words.length){ const sw = words.flatMap(w => (FOOD_SYN[w] || [w]).map(a => a.split(' ')[0])); hits = USDA.filter(x => words.every(w => synMatch(x.nl, w))); hits.sort((a, b) => usdaScore(a, sw) - usdaScore(b, sw)); }
+  ui.foodList = (words.length ? hits.slice(0, n) : COMMON_USDA.map(id => USDA_BY_ID[id]).filter(Boolean)).map(x => usdaFood(x.line));
+  ui.quickList = words.length ? FOODS.filter(f => words.every(w => f.name.toLowerCase().includes(w))) : [];
+  const none = words.length && !hits.length && !ui.quickList.length;
+  el.innerHTML = (words.length ? `<small class="mute">${hits.length} USDA match${hits.length === 1 ? '' : 'es'} · full nutrition facts</small>` : '<small class="mute">Common foods · full nutrition facts</small>')
+    + ui.foodList.map((f, i) => foodRow(f, i, 'usda')).join('')
+    + (hits.length > n ? `<button class="btn ghost block" style="margin-top:8px" data-act="foodMore">Show more (${hits.length - n} left)</button>` : '')
+    + (ui.quickList.length ? `<small class="mute" style="display:block;margin-top:12px">Quick estimates & restaurants · macros only</small>` + ui.quickList.map((f, i) => foodRow({...f, src:'local'}, i, 'local')).join('') : '')
     + (words.length ? `<button class="btn ghost block" style="margin-top:10px" data-act="offSearch">Search packaged & brand-name foods for "${esc(ui.foodQ.trim())}"</button><div id="offRes"></div>` : '')
-    + (words.length && !ui.foodList.length ? '<p class="mute" style="font-size:13px">No common foods match — try the packaged food search, or add it manually.</p>' : '');
+    + (none ? '<p class="mute" style="font-size:13px">No matches — try fewer or different words, the packaged food search, or add it manually.</p>' : '');
 }
 function offToFood(p){
   const n = p.nutriments || {};
@@ -1039,7 +1158,7 @@ function offToFood(p){
   const sq = parseFloat(p.serving_quantity);
   return {name: [p.product_name || p.product_name_en, (p.brands || '').split(',')[0]].filter(Boolean).join(' · ') || 'Unnamed product',
     per:{k:+k || 0, p:+n.proteins_100g || 0, c:+n.carbohydrates_100g || 0, f:+n.fat_100g || 0},
-    sv: sq > 0 ? [[p.serving_size || '1 serving', sq]] : [], src:'off', code:p.code};
+    n: offNuts(n), sv: sq > 0 ? [[p.serving_size || '1 serving', sq]] : [], src:'off', code:p.code};
 }
 async function offSearch(){
   const q = (ui.foodQ || '').trim(), el = $('#offRes'); if (!q || !el) return;
@@ -1062,6 +1181,7 @@ function manualUI(pre = {}){
     <div class="mgrid"><div><label class="lbl">Calories</label><input id="mK" type="number" inputmode="decimal" value="${pre.k ?? ''}"></div><div><label class="lbl">Protein (g)</label><input id="mP" type="number" inputmode="decimal" value="${pre.p ?? ''}"></div>
     <div><label class="lbl">Carbs (g)</label><input id="mC" type="number" inputmode="decimal" value="${pre.c ?? ''}"></div><div><label class="lbl">Fat (g)</label><input id="mF" type="number" inputmode="decimal" value="${pre.f ?? ''}"></div></div>
     <label class="lbl">Amount (optional)</label><input id="mA" value="${esc(pre.a || '')}" placeholder="e.g. 1 bowl">
+    <details class="mextra"${pre.x && Object.keys(pre.x).length ? ' open' : ''}><summary>More nutrition facts (optional)</summary><div class="mgrid">${MANUAL_EXTRA.map(([k, l, u]) => `<div><label class="lbl">${l} (${u})</label><input id="mx_${k}" type="number" inputmode="decimal" value="${pre.x && pre.x[k] != null ? pre.x[k] : ''}"></div>`).join('')}</div></details>
     ${pre.note ? `<p class="mute" style="font-size:12px">${esc(pre.note)}</p>` : ''}
     <button class="btn gold block" style="margin-top:14px" data-act="manualSave">${pre.edit ? 'Save changes' : 'Add food'}</button>
     ${pre.edit ? `<button class="btn danger block" style="margin-top:8px" data-act="foodDel">Delete</button>` : ''}`;
@@ -1077,6 +1197,7 @@ function openAmount(food, edit){
     <div id="amtPrev" style="margin-top:14px"></div>
     <button class="btn gold block" style="margin-top:14px" data-act="amtSave">${edit ? 'Save changes' : 'Add to ' + MEALS.find(x => x[0] === ui.foodMeal)[1]}</button>
     ${edit ? `<button class="btn danger block" style="margin-top:8px" data-act="foodDel">Delete</button>` : ''}
+    <div id="amtLabel" style="margin-top:14px"></div>
     <p class="mute" style="font-size:11px;margin:10px 0 0">Per 100 g: ${Math.round(food.per.k)} Cal · ${r1(food.per.p)}P · ${r1(food.per.c)}C · ${r1(food.per.f)}F${food.src === 'off' ? ' · from Open Food Facts' : ''}</p>`);
   amtPreview();
 }
@@ -1087,6 +1208,8 @@ function amtPreview(){
   ui.amt.tot = t;
   const el = $('#amtPrev'); if (el) el.innerHTML = `<div class="row between"><b style="font:700 24px 'Chakra Petch'">${Math.round(t.k)} Cal</b><small class="mute">${Math.round(g)} g</small></div>
     <div class="mrow3">${MAC.map(([k, n, col]) => `<div><small class="mute">${n}</small><b>${r1(t[k])} g</b></div>`).join('')}</div>${macroSplit(t)}`;
+  const lb = $('#amtLabel'); if (lb) lb.innerHTML = factsLabel(`${amtLabel()} (${Math.round(g)} g)`, t.k, {fat:t.f, carb:t.c, pro:t.p, ...scaleN(ui.amt.food.n, g)})
+    + (ui.amt.food.n ? '' : '<p class="mute" style="font-size:12px;margin:8px 0 0">This quick-estimate food only has calories and macros. Search the USDA list for full nutrition facts.</p>');
 }
 function rememberFood(food){
   const key = f => f.name + '|' + (f.code || '');
@@ -1823,23 +1946,26 @@ const ACT = {
   bwHistory: openBwHistory,
   bwDel: d => { state.bwLog = state.bwLog.filter(l => l.date !== +d.d); const last = state.bwLog[state.bwLog.length - 1]; if (last) state.profile.bw = last.w; save(); render(); openBwHistory(); },
   foodDay: d => { const base = ui.foodDate || Date.now(), n = new Date(base); n.setDate(n.getDate() + (+d.v)); if (dkey(n) > dkey(Date.now())) return; ui.foodDate = n.getTime(); render(); },
-  foodAdd: d => { ui.foodQ = ''; openAddFood(d.m, ui.foodMode === 'scan' ? 'scan' : 'search'); },
+  foodAdd: d => { ui.foodQ = ''; ui.foodN = 30; openAddFood(d.m, ui.foodMode === 'scan' ? 'scan' : 'search'); },
   foodMode: d => { stopScan(); ui.foodMode = d.v; openAddFood(ui.foodMeal, d.v); },
   offSearch: () => offSearch(),
-  foodPick: d => { const list = d.list === 'local' ? ui.foodList : d.list === 'off' ? ui.offList : ui.recentList; const f = list && list[+d.i]; if (!f) return;
-    if (f.fixed){ const day = foodDay(); (day[ui.foodMeal] = day[ui.foodMeal] || []).push({n:f.name, a:f.a || '', ...f.fixed, m:1}); rememberFood(f); save(); closeSheet(); render(); toast('Added'); }
+  foodMore: () => { ui.foodN = (ui.foodN || 30) + 30; renderFoodRes(); },
+  facts: d => openFacts(d.v),
+  foodPick: d => { const list = d.list === 'usda' ? ui.foodList : d.list === 'local' ? ui.quickList : d.list === 'off' ? ui.offList : ui.recentList; const f = list && list[+d.i]; if (!f) return;
+    if (f.fixed){ const day = foodDay(); (day[ui.foodMeal] = day[ui.foodMeal] || []).push({n:f.name, a:f.a || '', ...f.fixed, ...(f.x ? {x:{...f.x}} : {}), m:1}); rememberFood(f); save(); closeSheet(); render(); toast('Added'); }
     else openAmount(f); },
   amtSave: () => { const {food, edit, tot} = ui.amt; if (!(amtGrams() > 0)) return toast('Enter an amount');
-    const e = {n:food.name, a:amtLabel(), q:+ui.amt.qty, u:ui.amt.unit, k:r1(tot.k), p:r1(tot.p), c:r1(tot.c), f:r1(tot.f), d:{per:food.per, sv:food.sv, src:food.src, code:food.code}};
+    const e = {n:food.name, a:amtLabel(), q:+ui.amt.qty, u:ui.amt.unit, k:r1(tot.k), p:r1(tot.p), c:r1(tot.c), f:r1(tot.f), ...(food.n ? {x:scaleN(food.n, amtGrams())} : {}), d:{per:food.per, n:food.n, sv:food.sv, src:food.src, code:food.code}};
     const day = foodDay(); if (edit) day[edit.m][edit.i] = e; else (day[ui.foodMeal] = day[ui.foodMeal] || []).push(e);
-    rememberFood(food); save(); closeSheet(); render(); toast(edit ? 'Updated' : 'Added'); },
+    rememberFood(food); ui.foodEditRef = null; save(); closeSheet(); render(); toast(edit ? 'Updated' : 'Added'); },
   manualSave: () => { const name = $('#mName').value.trim(); const v = id => r1(+$(id).value || 0);
     if (!name) return toast('Give the food a name'); const fixed = {k:v('#mK'), p:v('#mP'), c:v('#mC'), f:v('#mF')}; if (!fixed.k && !fixed.p && !fixed.c && !fixed.f) return toast('Enter at least the calories');
-    const e = {n:name, a:$('#mA').value.trim(), ...fixed, m:1}, day = foodDay(), ed = ui.foodEditRef;
+    const x = {}; MANUAL_EXTRA.forEach(([k]) => { const el = $('#mx_' + k), v = el && el.value.trim(); if (v !== '' && v != null && isFinite(+v)) x[k] = +v; });
+    const e = {n:name, a:$('#mA').value.trim(), ...fixed, ...(Object.keys(x).length ? {x} : {}), m:1}, day = foodDay(), ed = ui.foodEditRef;
     if (ed) day[ed.m][ed.i] = e; else (day[ui.foodMeal] = day[ui.foodMeal] || []).push(e);
-    rememberFood({name, a:e.a, fixed}); ui.foodEditRef = null; save(); closeSheet(); render(); toast(ed ? 'Updated' : 'Added'); },
+    rememberFood({name, a:e.a, fixed, ...(e.x ? {x:e.x} : {})}); ui.foodEditRef = null; save(); closeSheet(); render(); toast(ed ? 'Updated' : 'Added'); },
   foodEdit: d => { const e = foodDay()[d.m][+d.i]; ui.foodMeal = d.m;
-    if (e.m || !e.d){ ui.foodEditRef = {m:d.m, i:+d.i}; openSheet(`<div class="row between"><h3 style="margin:0">Edit food</h3><button class="icon-btn" data-act="closeSheet">✕</button></div><div id="foodArea"></div>`); manualUI({name:e.n, k:e.k, p:e.p, c:e.c, f:e.f, a:e.a, edit:true}); }
+    if (e.m || !e.d){ ui.foodEditRef = {m:d.m, i:+d.i}; openSheet(`<div class="row between"><h3 style="margin:0">Edit food</h3><button class="icon-btn" data-act="closeSheet">✕</button></div><div id="foodArea"></div>`); manualUI({name:e.n, k:e.k, p:e.p, c:e.c, f:e.f, a:e.a, x:e.x, edit:true}); }
     else { ui.foodEditRef = {m:d.m, i:+d.i}; openAmount({name:e.n, ...e.d}, {m:d.m, i:+d.i, q:e.q, u:e.u}); } },
   foodDel: () => { const ref = ui.foodEditRef || (ui.amt && ui.amt.edit); if (!ref) return; foodDay()[ref.m].splice(ref.i, 1); ui.foodEditRef = null; save(); closeSheet(); render(); toast('Removed'); },
   codeLookup: () => { const c = $('#codeIn').value; stopScan(); lookupBarcode(c); },
@@ -1908,7 +2034,7 @@ document.addEventListener('input', e => {
   else if (t.id === 'wname' && state.active){ state.active.name = t.value; save(); }
   else if (d.sf && ui.edit){ const day = ui.edit.days[+d.d]; if (d.sf === 'dayName') day.name = t.value; else day.items[+d.i][d.sf] = d.sf === 'sets' ? +t.value || '' : t.value; }
   else if (t.id === 'splitName' && ui.edit){ ui.edit.name = t.value; }
-  else if (t.id === 'foodQ'){ ui.foodQ = t.value; renderFoodRes(); }
+  else if (t.id === 'foodQ'){ ui.foodQ = t.value; ui.foodN = 30; renderFoodRes(); }
   else if (t.id === 'amtQ' && ui.amt){ ui.amt.qty = t.value; amtPreview(); }
   else if (t.id === 'amtU' && ui.amt){ ui.amt.unit = t.value; amtPreview(); }
   else if (t.id === 'libq'){ ui.libQ = t.value; ui.libN = PAGE; renderLibList(); }

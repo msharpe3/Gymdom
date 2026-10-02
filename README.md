@@ -12,7 +12,7 @@ A gamified gym tracker — every set you log earns XP for the muscles it works, 
 - Muscle decay (faded after 7 days, rusty after 14) with a comeback bonus
 - Progressive overload hints, plate calculator, supersets
 - Bodyweight log with trend chart
-- Food tracker: barcode scanning, food search (built-in + Open Food Facts), manual entry, daily calorie/macro targets and per-meal macro breakdowns, saved meals and a water tracker
+- Food tracker: 8,000+ USDA foods with full Nutrition Facts labels (daily, per meal and per food), barcode scanning, packaged food search (Open Food Facts), manual entry, daily calorie/macro targets and per-meal macro breakdowns, saved meals and a water tracker
 - Armory: unlockable themes, figure gear (headband, shades, capes, crown, auras), equippable titles
 - Level-up celebration screen and random loot chests after workouts
 - Friends leaderboard (level, streak, weekly workouts, XP) via friend codes
@@ -21,4 +21,5 @@ A gamified gym tracker — every set you log earns XP for the muscles it works, 
 ## Credits
 
 Exercise data and photos come from [Free Exercise DB](https://github.com/yuhonas/free-exercise-db), released into the public domain.
+Whole-food nutrition data comes from the USDA National Nutrient Database for Standard Reference (SR28, public domain).
 Packaged food data comes from [Open Food Facts](https://world.openfoodfacts.org) (ODbL).
