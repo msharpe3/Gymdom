@@ -153,14 +153,15 @@ svg.body text{fill:var(--mute);font:600 11px 'Chakra Petch';letter-spacing:.25em
 <script>
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
-   Leave as null to keep everything on this device. */
-const FIREBASE_CONFIG = null;
-/* e.g.
+   Set it to null to keep everything on this device only. */
 const FIREBASE_CONFIG = {
-  apiKey: "...", authDomain: "...", projectId: "...",
-  storageBucket: "...", messagingSenderId: "...", appId: "..."
+  apiKey: "AIzaSyDju1Ka96XmwZmdsBgtIC6fbi7FOAKe2_Y",
+  authDomain: "gymdom-e7f5a.firebaseapp.com",
+  projectId: "gymdom-e7f5a",
+  storageBucket: "gymdom-e7f5a.firebasestorage.app",
+  messagingSenderId: "961617441783",
+  appId: "1:961617441783:web:e4c58f1ffac972a1af74f2"
 };
-*/
 
 const $ = s => document.querySelector(s);
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -945,7 +946,7 @@ function renderCoach(){
 /* ============ SETTINGS & SYNC ============ */
 let fbRef = null, fbUnsub = null, syncStatus = 'Local only';
 function loadScript(src){ return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
-async function initSync(){
+async function initSync(preferRemote = false){
   if (fbUnsub) fbUnsub(); fbUnsub = null; fbRef = null;
   if (!FIREBASE_CONFIG){ syncStatus = 'Sync off — add your Firebase config at the top of index.html'; return; }
   const code = (state.profile.syncCode || '').trim();
@@ -960,7 +961,11 @@ async function initSync(){
     syncStatus = 'Connecting…';
     fbUnsub = fbRef.onSnapshot(snap => {
       const d = snap.data();
-      if (!d || d.updatedAt < state.updatedAt) { pushRemote(); }
+      if (d && preferRemote){
+        preferRemote = false;
+        state = migrate(JSON.parse(d.data)); state.profile.syncCode = code; saveLocal(); render(); toast('Synced from cloud');
+      }
+      else if (!d || d.updatedAt < state.updatedAt) { preferRemote = false; pushRemote(); }
       else if (d.updatedAt > state.updatedAt){
         const typing = document.activeElement && document.activeElement.tagName === 'INPUT';
         state = migrate(JSON.parse(d.data)); saveLocal();
@@ -1037,7 +1042,7 @@ const ACT = {
   bwDel: d => { state.bwLog = state.bwLog.filter(l => l.date !== +d.d); const last = state.bwLog[state.bwLog.length - 1]; if (last) state.profile.bw = last.w; save(); render(); openBwHistory(); },
   saveSettings: () => { const p = state.profile, oldCode = p.syncCode;
     p.name = $('#sName').value.trim(); p.bw = +$('#sBw').value || 180; p.syncCode = $('#sCode').value.trim();
-    save(); closeSheet(); render(); toast('Saved'); if (p.syncCode !== oldCode) initSync(); },
+    save(); closeSheet(); render(); toast('Saved'); if (p.syncCode !== oldCode) initSync(true); },
   exportData: () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(state, null, 1)], {type:'application/json'}));
     a.download = 'gymdom-backup-' + new Date().toISOString().slice(0,10) + '.json'; a.click(); },
   importData: () => $('#importFile').click(),
