@@ -12,5 +12,4 @@ A gamified gym tracker — every set you log earns XP for the muscles it works, 
 - Muscle decay (faded after 7 days, rusty after 14) with a comeback bonus
 - Progressive overload hints, plate calculator, supersets
 - Bodyweight log with trend chart
-- Animated how-to figure for every exercise
 - Optional Firebase sync across devices (paste your config at the top of `index.html`)

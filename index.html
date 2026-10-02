@@ -127,7 +127,6 @@ svg.body text{fill:var(--mute);font:600 11px 'Chakra Petch';letter-spacing:.25em
 .badge .bi{font-size:28px}.badge b{font-size:12px}.badge small{font-size:10px;color:var(--mute);line-height:1.3}
 .badge.locked{opacity:.4}.badge.locked .bi{filter:grayscale(1)}
 .bwchart{width:100%;display:block;margin-top:8px}.bwchart .ax{fill:var(--mute);font:500 10px Inter}
-.howto{width:100%;max-width:340px;display:block;margin:8px auto 0;background:var(--panel2);border-radius:14px}
 .pr-box{background:linear-gradient(135deg,rgba(242,201,76,.18),rgba(167,139,250,.12));border:1px solid rgba(242,201,76,.5);border-radius:12px;padding:10px 12px;margin:12px 0;text-align:left}
 .pr-box h4{margin:0 0 6px;font:700 14px 'Chakra Petch';letter-spacing:.12em;color:var(--gold);text-align:center;animation:pop .6s .2s both}
 .pr-box.q{background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.45)}.pr-box.q h4{color:var(--purple)}
@@ -306,7 +305,55 @@ X('crunch','Crunch','bw','core',['abs'],[],'Lower back on the floor|Curl shoulde
 X('ab_wheel','Ab Wheel Rollout','bw','core',['abs'],['obliques','lats'],'Start on knees|Roll out with a flat back|Pull back using abs',.5),
 X('russian','Russian Twist','db','obliq',['obliques'],['abs'],'Lean back, chest up|Rotate side to side|Each side = 1 rep'),
 X('woodchop','Cable Woodchop','cb','obliq',['obliques'],['abs','shoulders'],'Rotate from the torso|Pivot the back foot|Control the return'),
-X('bicycle','Bicycle Crunch','bw','obliq',['obliques'],['abs'],'Elbow to opposite knee|Extend the other leg|Slow and controlled',.25)
+X('bicycle','Bicycle Crunch','bw','obliq',['obliques'],['abs'],'Elbow to opposite knee|Extend the other leg|Slow and controlled',.25),
+// ---- more chest ----
+X('decline_bench','Decline Bench Press','bb','push_h',['chest'],['triceps','shoulders'],'Hook feet securely|Bar to lower chest|Press up and slightly back'),
+X('smith_bench','Smith Machine Bench','mc','push_h',['chest'],['triceps','shoulders'],'Bench set so bar meets mid-chest|Unrack with a twist|Control every rep'),
+X('incline_machine','Incline Machine Press','mc','push_h2',['chest'],['shoulders','triceps'],'Seat so handles line up with upper chest|Press up and in|Slow return'),
+X('low_fly','Low-to-High Cable Fly','cb','chest_iso',['chest'],['shoulders'],'Pulleys set low|Sweep hands up to chin height|Squeeze upper chest'),
+X('incline_pushup','Incline Push-Up','bw','push_h',['chest'],['triceps','shoulders'],'Hands on a bench or bar|Body straight|Chest to the edge',.45),
+X('decline_pushup','Decline Push-Up','bw','push_h2',['chest'],['shoulders','triceps'],'Feet up on a bench|Body straight|Lower chest to floor',.75),
+// ---- more shoulders ----
+X('machine_ohp','Machine Shoulder Press','mc','push_v',['shoulders'],['triceps'],'Handles at shoulder height|Press without locking hard|Back against the pad'),
+X('landmine','Landmine Press','bb','push_v',['shoulders'],['chest','triceps'],'Bar end at shoulder|Press up and forward|Brace your core'),
+X('front_raise','Front Raise','db','delt_front',['shoulders'],[],'Arms nearly straight|Raise to eye level|Lower slowly, no swinging'),
+X('machine_lat','Machine Lateral Raise','mc','delt_side',['shoulders'],[],'Pads on outer arms|Lead with elbows|Pause at the top'),
+X('upright_row','Upright Row','bb','delt_side',['shoulders','traps'],['biceps'],'Hands shoulder width|Pull elbows up and out|Stop at chest height'),
+X('reverse_pec','Reverse Pec Deck','mc','rear_delt',['shoulders'],['traps'],'Chest against pad|Sweep arms back wide|Squeeze rear delts'),
+// ---- more back ----
+X('chest_row','Chest-Supported Row','db','pull_h',['lats','traps'],['biceps'],'Chest on an incline bench|Row dumbbells to hips|Squeeze at the top'),
+X('pendlay','Pendlay Row','bb','pull_h',['lats','traps'],['biceps','lowerback'],'Torso parallel to floor|Explode bar to lower chest|Reset on the floor each rep'),
+X('close_pd','Close-Grip Pulldown','cb','pull_v',['lats'],['biceps'],'V-handle, slight lean back|Pull to upper chest|Elbows drive down'),
+X('straight_pd','Straight-Arm Pulldown','cb','lat_iso',['lats'],['triceps'],'Arms straight, slight hinge|Sweep bar to thighs|Feel the lats, not arms'),
+X('machine_row','Machine Row','mc','pull_h',['lats','traps'],['biceps'],'Chest on pad|Pull handles to ribs|Squeeze shoulder blades'),
+X('rack_pull','Rack Pull','bb','hinge',['traps','lowerback','glutes'],['hamstrings','forearms'],'Bar on pins just below knees|Brace and stand tall|Lock out with glutes'),
+X('good_morning','Good Morning','bb','hinge',['hamstrings','lowerback'],['glutes'],'Bar on upper back|Push hips back, flat back|Stand by squeezing glutes'),
+X('kb_swing','Kettlebell Swing','db','hinge',['glutes','hamstrings'],['lowerback','shoulders','abs'],'Hike the bell back|Snap hips forward|Arms just guide it to chest height'),
+X('superman','Superman','bw','hinge',['lowerback'],['glutes'],'Lie face down|Lift arms and legs together|Hold briefly at the top',.3),
+// ---- more legs ----
+X('sumo_dl','Sumo Deadlift','bb','hinge',['glutes','quads','hamstrings'],['lowerback','traps','forearms'],'Wide stance, toes out|Hands inside knees|Push knees out as you stand'),
+X('trap_bar','Trap Bar Deadlift','bb','hinge',['quads','glutes','hamstrings'],['traps','lowerback','forearms'],'Stand in the center|Chest up, brace|Drive through the floor'),
+X('smith_squat','Smith Machine Squat','mc','squat',['quads','glutes'],['hamstrings'],'Feet slightly forward|Sit straight down|Drive up through heels'),
+X('step_up','Dumbbell Step-Up','db','lunge',['quads','glutes'],['hamstrings'],'Whole foot on the box|Drive through the top leg|Don\'t push off the back foot'),
+X('rev_lunge','Reverse Lunge','db','lunge',['quads','glutes'],['hamstrings'],'Step back, not forward|Back knee to floor|Drive through front heel'),
+X('seated_curl','Seated Leg Curl','mc','ham_iso',['hamstrings'],['calves'],'Pad locked over thighs|Curl heels under seat|Slow on the way up'),
+X('kickback_glute','Cable Glute Kickback','cb','glute',['glutes'],['hamstrings'],'Strap on ankle|Kick back and slightly up|Don\'t arch your lower back'),
+X('seated_calf','Seated Calf Raise','mc','calf',['calves'],[],'Pad on lower thighs|Deep stretch at bottom|Pause at the top'),
+X('lp_calf','Leg Press Calf Raise','mc','calf',['calves'],[],'Balls of feet on platform edge|Press through big toe|Full range'),
+// ---- more arms ----
+X('ez_curl','EZ-Bar Curl','bb','bi',['biceps'],['forearms'],'Grip the angled handles|Elbows still|Squeeze at the top'),
+X('incline_curl','Incline Dumbbell Curl','db','bi2',['biceps'],['forearms'],'Bench at 45°, arms hang back|Curl without moving elbows|Big stretch at bottom'),
+X('conc_curl','Concentration Curl','db','bi',['biceps'],[],'Elbow braced on inner thigh|Curl slowly|Squeeze at top'),
+X('rope_pushdown','Rope Pushdown','cb','tri',['triceps'],[],'Elbows pinned|Spread the rope at the bottom|Control the return'),
+X('oh_cable','Overhead Cable Extension','cb','tri2',['triceps'],[],'Face away from pulley|Elbows by your ears|Extend fully overhead'),
+X('tri_kickback','Triceps Kickback','db','tri',['triceps'],[],'Hinge forward, upper arm parallel to floor|Extend arm straight back|Pause and squeeze'),
+X('diamond_pushup','Diamond Push-Up','bw','tri2',['triceps'],['chest','shoulders'],'Hands together under chest|Elbows tucked|Chest to hands',.65),
+X('reverse_curl','Reverse Curl','bb','forearm',['forearms'],['biceps'],'Overhand grip|Elbows pinned|Slow lowering'),
+// ---- more core ----
+X('plank','Plank','bw','core',['abs'],['obliques','shoulders'],'Forearms under shoulders|Squeeze glutes, flat back|Log seconds held as reps',.1),
+X('dead_bug','Dead Bug','bw','core',['abs'],['obliques'],'Lower back pressed down|Extend opposite arm and leg|Each side = 1 rep',.2),
+X('knee_raise','Hanging Knee Raise','bw','core',['abs'],['obliques'],'Dead hang|Knees to chest|No swinging',.25),
+X('decline_situp','Decline Sit-Up','bw','core',['abs'],['obliques'],'Feet hooked|Curl up to knees|Lower with control',.4)
 ];
 const EX = Object.fromEntries(EXL.map(e => [e.id, e]));
 const EQN = {bb:'Barbell',db:'Dumbbell',mc:'Machine',cb:'Cable',bw:'Bodyweight'};
@@ -528,92 +575,6 @@ function openBwHistory(){
     ${[...state.bwLog].reverse().map(l => `<div class="prow"><span>${dstr(l.date)}</span><span class="row gap"><b>${l.w} lb</b><button class="icon-btn sm" data-act="bwDel" data-d="${l.date}">✕</button></span></div>`).join('') || '<p class="mute">No weigh-ins yet.</p>'}`);
 }
 
-/* ---- How-to illustrations: a jointed figure animated between two key poses ---- */
-const pp = (...strs) => { const o = {}; for (const s of strs) for (const tok of s.trim().split(/\s+/)){ const m = tok.match(/^([A-Z])(-?[\d.]+),(-?[\d.]+)$/); o[m[1]] = [+m[2], +m[3]]; } return o; };
-const STAND = 'H100,20 S100,36 E100,58 W101,80 P100,82 K102,114 A100,148';
-const FSTAND = 'H100,20 S84,38 E80,60 W78,82 P92,82 K91,114 A90,148';
-const GRAY = '#3b3a52';
-const BENCH_PROP = `<rect x="52" y="106" width="104" height="7" rx="3" fill="${GRAY}"/><rect x="62" y="113" width="5" height="38" fill="${GRAY}"/><rect x="142" y="113" width="5" height="38" fill="${GRAY}"/>`;
-const BAR_TOP = (x1, x2) => `<line x1="${x1}" y1="5" x2="${x2}" y2="5" stroke="${GRAY}" stroke-width="5" stroke-linecap="round"/>`;
-// Q/R = far (back) knee and ankle for split stances
-const ANIM = {
-  bench:{view:'side', props:BENCH_PROP, a:pp('H160,96 S144,100 P98,102 K76,122 A72,148 E126,108 W140,88'), b:pp('E144,78 W144,56')},
-  skull:{view:'side', props:BENCH_PROP, a:pp('H160,96 S144,100 P98,102 K76,122 A72,148 E142,76 W157,89'), b:pp('W142,54')},
-  incline:{view:'side', props:`<line x1="88" y1="114" x2="128" y2="66" stroke="${GRAY}" stroke-width="8" stroke-linecap="round"/><rect x="70" y="108" width="40" height="7" rx="3" fill="${GRAY}"/><rect x="96" y="115" width="5" height="36" fill="${GRAY}"/>`, a:pp('H136,52 S126,68 P100,104 K72,106 A70,146 E112,84 W128,70'), b:pp('E134,46 W140,24')},
-  dip:{view:'side', floor:false, foot:'free', props:`<line x1="94" y1="74" x2="126" y2="74" stroke="${GRAY}" stroke-width="5" stroke-linecap="round"/><line x1="122" y1="74" x2="122" y2="152" stroke="${GRAY}" stroke-width="5"/>`, a:pp('H110,30 S110,46 E110,60 W110,72 P106,90 K100,116 A110,136'), b:pp('H113,52 S108,68 E90,64 P100,110 K96,134 A106,150')},
-  pushup:{view:'side', foot:'free', a:pp('H150,92 S136,98 E137,118 W137,138 P94,112 K62,124 A32,136'), b:pp('H152,118 S136,124 E122,130 P94,130 K62,136 A32,140')},
-  fly:{view:'front', pulley:[14,4], a:pp(FSTAND, 'E56,52 W36,58'), b:pp('E78,70 W96,82')},
-  ohp:{view:'front', a:pp(FSTAND, 'E68,58 W74,38'), b:pp('E80,18 W86,-2')},
-  lateral:{view:'front', a:pp(FSTAND), b:pp('E63,42 W43,40')},
-  pullup:{view:'front', floor:false, foot:'free', noLoad:true, props:BAR_TOP(36, 164), a:pp('H100,38 S84,52 E74,30 W70,7 P92,96 K91,124 A90,150'), b:pp('H100,8 S84,24 E62,24 P92,68 K91,96 A90,122')},
-  pulldown:{view:'front', pulley:[100,-14], cableCenter:true, props:`<rect x="66" y="104" width="68" height="8" rx="3" fill="${GRAY}"/>`, a:pp('H100,40 S84,56 E72,36 W66,15 P92,100 K90,112 A90,146'), b:pp('E66,72 W70,50')},
-  row:{view:'side', a:pp('H138,48 S126,56 P96,88 K104,118 A100,148 E126,78 W127,100'), b:pp('E106,72 W120,88')},
-  shrug:{view:'front', a:pp(FSTAND, 'H100,22 S84,40 E81,62 W79,84'), b:pp('H100,17 S84,32 E81,54 W79,76')},
-  rdl:{view:'side', a:pp(STAND), b:pp('H146,66 S132,68 E132,90 W131,112 P96,84 K104,116')},
-  deadlift:{view:'side', a:pp('H132,76 S118,84 E118,108 W118,130 P84,104 K114,112 A104,148'), b:pp(STAND, 'A104,148 W104,80')},
-  thrust:{view:'side', props:`<rect x="18" y="100" width="44" height="8" rx="3" fill="${GRAY}"/><rect x="36" y="108" width="6" height="43" fill="${GRAY}"/>`, a:pp('H44,90 S58,96 P92,126 K124,112 A132,148 E74,112 W92,124'), b:pp('P96,98 K126,112 E78,96 W96,98')},
-  squat:{view:'side', load:'S', a:pp('H100,20 S100,36 E88,44 W94,34 P100,82 K102,114 A100,148'), b:pp('H118,56 S112,70 E100,78 W106,68 P80,104 K116,112')},
-  lunge:{view:'side', a:pp(STAND, 'K112,113 A114,148 Q92,113 R82,146'), b:pp('H100,44 S100,60 E100,82 W101,104 P100,106 K126,108 A122,148 Q96,136 R72,146')},
-  legext:{view:'side', foot:'free', props:`<rect x="68" y="100" width="44" height="8" rx="3" fill="${GRAY}"/><line x1="70" y1="100" x2="66" y2="56" stroke="${GRAY}" stroke-width="7" stroke-linecap="round"/><rect x="86" y="108" width="6" height="43" fill="${GRAY}"/>`, a:pp('H82,36 S80,52 E82,74 W92,94 P86,96 K116,96 A120,130'), b:pp('A148,90')},
-  legcurl:{view:'side', foot:'free', props:`<rect x="28" y="108" width="128" height="7" rx="3" fill="${GRAY}"/><rect x="40" y="115" width="5" height="36" fill="${GRAY}"/><rect x="140" y="115" width="5" height="36" fill="${GRAY}"/>`, a:pp('H36,96 S50,102 E60,116 W46,118 P100,104 K134,104 A168,106'), b:pp('A148,76')},
-  calf:{view:'side', a:pp(STAND), b:pp('H100,12 S100,28 E100,50 W101,72 P100,74 K102,106 A102,140')},
-  curl:{view:'side', a:pp(STAND), b:pp('W114,41')},
-  pushdown:{view:'side', pulley:[122,-14], a:pp(STAND, 'H104,20 S102,36 E100,58 W118,48'), b:pp('W103,80')},
-  ohext:{view:'side', a:pp(STAND, 'E104,14 W86,24'), b:pp('W110,-8')},
-  legraise:{view:'side', floor:false, foot:'free', props:BAR_TOP(76, 124), a:pp('H108,34 S100,46 E100,26 W100,6 P100,92 K100,124 A100,152'), b:pp('K128,86 A158,90')},
-  crunch:{view:'side', foot:'free', a:pp('H46,138 S60,140 E50,126 W44,132 P100,140 K124,116 A146,142'), b:pp('H62,112 S74,124 E62,110 W58,118')}
-};
-const ANIM_MAP = {bench:'bench',db_bench:'bench',machine_press:'bench',cgbp:'bench',incline_bb:'incline',incline_db:'incline',dip:'dip',bench_dip:'dip',pushup:'pushup',pike:'pushup',
-  cable_fly:'fly',pec_deck:'fly',db_fly:'fly',ohp:'ohp',db_ohp:'ohp',arnold:'ohp',lat_raise:'lateral',cable_lat:'lateral',rear_fly:'row',face_pull:'row',
-  pullup:'pullup',chinup:'pullup',lat_pd:'pulldown',bb_row:'row',db_row:'row',cable_row:'row',tbar:'row',inv_row:'row',shrug:'shrug',db_shrug:'shrug',farmer:'shrug',
-  deadlift:'deadlift',rdl:'rdl',db_rdl:'rdl',back_ext:'rdl',hip_thrust:'thrust',bridge:'thrust',squat:'squat',front_squat:'squat',goblet:'squat',leg_press:'squat',hack:'squat',air_squat:'squat',
-  bss:'lunge',lunge:'lunge',bw_lunge:'lunge',leg_ext:'legext',leg_curl:'legcurl',nordic:'legcurl',calf_raise:'calf',db_calf:'calf',bw_calf:'calf',
-  bb_curl:'curl',db_curl:'curl',preacher:'curl',hammer:'curl',cable_curl:'curl',wrist_curl:'curl',pushdown:'pushdown',skull:'skull',oh_ext:'ohext',leg_raise:'legraise'};
-const animFor = ex => ANIM_MAP[ex.id] || 'crunch';
-const ARMS_M = ['chest','shoulders','biceps','triceps','forearms','lats','traps'], CORE_M = ['abs','obliques','lowerback','chest','lats','traps'];
-function drawPose(an, t, ex){
-  const p = {}; for (const k in an.a) p[k] = an.b[k] ? [an.a[k][0] + (an.b[k][0] - an.a[k][0]) * t, an.a[k][1] + (an.b[k][1] - an.a[k][1]) * t] : an.a[k];
-  const hit = list => ex.p.some(m => list.includes(m));
-  const BODY = '#d8d6ea', FAR = '#6f6c88';
-  const cA = hit(ARMS_M) ? GOLD : BODY, cL = hit(LOWER) ? GOLD : BODY, cT = hit(CORE_M) ? GOLD : BODY;
-  const f1 = v => v.toFixed(1);
-  const L = (a, b, w, c) => `<line x1="${f1(a[0])}" y1="${f1(a[1])}" x2="${f1(b[0])}" y2="${f1(b[1])}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;
-  const foot = (A, c) => an.foot === 'free' ? L(A, [A[0] + 6, A[1] + 5], 6, c) : L(A, [A[0] + 12, 150], 6, c);
-  const cable = (a, b) => `<line x1="${f1(a[0])}" y1="${f1(a[1])}" x2="${b[0]}" y2="${b[1]}" stroke="${TEAL}" stroke-width="1.5" stroke-dasharray="3 3" opacity=".8"/>`;
-  const load = ([x, y]) => {
-    if (an.noLoad) return '';
-    if (ex.eq === 'bb') return `<circle cx="${f1(x)}" cy="${f1(y)}" r="11" fill="none" stroke="${TEAL}" stroke-width="4"/><circle cx="${f1(x)}" cy="${f1(y)}" r="2.5" fill="${TEAL}"/>`;
-    if (ex.eq === 'db') return `<rect x="${f1(x - 8)}" y="${f1(y - 4)}" width="16" height="8" rx="3" fill="${TEAL}"/>`;
-    if (ex.eq === 'cb' || ex.eq === 'mc') return `<circle cx="${f1(x)}" cy="${f1(y)}" r="4" fill="${TEAL}"/>`;
-    return '';
-  };
-  let s = an.floor === false ? '' : '<line x1="0" y1="152" x2="200" y2="152" stroke="#2a2839" stroke-width="3"/>';
-  s += an.props || '';
-  if (an.view === 'front'){
-    const M = q => [200 - q[0], q[1]], ID = q => q;
-    for (const f of [ID, M]){ const A = f(p.A); s += L(f(p.P), f(p.K), 10, cL) + L(f(p.K), A, 9, cL) + (an.foot === 'free' ? '' : L(A, [A[0] + (A[0] < 100 ? -6 : 6), 151], 6, cL)); }
-    s += `<polygon points="${[p.S, M(p.S), M(p.P), p.P].map(q => f1(q[0]) + ',' + f1(q[1])).join(' ')}" fill="${cT}" stroke="${cT}" stroke-width="6" stroke-linejoin="round"/>`;
-    s += L([100, p.H[1] + 8], [100, p.S[1]], 7, BODY) + `<circle cx="100" cy="${f1(p.H[1])}" r="10" fill="${BODY}"/>`;
-    if (an.pulley && ex.eq === 'cb') s += an.cableCenter ? cable([100, p.W[1]], an.pulley) : cable(p.W, an.pulley) + cable(M(p.W), M(an.pulley));
-    for (const f of [ID, M]) s += L(f(p.S), f(p.E), 8, cA) + L(f(p.E), f(p.W), 7, cA);
-    if (!an.noLoad && (ex.eq === 'bb' || (an.cableCenter && ex.eq === 'cb'))) s += `<line x1="${f1(p.W[0] - 12)}" y1="${f1(p.W[1])}" x2="${f1(M(p.W)[0] + 12)}" y2="${f1(p.W[1])}" stroke="${TEAL}" stroke-width="4" stroke-linecap="round"/>`;
-    else s += load(p.W) + load(M(p.W));
-  } else {
-    if (p.Q) s += L(p.P, p.Q, 10, FAR) + L(p.Q, p.R, 9, FAR) + foot(p.R, FAR);
-    s += L(p.P, p.K, 11, cL) + L(p.K, p.A, 9, cL) + foot(p.A, cL);
-    s += L(p.S, p.P, 15, cT);
-    s += L(p.S, p.H, 6, BODY) + `<circle cx="${f1(p.H[0])}" cy="${f1(p.H[1])}" r="10" fill="${BODY}"/>`;
-    if (an.pulley && ex.eq === 'cb') s += cable(p.W, an.pulley);
-    s += L(p.S, p.E, 8, cA) + L(p.E, p.W, 7, cA);
-    s += load(an.load === 'S' ? p.S : p.W);
-  }
-  return s;
-}
-function howtoLoop(ts){
-  const els = document.querySelectorAll('svg.howto');
-  if (els.length){ const t = (1 - Math.cos(ts / 1300 * Math.PI)) / 2; els.forEach(el => { const ex = EX[el.dataset.ex]; if (ex) el.innerHTML = drawPose(ANIM[animFor(ex)], t, ex); }); }
-  requestAnimationFrame(howtoLoop);
-}
 function livePR(i, j){
   const e = state.active.entries[i], ex = EX[e.ex], s = e.sets[j], pb = bestBefore(e.ex);
   const n = document.querySelector(`[data-row="${i}-${j}"] .n`); if (!n) return;
@@ -836,9 +797,7 @@ function exInfo(id){
     spark = `<svg class="spark" viewBox="0 0 300 60" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${TEAL}" stroke-width="2.5" vector-effect="non-scaling-stroke"/></svg><small class="mute">Best estimated 1RM per session</small>`; }
   openSheet(`<div class="row between"><h2 style="margin:0">${ex.name}</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
     <div style="margin:8px 0"><span class="tag">${EQN[ex.eq]}</span>${ex.p.map(m => `<span class="tag p">${MUSCLES[m]}</span>`).join('')}${ex.s.map(m => `<span class="tag s">${MUSCLES[m]}</span>`).join('')}</div>
-    <svg class="howto" viewBox="0 -16 200 172" data-ex="${ex.id}"></svg>
-    <p class="mute" style="font-size:11px;text-align:center;margin:4px 0 10px">Movement demo · gold = working area</p>
-    <div style="max-width:260px;margin:0 auto">${bodySVG(exColor(ex))}</div>
+    <div style="max-width:320px;margin:0 auto">${bodySVG(exColor(ex))}</div>
     <div class="legend"><span><i style="background:${GOLD}"></i>Primary · full XP</span><span><i style="background:${TEAL}"></i>Secondary · half XP</span></div>
     <h3 style="margin-top:16px">Form cues</h3><ol class="cues">${ex.cue.split('|').map(c => `<li>${c}</li>`).join('')}</ol>
     <h3>Your progress</h3>${st.count ? `<p style="margin:0 0 6px">Logged ${st.count}× · Best set <b>${ex.bw && !st.best.w ? 'BW' : st.best.w}×${st.best.r}</b> · Est. 1RM <b>${fmt(st.best.rm)} lb</b></p>${spark}` : `<p class="mute">Not logged yet.</p>`}
@@ -868,7 +827,7 @@ const DAYTYPES = {
 const REGION = {push:['chest','shoulders','triceps','abs','obliques'], pull:['lats','traps','biceps','forearms','shoulders','abs','obliques','lowerback'],
   legs:['quads','hamstrings','glutes','calves','abs','obliques','lowerback'], lower:['quads','hamstrings','glutes','calves','abs','obliques','lowerback'],
   upper:['chest','shoulders','triceps','biceps','lats','traps','forearms','abs','obliques'], full:Object.keys(MUSCLES)};
-const FALL = {push_h2:['push_h'], chest_iso:['push_h2','push_h'], delt_side:['push_v'], rear_delt:['pull_h'], traps:['pull_h'], bi:['bi2','pull_v'], bi2:['bi','pull_v'], tri:['tri2','push_h2'], tri2:['tri','push_h2'], quad_iso:['lunge','squat'], ham_iso:['hinge'], glute:['hinge'], forearm:['bi2'], obliq:['core'], core:['obliq']};
+const FALL = {delt_front:['delt_side','push_v'], lat_iso:['pull_v'], push_h2:['push_h'], chest_iso:['push_h2','push_h'], delt_side:['push_v'], rear_delt:['pull_h'], traps:['pull_h'], bi:['bi2','pull_v'], bi2:['bi','pull_v'], tri:['tri2','push_h2'], tri2:['tri','push_h2'], quad_iso:['lunge','squat'], ham_iso:['hinge'], glute:['hinge'], forearm:['bi2'], obliq:['core'], core:['obliq']};
 const COMPOUND = new Set(['push_h','push_h2','push_v','pull_v','pull_h','squat','hinge','lunge']);
 const EQUIP = {full:['bb','db','mc','cb','bw'], db:['db','bw'], bw:['bw']};
 const SCHEME = {
@@ -1073,7 +1032,6 @@ setInterval(() => { const el = $('#elapsed'); if (el && state.active){ const s =
 if (state.active) ui.tab = 'train';
 render();
 initSync();
-requestAnimationFrame(howtoLoop);
 </script>
 </body>
 </html>
