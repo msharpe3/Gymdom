@@ -144,6 +144,22 @@ svg.body text{fill:var(--mute);font:600 11px 'Chakra Petch';letter-spacing:.25em
 .photos img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
 .photos figcaption{position:absolute;left:6px;bottom:6px;font:700 10px 'Chakra Petch';letter-spacing:.12em;background:rgba(11,10,18,.8);color:var(--text);padding:2px 6px;border-radius:5px;text-transform:uppercase}
 details.steps{margin:0 0 12px}details.steps summary{cursor:pointer;color:var(--teal);font-weight:600;font-size:14px;margin-bottom:8px}
+.macros{display:grid;gap:10px;margin-top:12px}
+.msplit{display:flex;height:10px;border-radius:99px;overflow:hidden;gap:2px;margin:10px 0 6px;background:var(--panel2)}
+.msplit i{display:block;height:100%}
+.mlegend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--mute)}
+.mlegend span{display:flex;align-items:center;gap:5px}.mlegend i{width:8px;height:8px;border-radius:2px;display:inline-block}
+.frow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer;font-size:14px}
+.frow:last-of-type{border-bottom:0}
+.fk{text-align:right;white-space:nowrap;font:700 15px 'Chakra Petch'}.fk small{font:500 11px Inter}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.mrow3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;text-align:center}
+.mrow3 div{background:var(--panel2);border-radius:10px;padding:8px}.mrow3 small{display:block}.mrow3 b{font:700 16px 'Chakra Petch'}
+select{font:16px Inter;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;width:100%}
+.scanbox{position:relative;border-radius:14px;overflow:hidden;background:#000;aspect-ratio:4/3;margin-bottom:10px}
+.scanbox video{width:100%;height:100%;object-fit:cover;display:block}
+.scanline{position:absolute;left:10%;right:10%;top:50%;height:2px;background:var(--red);box-shadow:0 0 12px var(--red);animation:scan 1.8s ease-in-out infinite}
+@keyframes scan{0%,100%{transform:translateY(-60px)}50%{transform:translateY(60px)}}
 </style>
 </head>
 <body>
@@ -417,6 +433,8 @@ function migrate(s){
   s.updatedAt = s.updatedAt || 0;
   s.bwLog = s.bwLog || []; s.achievements = s.achievements || {}; s.questsDone = s.questsDone || {};
   s.bonusXP = s.bonusXP || 0; s.prCount = s.prCount || 0;
+  s.food = s.food || {}; s.foodRecent = s.foodRecent || []; s.foodTargets = s.foodTargets || null;
+  s.foodProfile = Object.assign({sex:'m', age:'', lb:'', ft:'', inch:'', act:1.55, goal:'recomp'}, s.foodProfile || {});
   return s;
 }
 try { state = migrate(JSON.parse(localStorage.getItem(KEY))); } catch(e){ state = migrate(null); }
@@ -632,9 +650,244 @@ function livePR(i, j){
   n.textContent = isPR ? '🏆' : j + 1;
 }
 
+/* ============ FOOD TRACKER ============ */
+// Built-in common foods: [name, kcal, protein, carbs, fat] per 100 g, then servings "label:grams|label:grams"
+const FOODS_RAW = [
+['Chicken breast, cooked',165,31,0,3.6,'4 oz:113|6 oz:170|1 breast:172'],['Chicken thigh, cooked',209,26,0,10.9,'1 thigh:85|4 oz:113'],
+['Ground beef 90/10, cooked',217,26,0,11.8,'4 oz:113|1 patty:85'],['Ground beef 80/20, cooked',254,26,0,17,'4 oz:113|1 patty:85'],
+['Sirloin steak, cooked',200,28,0,9,'4 oz:113|6 oz:170|8 oz:227'],['Ground turkey 93/7, cooked',203,27,0,10,'4 oz:113'],
+['Pork chop, cooked',231,25,0,14,'1 chop:145|4 oz:113'],['Bacon, cooked',541,37,1.4,42,'1 slice:8|3 slices:24'],
+['Salmon, cooked',206,22,0,12,'4 oz:113|6 oz:170'],['Tuna, canned in water',116,26,0,0.8,'1 can:142|3 oz:85'],
+['Shrimp, cooked',99,24,0.2,0.3,'4 oz:113|10 large:55'],['Deli turkey slices',104,18,3,2,'2 oz:56|4 slices:56'],
+['Egg, whole',143,12.6,0.7,9.5,'1 large:50|2 large:100|3 large:150'],['Egg whites',52,11,0.7,0.2,'1/2 cup:122|1 large white:33'],
+['Scrambled eggs',149,10,1.6,11,'2 eggs:122|1 cup:220'],['Tofu, firm',144,17,2.8,8.7,'1/2 block:200|3 oz:85'],
+['Whey protein powder',390,78,10,5,'1 scoop:30|2 scoops:60'],
+['Milk, whole',61,3.2,4.8,3.3,'1 cup:244'],['Milk, 2%',50,3.3,4.8,2,'1 cup:244'],['Milk, skim',34,3.4,5,0.1,'1 cup:245'],
+['Greek yogurt, nonfat plain',59,10,3.6,0.4,'1 cup:245|1 container:170'],['Yogurt, nonfat vanilla',78,4.4,14,0.2,'1 container:170|1 cup:245'],
+['Cottage cheese, 2%',84,11,4.3,2.3,'1/2 cup:113|1 cup:226'],['Cheddar cheese',403,25,1.3,33,'1 slice:28|1 oz:28'],
+['Mozzarella, part-skim',254,24,2.8,16,'1 oz:28|1 stick:28'],['Butter',717,0.9,0.1,81,'1 tbsp:14|1 tsp:5'],
+['White rice, cooked',130,2.7,28,0.3,'1 cup:158|1/2 cup:79'],['Brown rice, cooked',123,2.7,25.6,1,'1 cup:195|1/2 cup:98'],
+['Cilantro-lime rice (est.)',150,2.6,28,3,'1 cup:160|1/2 cup:80'],['Pasta, cooked',158,5.8,31,0.9,'1 cup:140|2 cups:280'],
+['Bread, white',265,9,49,3.2,'1 slice:28|2 slices:56'],['Bread, whole wheat',252,12.4,43,3.5,'1 slice:32|2 slices:64'],
+['Bagel, plain',250,10,49,1.5,'1 bagel:105'],['Flour tortilla',312,8.3,52,8,'1 large (10"):72|1 small (6"):32'],
+['Oats, dry',389,16.9,66,6.9,'1/2 cup:40|1 cup:80'],['Granola',471,10,64,20,'1/4 cup:30|1/2 cup:60'],
+['Quinoa, cooked',120,4.4,21,1.9,'1 cup:185'],['Potato, baked',93,2.5,21,0.1,'1 medium:173'],['Sweet potato, baked',90,2,21,0.2,'1 medium:114'],
+['French fries',312,3.4,41,15,'Medium order:117|Large order:154'],
+['Black beans, cooked',132,8.9,23.7,0.5,'1/2 cup:86|1 cup:172'],['Chickpeas, cooked',164,8.9,27,2.6,'1/2 cup:82'],['Lentils, cooked',116,9,20,0.4,'1/2 cup:99|1 cup:198'],
+['Banana',89,1.1,23,0.3,'1 medium:118|1 large:136'],['Apple',52,0.3,14,0.2,'1 medium:182'],['Orange',47,0.9,12,0.1,'1 medium:131'],
+['Strawberries',32,0.7,7.7,0.3,'1 cup:152'],['Blueberries',57,0.7,14,0.3,'1 cup:148'],['Grapes',69,0.7,18,0.2,'1 cup:151'],
+['Pineapple',50,0.5,13,0.1,'1 cup:165'],['Watermelon',30,0.6,8,0.2,'1 cup:152|1 wedge:286'],['Avocado',160,2,9,15,'1/2 avocado:68|1 avocado:136'],
+['Broccoli, cooked',35,2.4,7.2,0.4,'1 cup:156'],['Spinach, raw',23,2.9,3.6,0.4,'1 cup:30|2 cups:60'],['Salad greens',17,1.4,3,0.2,'2 cups:85'],
+['Carrots',41,0.9,10,0.2,'1 medium:61|1 cup chopped:128'],['Bell pepper',31,1,6,0.3,'1 medium:119|1/2 cup sliced:46'],
+['Green beans, cooked',35,1.9,7.9,0.3,'1 cup:125'],['Corn, cooked',96,3.4,21,1.5,'1 ear:103|1/2 cup:82'],
+['Elote / street corn (est.)',170,4.5,18,10,'1 ear:150|1 cup (esquites):200'],['Onion',40,1.1,9.3,0.1,'1/2 cup chopped:80'],
+['Tomato',18,0.9,3.9,0.2,'1 medium:123'],['Cucumber',15,0.7,3.6,0.1,'1/2 cup sliced:52'],
+['Olive oil',884,0,0,100,'1 tbsp:13.5|1 tsp:4.5'],['Peanut butter',588,25,20,50,'1 tbsp:16|2 tbsp:32'],
+['Almonds',579,21,22,50,'1 oz (23 nuts):28'],['Cashews',553,18,30,44,'1 oz:28'],['Walnuts',654,15,14,65,'1 oz:28'],
+['Mayonnaise',680,1,0.6,75,'1 tbsp:14'],['Ranch dressing',430,1,6,44,'2 tbsp:30'],['Hummus',166,7.9,14,9.6,'2 tbsp:30|1/4 cup:62'],
+['Salsa',36,1.5,7,0.2,'2 tbsp:32'],['Ketchup',112,1.3,26,0.2,'1 tbsp:17'],['Marinara sauce',50,1.5,8,1.5,'1/2 cup:125'],
+['Honey',304,0.3,82,0,'1 tbsp:21'],['Sugar',387,0,100,0,'1 tsp:4|1 tbsp:12.5'],
+['Dark chocolate (70–85%)',598,7.8,46,43,'1 oz:28'],['Potato chips',536,7,53,35,'1 oz bag:28'],['Pizza, cheese',266,11,33,10,'1 slice:107|2 slices:214'],
+['Protein bar (typical)',350,30,40,11,'1 bar:60'],['Orange juice',45,0.7,10.4,0.2,'1 cup:248'],['Cola',42,0,10.6,0,'12 oz can:368'],
+['Beer',43,0.5,3.6,0,'12 oz:356'],['Coffee, black',1,0.1,0,0,'1 cup:237']];
+const FOODS = FOODS_RAW.map(([name, k, p, c, f, sv]) => ({name, per:{k, p, c, f}, sv: sv.split('|').map(x => { const i = x.lastIndexOf(':'); return [x.slice(0, i), +x.slice(i + 1)]; }), src:'local'}));
+const MEALS = [['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['snacks','Snacks']];
+const MAC = [['p','Protein','#4fd1c5',4],['c','Carbs','#f2c94c',4],['f','Fat','#a78bfa',9]];
+const dkey = ts => { const d = new Date(ts); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const r1 = v => Math.round(v * 10) / 10;
+function foodDay(){ const k = dkey(ui.foodDate || Date.now()); state.food[k] = state.food[k] || {}; return state.food[k]; }
+function sumEntries(list){ return list.reduce((a, e) => ({k:a.k + e.k, p:a.p + e.p, c:a.c + e.c, f:a.f + e.f}), {k:0, p:0, c:0, f:0}); }
+// Stacked bar of where the calories come from (protein / carbs / fat), labeled so color isn't the only cue
+function macroSplit(t){
+  const cals = MAC.map(([k,, , m]) => t[k] * m), tot = cals.reduce((a, b) => a + b, 0);
+  if (!tot) return '';
+  const pct = cals.map(c => Math.round(c / tot * 100));
+  return `<div class="msplit">${MAC.map(([k, n, col], i) => pct[i] ? `<i style="width:${pct[i]}%;background:${col}"></i>` : '').join('')}</div>
+    <div class="mlegend">${MAC.map(([k, n, col], i) => `<span><i style="background:${col}"></i>${n} ${pct[i]}%</span>`).join('')}</div>`;
+}
+function renderFood(){
+  const day = foodDay(), all = MEALS.flatMap(([m]) => day[m] || []), t = sumEntries(all), g = state.foodTargets;
+  const isToday = dkey(ui.foodDate || Date.now()) === dkey(Date.now());
+  const label = isToday ? 'Today' : new Date(ui.foodDate).toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric'});
+  let h = `<div class="row between" style="margin-bottom:12px"><button class="icon-btn" data-act="foodDay" data-v="-1" aria-label="Previous day">‹</button><h2 style="margin:0">${label}</h2><button class="icon-btn" data-act="foodDay" data-v="1" aria-label="Next day"${isToday ? ' disabled style="opacity:.3"' : ''}>›</button></div>`;
+  h += `<div class="card">`;
+  if (g){
+    const left = g.kcal - t.k;
+    h += `<div class="row between"><span class="mute" style="font-size:13px">Calories</span><button class="btn ghost sm" data-act="foodTargets">Targets</button></div>
+      <div style="font:700 28px 'Chakra Petch';margin:2px 0">${fmt(t.k)} <small class="mute" style="font:500 14px Inter">/ ${fmt(g.kcal)} kcal</small></div>
+      <div class="bar"><i style="width:${Math.min(100, t.k / g.kcal * 100)}%"></i></div>
+      <small class="mute">${left >= 0 ? `${fmt(left)} left` : `${fmt(-left)} over`}</small>
+      <div class="macros">${MAC.map(([k, n, col]) => `<div><div class="row between"><small><b>${n}</b></small><small class="mute">${Math.round(t[k])} / ${g[k]} g</small></div><div class="bar"><i style="width:${Math.min(100, t[k] / g[k] * 100)}%;background:${col}"></i></div></div>`).join('')}</div>`;
+  } else {
+    h += `<div class="empty" style="padding:8px"><h3>Set your daily targets</h3><p class="mute" style="font-size:14px">I'll estimate calories and macros from your stats and goal. You can adjust them after.</p><button class="btn gold" data-act="foodTargets">Calculate targets</button></div>`;
+    if (t.k) h += `<div style="font:700 22px 'Chakra Petch'">${fmt(t.k)} kcal <small class="mute" style="font:500 13px Inter">· P ${Math.round(t.p)} · C ${Math.round(t.c)} · F ${Math.round(t.f)}</small></div>`;
+  }
+  h += `${t.k ? macroSplit(t) : ''}</div>`;
+  for (const [m, name] of MEALS){
+    const list = day[m] || [], mt = sumEntries(list);
+    h += `<div class="card"><div class="row between"><h3 style="margin:0">${name}</h3>${list.length ? `<span class="xp" style="color:var(--text)">${fmt(mt.k)} kcal</span>` : ''}</div>
+      ${list.length ? `<small class="mute">Protein ${Math.round(mt.p)} g · Carbs ${Math.round(mt.c)} g · Fat ${Math.round(mt.f)} g</small>${macroSplit(mt)}` : ''}
+      ${list.map((e, i) => `<div class="frow" data-act="foodEdit" data-m="${m}" data-i="${i}"><span><b>${esc(e.n)}</b><br><small class="mute">${esc(e.a || '')}</small></span><span class="fk">${fmt(e.k)}<small> kcal</small><br><small class="mute">${Math.round(e.p)}P · ${Math.round(e.c)}C · ${Math.round(e.f)}F</small></span></div>`).join('')}
+      <button class="btn ghost sm" style="margin-top:8px" data-act="foodAdd" data-m="${m}">+ Add food</button></div>`;
+  }
+  return h;
+}
+
+/* ---- Add food: search, scan, manual, recent ---- */
+function openAddFood(meal, mode){
+  stopScan();
+  ui.foodMeal = meal; ui.foodMode = mode || ui.foodMode || 'search';
+  const mn = MEALS.find(x => x[0] === meal)[1];
+  openSheet(`<div class="row between"><h3 style="margin:0">Add to ${mn}</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    <div class="chips" style="margin:12px 0">${[['search','Search'],['scan','Scan barcode'],['manual','Manual'],['recent','Recent']].map(([k, v]) => `<button class="chip${ui.foodMode === k ? ' on' : ''}" data-act="foodMode" data-v="${k}">${v}</button>`).join('')}</div>
+    <div id="foodArea"></div>`);
+  ({search:foodSearchUI, scan:startScan, manual:() => manualUI(), recent:recentUI})[ui.foodMode]();
+}
+const foodRow = (f, i, list) => `<div class="frow" data-act="foodPick" data-list="${list}" data-i="${i}"><span><b>${esc(f.name)}</b><br><small class="mute">${f.sv && f.sv[0] ? esc(f.sv[0][0]) + ' · ' + Math.round(f.per.k * f.sv[0][1] / 100) + ' kcal' : Math.round(f.per.k) + ' kcal / 100 g'}</small></span><span class="sr">+</span></div>`;
+function foodSearchUI(){
+  $('#foodArea').innerHTML = `<input id="foodQ" placeholder="Search foods (e.g. chicken, rice, banana)" value="${esc(ui.foodQ || '')}"><div id="foodRes" style="margin-top:8px"></div>`;
+  renderFoodRes();
+}
+function renderFoodRes(){
+  const q = (ui.foodQ || '').trim().toLowerCase(), words = q.split(/\s+/).filter(Boolean);
+  ui.foodList = words.length ? FOODS.filter(f => words.every(w => f.name.toLowerCase().includes(w))) : FOODS.slice(0, 12);
+  const el = $('#foodRes'); if (!el) return;
+  el.innerHTML = (words.length ? '' : '<small class="mute">Common foods</small>') + ui.foodList.map((f, i) => foodRow(f, i, 'local')).join('')
+    + (words.length ? `<button class="btn ghost block" style="margin-top:10px" data-act="offSearch">Search packaged & brand-name foods for "${esc(ui.foodQ.trim())}"</button><div id="offRes"></div>` : '')
+    + (words.length && !ui.foodList.length ? '<p class="mute" style="font-size:13px">No common foods match — try the packaged food search, or add it manually.</p>' : '');
+}
+function offToFood(p){
+  const n = p.nutriments || {};
+  let k = n['energy-kcal_100g']; if (k == null && n['energy_100g'] != null) k = n['energy_100g'] / 4.184;
+  if (k == null) return null;
+  const sq = parseFloat(p.serving_quantity);
+  return {name: [p.product_name || p.product_name_en, (p.brands || '').split(',')[0]].filter(Boolean).join(' · ') || 'Unnamed product',
+    per:{k:+k || 0, p:+n.proteins_100g || 0, c:+n.carbohydrates_100g || 0, f:+n.fat_100g || 0},
+    sv: sq > 0 ? [[p.serving_size || '1 serving', sq]] : [], src:'off', code:p.code};
+}
+async function offSearch(){
+  const q = (ui.foodQ || '').trim(), el = $('#offRes'); if (!q || !el) return;
+  el.innerHTML = '<p class="mute">Searching Open Food Facts…</p>';
+  try {
+    const r = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=25&fields=code,product_name,product_name_en,brands,serving_size,serving_quantity,nutriments`);
+    const j = await r.json();
+    ui.offList = (j.products || []).map(offToFood).filter(Boolean);
+    el.innerHTML = ui.offList.length ? '<small class="mute">Packaged foods (Open Food Facts — community data, double-check labels)</small>' + ui.offList.map((f, i) => foodRow(f, i, 'off')).join('') : '<p class="mute">No packaged foods found.</p>';
+  } catch(e){ el.innerHTML = `<p class="mute">Couldn't reach the food database. Check your connection and try again.</p>`; }
+}
+function recentUI(){
+  ui.recentList = state.foodRecent;
+  $('#foodArea').innerHTML = state.foodRecent.length ? state.foodRecent.map((f, i) => f.fixed
+    ? `<div class="frow" data-act="foodPick" data-list="recent" data-i="${i}"><span><b>${esc(f.name)}</b><br><small class="mute">Manual · ${Math.round(f.fixed.k)} kcal</small></span><span class="sr">+</span></div>`
+    : foodRow(f, i, 'recent')).join('') : '<p class="mute">Foods you add will show up here for quick re-adding.</p>';
+}
+function manualUI(pre = {}){
+  $('#foodArea').innerHTML = `<label class="lbl">Food name</label><input id="mName" value="${esc(pre.name || '')}" placeholder="e.g. Chipotle burrito bowl">
+    <div class="mgrid"><div><label class="lbl">Calories</label><input id="mK" type="number" inputmode="decimal" value="${pre.k ?? ''}"></div><div><label class="lbl">Protein (g)</label><input id="mP" type="number" inputmode="decimal" value="${pre.p ?? ''}"></div>
+    <div><label class="lbl">Carbs (g)</label><input id="mC" type="number" inputmode="decimal" value="${pre.c ?? ''}"></div><div><label class="lbl">Fat (g)</label><input id="mF" type="number" inputmode="decimal" value="${pre.f ?? ''}"></div></div>
+    <label class="lbl">Amount (optional)</label><input id="mA" value="${esc(pre.a || '')}" placeholder="e.g. 1 bowl">
+    ${pre.note ? `<p class="mute" style="font-size:12px">${esc(pre.note)}</p>` : ''}
+    <button class="btn gold block" style="margin-top:14px" data-act="manualSave">${pre.edit ? 'Save changes' : 'Add food'}</button>
+    ${pre.edit ? `<button class="btn danger block" style="margin-top:8px" data-act="foodDel">Delete</button>` : ''}`;
+}
+
+/* ---- Amount picker with live macro breakdown ---- */
+function openAmount(food, edit){
+  ui.amt = {food, edit, unit: edit ? edit.u : (food.sv[0] ? 's0' : 'g'), qty: edit ? edit.q : (food.sv[0] ? 1 : 100)};
+  const opts = [...food.sv.map(([l, g], i) => [`s${i}`, `${l} (${g} g)`]), ['g', 'grams'], ['oz', 'ounces']];
+  openSheet(`<div class="row between"><h3 style="margin:0">${esc(food.name)}</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    <div class="mgrid" style="margin-top:12px"><div><label class="lbl">Amount</label><input id="amtQ" type="number" inputmode="decimal" value="${ui.amt.qty}"></div>
+    <div><label class="lbl">Unit</label><select id="amtU">${opts.map(([v, l]) => `<option value="${v}"${v === ui.amt.unit ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></div></div>
+    <div id="amtPrev" style="margin-top:14px"></div>
+    <button class="btn gold block" style="margin-top:14px" data-act="amtSave">${edit ? 'Save changes' : 'Add to ' + MEALS.find(x => x[0] === ui.foodMeal)[1]}</button>
+    ${edit ? `<button class="btn danger block" style="margin-top:8px" data-act="foodDel">Delete</button>` : ''}
+    <p class="mute" style="font-size:11px;margin:10px 0 0">Per 100 g: ${Math.round(food.per.k)} kcal · ${r1(food.per.p)}P · ${r1(food.per.c)}C · ${r1(food.per.f)}F${food.src === 'off' ? ' · from Open Food Facts' : ''}</p>`);
+  amtPreview();
+}
+function amtGrams(){ const {food, unit, qty} = ui.amt; const q = +qty || 0; return unit === 'g' ? q : unit === 'oz' ? q * 28.35 : q * (food.sv[+unit.slice(1)] || [0, 0])[1]; }
+function amtLabel(){ const {food, unit, qty} = ui.amt; return unit === 'g' ? `${qty} g` : unit === 'oz' ? `${qty} oz` : `${qty} × ${food.sv[+unit.slice(1)][0]}`; }
+function amtPreview(){
+  const g = amtGrams(), f = ui.amt.food.per, t = {k:f.k * g / 100, p:f.p * g / 100, c:f.c * g / 100, f:f.f * g / 100};
+  ui.amt.tot = t;
+  const el = $('#amtPrev'); if (el) el.innerHTML = `<div class="row between"><b style="font:700 24px 'Chakra Petch'">${Math.round(t.k)} kcal</b><small class="mute">${Math.round(g)} g</small></div>
+    <div class="mrow3">${MAC.map(([k, n, col]) => `<div><small class="mute">${n}</small><b>${r1(t[k])} g</b></div>`).join('')}</div>${macroSplit(t)}`;
+}
+function rememberFood(food){
+  const key = f => f.name + '|' + (f.code || '');
+  state.foodRecent = [food, ...state.foodRecent.filter(f => key(f) !== key(food))].slice(0, 30);
+}
+
+/* ---- Barcode scanning (ZXing, loaded only when needed) ---- */
+let scanCtl = null;
+async function loadZX(){ if (!window.ZXingBrowser) await loadScript('https://cdn.jsdelivr.net/npm/@zxing/browser@0.2.1/umd/zxing-browser.min.js'); return window.ZXingBrowser; }
+function stopScan(){ try { scanCtl && scanCtl.stop(); } catch(e){} scanCtl = null; }
+async function startScan(){
+  $('#foodArea').innerHTML = `<div class="scanbox"><video id="scanVid" playsinline muted autoplay></video><div class="scanline"></div></div>
+    <p id="scanMsg" class="mute" style="font-size:13px">Starting camera…</p>
+    <div class="row gap"><input id="codeIn" inputmode="numeric" placeholder="Or type the barcode number"><button class="btn sm" data-act="codeLookup">Look up</button></div>
+    <label class="btn ghost sm block" style="margin-top:8px;text-align:center;box-sizing:border-box">📷 Scan from a photo instead<input type="file" accept="image/*" capture="environment" id="scanFile" hidden></label>`;
+  try {
+    const ZX = await loadZX(), reader = new ZX.BrowserMultiFormatReader();
+    ui.zxReader = reader;
+    scanCtl = await reader.decodeFromConstraints({video:{facingMode:{ideal:'environment'}}}, $('#scanVid'), (res, err, ctl) => {
+      if (res){ try { ctl.stop(); } catch(e){} scanCtl = null; if (navigator.vibrate) navigator.vibrate(60); lookupBarcode(res.getText()); }
+    });
+    const m = $('#scanMsg'); if (m) m.textContent = 'Point your camera at the barcode';
+  } catch(e){
+    const m = $('#scanMsg'); if (m) m.textContent = e && e.name === 'NotAllowedError' ? 'Camera access was blocked. Allow camera access for this site, or type the number / use a photo.' : 'Camera unavailable here. Type the number or scan from a photo.';
+  }
+}
+async function scanPhoto(file){
+  const m = $('#scanMsg'); if (m) m.textContent = 'Reading barcode from photo…';
+  try { const ZX = await loadZX(), reader = ui.zxReader || new ZX.BrowserMultiFormatReader(), url = URL.createObjectURL(file);
+    const res = await reader.decodeFromImageUrl(url); URL.revokeObjectURL(url); stopScan(); lookupBarcode(res.getText()); }
+  catch(e){ if (m) m.textContent = "Couldn't find a barcode in that photo. Try again closer, or type the number."; }
+}
+async function lookupBarcode(code){
+  code = String(code).replace(/\D/g, '');
+  const area = $('#foodArea'); if (!code || !area) return;
+  area.innerHTML = `<p class="mute">Looking up barcode ${esc(code)}…</p>`;
+  try {
+    const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=code,product_name,product_name_en,brands,serving_size,serving_quantity,nutriments`);
+    const j = await r.json(), food = j && j.status === 1 && j.product ? offToFood({...j.product, code}) : null;
+    if (food) return openAmount(food);
+    ui.foodMode = 'manual'; manualUI({note:`Barcode ${code} isn't in the database (or has no nutrition info). Enter it from the label instead.`});
+  } catch(e){ area.innerHTML = `<p class="mute">Couldn't reach the food database. Check your connection and try again.</p><button class="btn ghost sm" data-act="foodMode" data-v="scan">Try again</button>`; }
+}
+
+/* ---- Targets calculator (Mifflin-St Jeor) ---- */
+const ACTS = [[1.2,'Sedentary'],[1.375,'Light (1–3 days)'],[1.55,'Moderate (3–5 days)'],[1.725,'Very active (6–7 days)']];
+const GOALS = [['cut','Lose fat',0.8,1.0],['recomp','Recomp',0.9,1.0],['maintain','Maintain',1.0,0.8],['bulk','Lean bulk',1.1,0.8]];
+function calcTargets(fp){
+  const lb = +fp.lb, kg = lb * 0.4536, cm = ((+fp.ft) * 12 + (+fp.inch)) * 2.54, age = +fp.age;
+  if (!(lb > 50 && cm > 100 && age >= 13)) return null;
+  const bmr = 10 * kg + 6.25 * cm - 5 * age + (fp.sex === 'f' ? -161 : 5);
+  const goal = GOALS.find(g => g[0] === fp.goal) || GOALS[1];
+  const kcal = Math.max(fp.sex === 'f' ? 1200 : 1500, Math.round(bmr * fp.act * goal[2] / 10) * 10);
+  const p = Math.round(lb * goal[3]), f = Math.round(kcal * 0.27 / 9), c = Math.max(0, Math.round((kcal - p * 4 - f * 9) / 4));
+  return {kcal, p, c, f};
+}
+function openTargets(){
+  const fp = ui.tp = {...state.foodProfile, lb: state.foodProfile.lb || state.profile.bw || 180};
+  const t = state.foodTargets || calcTargets(fp) || {kcal:'', p:'', c:'', f:''};
+  const chip = (k, v, l) => `<button class="chip${String(fp[k]) === String(v) ? ' on' : ''}" data-act="tpSet" data-k="${k}" data-v="${v}">${l}</button>`;
+  openSheet(`<div class="row between"><h2 style="margin:0">Daily targets</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    <label class="lbl">Sex</label><div class="chips">${chip('sex','m','Male')}${chip('sex','f','Female')}</div>
+    <div class="mgrid"><div><label class="lbl">Age</label><input id="tpAge" type="number" inputmode="numeric" value="${fp.age || ''}"></div><div><label class="lbl">Weight (lb)</label><input id="tpLb" type="number" inputmode="decimal" value="${fp.lb || ''}"></div>
+    <div><label class="lbl">Height (ft)</label><input id="tpFt" type="number" inputmode="numeric" value="${fp.ft || ''}"></div><div><label class="lbl">Height (in)</label><input id="tpIn" type="number" inputmode="numeric" value="${fp.inch ?? ''}"></div></div>
+    <label class="lbl">Activity</label><div class="chips wrap">${ACTS.map(([v, l]) => chip('act', v, l)).join('')}</div>
+    <label class="lbl">Goal</label><div class="chips wrap">${GOALS.map(([v, l]) => chip('goal', v, l)).join('')}</div>
+    <button class="btn block" style="margin-top:14px" data-act="tpCalc">Calculate</button>
+    <label class="lbl">Your targets (edit any number)</label>
+    <div class="mgrid"><div><label class="lbl">Calories</label><input id="tK" type="number" inputmode="numeric" value="${t.kcal}"></div><div><label class="lbl">Protein (g)</label><input id="tP" type="number" inputmode="numeric" value="${t.p}"></div>
+    <div><label class="lbl">Carbs (g)</label><input id="tC" type="number" inputmode="numeric" value="${t.c}"></div><div><label class="lbl">Fat (g)</label><input id="tF" type="number" inputmode="numeric" value="${t.f}"></div></div>
+    <p class="mute" style="font-size:12px">These are estimates. If your weight trend isn't moving the way you want after 2–3 weeks, nudge calories by about 100–200.</p>
+    <button class="btn gold block" data-act="tpSave">Save targets</button>`);
+}
+function readTp(){ const fp = ui.tp; fp.age = $('#tpAge').value; fp.lb = $('#tpLb').value; fp.ft = $('#tpFt').value; fp.inch = $('#tpIn').value; return fp; }
 /* ============ UI HELPERS ============ */
 function openSheet(html){ $('#sheet').innerHTML = html; $('#sheetWrap').classList.add('open'); $('#sheet').scrollTop = 0; }
-function closeSheet(){ $('#sheetWrap').classList.remove('open'); ui.pick = null; }
+function closeSheet(){ $('#sheetWrap').classList.remove('open'); ui.pick = null; stopScan(); }
 $('#sheetWrap').addEventListener('click', e => { if (e.target.id === 'sheetWrap') closeSheet(); });
 let toastT;
 function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200); }
@@ -655,7 +908,7 @@ const TABS = [
   ['body','Body','<circle cx="12" cy="4.5" r="2.5"/><path d="M5 9h14M12 9v6m0 0-3 7m3-7 3 7"/>'],
   ['progress','Progress','<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4ZM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/>'],
   ['train','Train','<path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11"/>'],
-  ['splits','Splits','<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/>'],
+  ['food','Food','<path d="M7 3v7a2 2 0 0 0 4 0V3M9 10v11M17 21V3c-2.5 1.5-3.5 4.5-3.5 8h3.5"/>'],
   ['library','Library','<path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2V5Zm0 16h14"/>'],
   ['coach','Coach','<path d="M12 3l2.2 5.2L20 9l-4.4 3.8L17 19l-5-3-5 3 1.4-6.2L4 9l5.8-.8L12 3Z"/>']
 ];
@@ -665,7 +918,7 @@ function renderTabs(){
 function render(){
   renderTabs();
   const v = $('#view');
-  v.innerHTML = ({body:renderBody, progress:renderProgress, train:renderTrain, splits:renderSplits, library:renderLibrary, coach:renderCoach})[ui.tab]();
+  v.innerHTML = ({body:renderBody, progress:renderProgress, food:renderFood, train:renderTrain, splits:renderSplits, library:renderLibrary, coach:renderCoach})[ui.tab]();
   if (ui.tab === 'library') renderLibList();
 }
 
@@ -730,13 +983,8 @@ function muscleInfo(m){
 /* ============ TRAIN VIEW ============ */
 function renderTrain(){
   const a = state.active;
-  if (!a){
-    let h = `<h2>Train</h2><div class="card"><h3>Start from a split</h3>`;
-    h += state.splits.length ? state.splits.map(s => `<div style="margin-bottom:12px"><b>${esc(s.name)}</b><div class="day-btns">${s.days.map(d => `<button class="btn ghost sm" data-act="startDay" data-s="${s.id}" data-d="${d.id}">${esc(d.name)}</button>`).join('')}</div></div>`).join('')
-      : `<p class="mute" style="margin:0 0 10px">No splits yet. Make one yourself or let Coach build one.</p><div class="row gap"><button class="btn sm" data-act="tab" data-tab="coach">Open Coach</button><button class="btn ghost sm" data-act="newSplit">New split</button></div>`;
-    h += `</div><button class="btn ghost block" data-act="startEmpty">+ Empty workout</button>`;
-    return h;
-  }
+  if (ui.edit) return renderSplits();
+  if (!a) return `<h2>Train</h2><button class="btn gold block" data-act="startEmpty" style="margin-bottom:16px">+ Start empty workout</button>` + renderSplits();
   let h = `<div class="card live"><div class="row between" style="margin-bottom:10px"><span class="pulse">● LIVE</span><span id="elapsed">0:00</span></div><input id="wname" value="${esc(a.name)}" placeholder="Workout name"></div>`;
   const ssl = ssLabels(a.entries);
   a.entries.forEach((e, i) => {
@@ -821,7 +1069,7 @@ function renderSplits(){
     <button class="btn ghost block" data-act="addDay" style="margin:12px 0">+ Add day</button>
     <div class="row gap"><button class="btn ghost" data-act="cancelSplit">Cancel</button><button class="btn" style="flex:1" data-act="saveSplit">Save split</button></div>`;
   }
-  let h = `<div class="row between"><h2>Splits</h2><button class="btn sm" data-act="newSplit">+ New</button></div>`;
+  let h = `<div class="row between" style="margin-bottom:10px"><h3 style="margin:0">Your splits</h3><button class="btn sm" data-act="newSplit">+ New split</button></div>`;
   if (!state.splits.length) h += `<div class="card empty"><p class="mute">No saved splits yet.</p><button class="btn gold" data-act="tab" data-tab="coach">Let Coach build one</button></div>`;
   for (const s of state.splits) h += `<div class="card"><div class="row between"><h3 style="margin:0">${esc(s.name)}</h3><div class="row gap"><button class="btn ghost sm" data-act="editSplit" data-id="${s.id}">Edit</button><button class="icon-btn sm" data-act="delSplit" data-id="${s.id}">🗑</button></div></div>
     ${s.days.map(d => `<div class="prow" data-act="startDay" data-s="${s.id}" data-d="${d.id}"><span><b>${esc(d.name)}</b><br><small class="mute">${d.items.map(it => EX[it.ex]?.name).join(' · ')}</small></span><span class="sr">START ▸</span></div>`).join('')}</div>`;
@@ -1035,7 +1283,7 @@ const ACT = {
   discard: async () => { if (await confirmBox('Discard this workout? Nothing will be saved.', 'Discard')){ state.active = null; save(); render(); } },
   viewWorkout: d => viewWorkout(d.id),
   delWorkout: async d => { if (await confirmBox('Delete this workout and its XP?', 'Delete')){ state.workouts = state.workouts.filter(w => w.id !== d.id); save(); render(); } },
-  newSplit: () => { ui.edit = {isNew:true, id:uid(), name:'', days:[{id:uid(), name:'Day 1', items:[]}]}; ui.tab = 'splits'; render(); },
+  newSplit: () => { ui.edit = {isNew:true, id:uid(), name:'', days:[{id:uid(), name:'Day 1', items:[]}]}; ui.tab = 'train'; render(); },
   editSplit: d => { ui.edit = JSON.parse(JSON.stringify(state.splits.find(s => s.id === d.id))); render(); },
   delSplit: async d => { if (await confirmBox('Delete this split?', 'Delete')){ state.splits = state.splits.filter(s => s.id !== d.id); save(); render(); } },
   addDay: () => { ui.edit.days.push({id:uid(), name:'Day ' + (ui.edit.days.length+1), items:[]}); render(); },
@@ -1059,7 +1307,7 @@ const ACT = {
   generate: () => { genPlan(); render(); setTimeout(() => $('#plan')?.scrollIntoView({behavior:'smooth'}), 50); },
   regen: () => { ui.coach.seed++; genPlan(); render(); setTimeout(() => $('#plan')?.scrollIntoView(), 0); },
   savePlan: () => { const p = ui.plan; state.splits.push({id:uid(), name:'Coach: ' + p.name, days:p.days.map(d => ({id:uid(), name:d.name, items:d.items.map(({ex,sets,reps,ss}) => ({ex,sets,reps,ss:!!ss}))}))});
-    save(); ui.plan = null; ui.tab = 'splits'; render(); toast('Plan saved to Splits'); },
+    save(); ui.plan = null; ui.tab = 'train'; render(); toast('Plan saved to your splits'); },
   trophies: openTrophies,
   plates: d => openPlates(d.w),
   plateBar: (d, b) => { ui.plateBar = +d.v; document.querySelectorAll('#barChips .chip').forEach(c => c.classList.toggle('on', c === b)); $('#plateViz').innerHTML = plateViz(+$('#plateW').value || 0, ui.plateBar); },
@@ -1071,6 +1319,34 @@ const ACT = {
   bwTip: d => { const l = state.bwLog.slice(-60)[+d.i]; if (l) $('#bwTip').textContent = `${dstr(l.date)} · ${l.w} lb`; },
   bwHistory: openBwHistory,
   bwDel: d => { state.bwLog = state.bwLog.filter(l => l.date !== +d.d); const last = state.bwLog[state.bwLog.length - 1]; if (last) state.profile.bw = last.w; save(); render(); openBwHistory(); },
+  foodDay: d => { const base = ui.foodDate || Date.now(), n = new Date(base); n.setDate(n.getDate() + (+d.v)); if (dkey(n) > dkey(Date.now())) return; ui.foodDate = n.getTime(); render(); },
+  foodAdd: d => { ui.foodQ = ''; openAddFood(d.m, ui.foodMode === 'scan' ? 'scan' : 'search'); },
+  foodMode: d => { stopScan(); ui.foodMode = d.v; openAddFood(ui.foodMeal, d.v); },
+  offSearch: () => offSearch(),
+  foodPick: d => { const list = d.list === 'local' ? ui.foodList : d.list === 'off' ? ui.offList : ui.recentList; const f = list && list[+d.i]; if (!f) return;
+    if (f.fixed){ const day = foodDay(); (day[ui.foodMeal] = day[ui.foodMeal] || []).push({n:f.name, a:f.a || '', ...f.fixed, m:1}); rememberFood(f); save(); closeSheet(); render(); toast('Added'); }
+    else openAmount(f); },
+  amtSave: () => { const {food, edit, tot} = ui.amt; if (!(amtGrams() > 0)) return toast('Enter an amount');
+    const e = {n:food.name, a:amtLabel(), q:+ui.amt.qty, u:ui.amt.unit, k:r1(tot.k), p:r1(tot.p), c:r1(tot.c), f:r1(tot.f), d:{per:food.per, sv:food.sv, src:food.src, code:food.code}};
+    const day = foodDay(); if (edit) day[edit.m][edit.i] = e; else (day[ui.foodMeal] = day[ui.foodMeal] || []).push(e);
+    rememberFood(food); save(); closeSheet(); render(); toast(edit ? 'Updated' : 'Added'); },
+  manualSave: () => { const name = $('#mName').value.trim(); const v = id => r1(+$(id).value || 0);
+    if (!name) return toast('Give the food a name'); const fixed = {k:v('#mK'), p:v('#mP'), c:v('#mC'), f:v('#mF')}; if (!fixed.k && !fixed.p && !fixed.c && !fixed.f) return toast('Enter at least the calories');
+    const e = {n:name, a:$('#mA').value.trim(), ...fixed, m:1}, day = foodDay(), ed = ui.foodEditRef;
+    if (ed) day[ed.m][ed.i] = e; else (day[ui.foodMeal] = day[ui.foodMeal] || []).push(e);
+    rememberFood({name, a:e.a, fixed}); ui.foodEditRef = null; save(); closeSheet(); render(); toast(ed ? 'Updated' : 'Added'); },
+  foodEdit: d => { const e = foodDay()[d.m][+d.i]; ui.foodMeal = d.m;
+    if (e.m || !e.d){ ui.foodEditRef = {m:d.m, i:+d.i}; openSheet(`<div class="row between"><h3 style="margin:0">Edit food</h3><button class="icon-btn" data-act="closeSheet">✕</button></div><div id="foodArea"></div>`); manualUI({name:e.n, k:e.k, p:e.p, c:e.c, f:e.f, a:e.a, edit:true}); }
+    else { ui.foodEditRef = {m:d.m, i:+d.i}; openAmount({name:e.n, ...e.d}, {m:d.m, i:+d.i, q:e.q, u:e.u}); } },
+  foodDel: () => { const ref = ui.foodEditRef || (ui.amt && ui.amt.edit); if (!ref) return; foodDay()[ref.m].splice(ref.i, 1); ui.foodEditRef = null; save(); closeSheet(); render(); toast('Removed'); },
+  codeLookup: () => { const c = $('#codeIn').value; stopScan(); lookupBarcode(c); },
+  foodTargets: openTargets,
+  tpSet: (d, b) => { readTp(); ui.tp[d.k] = d.k === 'act' ? +d.v : d.v; b.parentNode.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b)); },
+  tpCalc: () => { const t = calcTargets(readTp()); if (!t) return toast('Fill in age, weight and height');
+    $('#tK').value = t.kcal; $('#tP').value = t.p; $('#tC').value = t.c; $('#tF').value = t.f; },
+  tpSave: () => { const fp = readTp(); const t = {kcal:+$('#tK').value, p:+$('#tP').value, c:+$('#tC').value, f:+$('#tF').value};
+    if (!(t.kcal > 0)) return toast('Calculate or enter your calories first');
+    state.foodProfile = {sex:fp.sex, age:fp.age, lb:fp.lb, ft:fp.ft, inch:fp.inch, act:fp.act, goal:fp.goal}; state.foodTargets = t; save(); closeSheet(); render(); toast('Targets saved'); },
   saveSettings: () => { const p = state.profile, oldCode = p.syncCode;
     p.name = $('#sName').value.trim(); p.bw = +$('#sBw').value || 180; p.syncCode = $('#sCode').value.trim();
     save(); closeSheet(); render(); toast('Saved'); if (p.syncCode !== oldCode) initSync(true); },
@@ -1090,9 +1366,13 @@ document.addEventListener('input', e => {
   else if (t.id === 'wname' && state.active){ state.active.name = t.value; save(); }
   else if (d.sf && ui.edit){ const day = ui.edit.days[+d.d]; if (d.sf === 'dayName') day.name = t.value; else day.items[+d.i][d.sf] = d.sf === 'sets' ? +t.value || '' : t.value; }
   else if (t.id === 'splitName' && ui.edit){ ui.edit.name = t.value; }
+  else if (t.id === 'foodQ'){ ui.foodQ = t.value; renderFoodRes(); }
+  else if (t.id === 'amtQ' && ui.amt){ ui.amt.qty = t.value; amtPreview(); }
+  else if (t.id === 'amtU' && ui.amt){ ui.amt.unit = t.value; amtPreview(); }
   else if (t.id === 'libq'){ ui.libQ = t.value; ui.libN = PAGE; renderLibList(); }
   else if (t.id === 'pickq' && ui.pick){ ui.pick.q = t.value; ui.pick.n = PAGE; renderPickList(); }
 });
+document.addEventListener('change', e => { const t = e.target; if (t.id === 'scanFile' && t.files[0]) scanPhoto(t.files[0]); else if (t.id === 'amtU' && ui.amt){ ui.amt.unit = t.value; amtPreview(); } });
 $('#importFile').addEventListener('change', async e => {
   const f = e.target.files[0]; if (!f) return;
   try { const s = migrate(JSON.parse(await f.text())); const code = state.profile.syncCode; state = s; state.profile.syncCode = state.profile.syncCode || code; save(); closeSheet(); render(); toast('Backup imported'); }
