@@ -13,6 +13,8 @@ A gamified gym tracker — every set you log earns XP for the muscles it works, 
 - Progressive overload hints, plate calculator, supersets
 - Bodyweight log with trend chart
 - Food tracker: barcode scanning, food search (built-in + Open Food Facts), manual entry, daily calorie/macro targets and per-meal macro breakdowns, saved meals and a water tracker
+- Armory: unlockable themes, figure gear (headband, shades, capes, crown, auras), equippable titles
+- Level-up celebration screen and random loot chests after workouts
 - Friends leaderboard (level, streak, weekly workouts, XP) via friend codes
 - Optional Firebase sync across devices (paste your config at the top of `index.html`)
 
