@@ -353,7 +353,38 @@ X('reverse_curl','Reverse Curl','bb','forearm',['forearms'],['biceps'],'Overhand
 X('plank','Plank','bw','core',['abs'],['obliques','shoulders'],'Forearms under shoulders|Squeeze glutes, flat back|Log seconds held as reps',.1),
 X('dead_bug','Dead Bug','bw','core',['abs'],['obliques'],'Lower back pressed down|Extend opposite arm and leg|Each side = 1 rep',.2),
 X('knee_raise','Hanging Knee Raise','bw','core',['abs'],['obliques'],'Dead hang|Knees to chest|No swinging',.25),
-X('decline_situp','Decline Sit-Up','bw','core',['abs'],['obliques'],'Feet hooked|Curl up to knees|Lower with control',.4)
+X('decline_situp','Decline Sit-Up','bw','core',['abs'],['obliques'],'Feet hooked|Curl up to knees|Lower with control',.4),
+// ---- machines ----
+X('hs_chest','Plate-Loaded Chest Press','mc','push_h',['chest'],['triceps','shoulders'],'Handles at mid-chest|Press out and slightly together|Control the stretch'),
+X('decline_machine','Decline Machine Press','mc','push_h',['chest'],['triceps'],'Handles at lower chest|Press down and out|Slow return'),
+X('smith_incline','Smith Machine Incline Press','mc','push_h2',['chest'],['shoulders','triceps'],'Bench at 30°|Bar to upper chest|Press straight up'),
+X('seated_dip','Seated Dip Machine','mc','push_h2',['triceps','chest'],['shoulders'],'Sit tall, grip handles at sides|Press down to full lockout|Let handles rise to ~90° elbows'),
+X('fly_machine','Chest Fly Machine','mc','chest_iso',['chest'],['shoulders'],'Elbows slightly bent|Bring handles together in front|Stretch back with control'),
+X('smith_ohp','Smith Machine Shoulder Press','mc','push_v',['shoulders'],['triceps'],'Bench upright, bar in front of face|Press to just short of lockout|Lower to chin height'),
+X('hs_shoulder','Plate-Loaded Shoulder Press','mc','push_v',['shoulders'],['triceps'],'Handles at shoulder height|Press up and slightly in|Back flat on pad'),
+X('machine_pd','Plate-Loaded Pulldown','mc','pull_v',['lats'],['biceps'],'Thighs locked under pads|Pull handles to upper chest|Let arms stretch fully'),
+X('high_row','Machine High Row','mc','pull_v',['lats','traps'],['biceps'],'Chest on pad|Pull down and back to chest|Squeeze shoulder blades'),
+X('hs_row','Plate-Loaded Row','mc','pull_h',['lats','traps'],['biceps'],'Chest on pad|Row elbows past your torso|Pause and squeeze'),
+X('low_row','Machine Low Row','mc','pull_h',['lats'],['biceps','traps'],'Sit tall|Pull handles to lower ribs|Elbows close to body'),
+X('pullover_machine','Pullover Machine','mc','lat_iso',['lats'],['chest','triceps'],'Elbows on pads|Sweep arms down to stomach|Big stretch overhead'),
+X('machine_shrug','Machine Shrug','mc','traps',['traps'],['forearms'],'Arms straight|Shrug straight up|Hold a second at the top'),
+X('back_ext_machine','Back Extension Machine','mc','hinge',['lowerback'],['glutes','hamstrings'],'Pad across upper back|Extend until upright|Slow on the way forward'),
+X('pendulum','Pendulum Squat','mc','squat',['quads'],['glutes'],'Back flat on pad, feet mid-platform|Sink as deep as you can|Drive through the whole foot'),
+X('belt_squat','Belt Squat','mc','squat',['quads','glutes'],['hamstrings'],'Belt around hips|Sit straight down, chest up|Stand by driving through heels'),
+X('vsquat','V-Squat Machine','mc','squat',['quads','glutes'],['hamstrings'],'Shoulders under pads|Squat to parallel or below|Don\'t lock knees at top'),
+X('smith_split','Smith Machine Split Squat','mc','lunge',['quads','glutes'],['hamstrings'],'Staggered stance under bar|Drop back knee straight down|Push through front heel'),
+X('lying_curl','Lying Leg Curl','mc','ham_iso',['hamstrings'],['calves'],'Pad just above heels, hips down|Curl to glutes|Slow negative'),
+X('standing_curl','Standing Leg Curl','mc','ham_iso',['hamstrings'],[],'One leg at a time|Curl heel up toward glute|Keep hips square'),
+X('hip_thrust_machine','Hip Thrust Machine','mc','glute',['glutes'],['hamstrings'],'Pad across hips|Drive hips up through heels|Squeeze hard at the top'),
+X('kickback_machine','Glute Kickback Machine','mc','glute',['glutes'],['hamstrings'],'Chest on pad|Push platform back with heel|Don\'t arch your lower back'),
+X('abductor','Hip Abduction Machine','mc','glute',['glutes'],[],'Sit tall or lean forward slightly|Push knees out against pads|Control them back in'),
+X('adductor','Hip Adduction Machine','mc','quad_iso',['quads'],[],'Inner thighs against pads|Squeeze knees together|Counts toward Quads (inner thigh)'),
+X('donkey_calf','Donkey Calf Raise Machine','mc','calf',['calves'],[],'Hips under pad, slight hinge|Deep stretch at bottom|Rise onto big toes'),
+X('machine_curl','Machine Biceps Curl','mc','bi',['biceps'],[],'Elbows lined up with pivot|Curl all the way up|Slow lowering'),
+X('machine_tri','Machine Triceps Extension','mc','tri',['triceps'],[],'Elbows on pad, lined up with pivot|Extend fully|Control the return'),
+X('ab_machine','Ab Crunch Machine','mc','core',['abs'],[],'Hold handles, feet locked|Crunch ribs toward hips|Don\'t pull with arms'),
+X('torso_rotation','Torso Rotation Machine','mc','obliq',['obliques'],['abs'],'Hips locked in place|Rotate from your torso|Each side = 1 rep'),
+X('captains_chair','Captain\'s Chair Leg Raise','bw','core',['abs'],['obliques'],'Back against pad, forearms on rests|Raise knees or legs up|No swinging',.3)
 ];
 const EX = Object.fromEntries(EXL.map(e => [e.id, e]));
 const EQN = {bb:'Barbell',db:'Dumbbell',mc:'Machine',cb:'Cable',bw:'Bodyweight'};
@@ -781,12 +812,12 @@ function renderSplits(){
 
 /* ============ LIBRARY VIEW ============ */
 function renderLibrary(){
-  return `<h2>Library</h2><input id="libq" placeholder="Search ${EXL.length} exercises" value="${esc(ui.libQ)}"><div class="chips" style="margin:10px 0 12px">${chipsHtml('libMuscle', ui.libM)}</div><div id="libList" class="lib-grid"></div>`;
+  return `<h2>Library</h2><input id="libq" placeholder="Search ${EXL.length} exercises" value="${esc(ui.libQ)}"><div class="chips" style="margin:10px 0 8px">${chipsHtml('libMuscle', ui.libM)}</div><div class="chips" style="margin:0 0 12px">${[['','All equipment'],...Object.entries(EQN)].map(([k,v]) => `<button class="chip gold${(ui.libEq||'')===k?' on':''}" data-act="libEq" data-v="${k}">${v}</button>`).join('')}</div><div id="libList" class="lib-grid"></div>`;
 }
 function filterEx(q, m){ q = q.trim().toLowerCase(); return EXL.filter(e => (!m || e.p.includes(m) || e.s.includes(m)) && (!q || e.name.toLowerCase().includes(q))).sort((a,b) => m ? (b.p.includes(m)-a.p.includes(m)) : 0); }
 function renderLibList(){
   const el = $('#libList'); if (!el) return;
-  const list = filterEx(ui.libQ, ui.libM);
+  const list = filterEx(ui.libQ, ui.libM).filter(e => !ui.libEq || e.eq === ui.libEq);
   el.innerHTML = list.length ? list.map(e => `<div class="lcard" data-act="exInfo" data-id="${e.id}"><div class="mini">${bodySVG(exColor(e), {labels:false})}</div><b>${e.name}</b><small>${EQN[e.eq]}</small></div>`).join('') : `<p class="mute">No matches.</p>`;
 }
 function exInfo(id){
@@ -979,6 +1010,7 @@ const ACT = {
     delete e.isNew; const i = state.splits.findIndex(s => s.id === e.id); if (i >= 0) state.splits[i] = e; else state.splits.push(e);
     ui.edit = null; save(); render(); toast('Split saved'); },
   libMuscle: d => { ui.libM = d.m; render(); },
+  libEq: d => { ui.libEq = d.v; render(); },
   pickM: (d, b) => { ui.pick.m = d.m; document.querySelectorAll('#pickChips .chip').forEach(c => c.classList.toggle('on', c === b)); renderPickList(); },
   pick: d => { const cb = ui.pick.cb; closeSheet(); cb(d.id); },
   coachOpt: d => { ui.coach[d.k] = /^\d+$/.test(d.v) ? +d.v : d.v; render(); },
