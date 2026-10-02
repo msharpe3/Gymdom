@@ -149,52 +149,62 @@ const lvl = xp => Math.floor(Math.sqrt((xp||0) / 250));
 const lvlXP = L => 250 * L * L;
 const rankOf = L => { let r = RANKS[0]; for (const x of RANKS) if (L >= x[0]) r = x; return r; };
 
-/* ============ BODY ART (left side; mirrored for right) ============ */
-const NEUTRAL = {
-  arm:"M72,72 Q50,74 47,104 Q45,130 46,150 Q40,170 39,192 Q40,198 46,198 Q58,176 62,152 Q68,132 70,108Z",
-  hand:"M38,196 Q34,206 38,214 Q44,220 50,212 Q50,202 47,196Z",
-  leg:"M99,192 Q76,186 70,206 Q64,252 72,298 Q68,334 74,376 L90,376 Q94,334 92,300 Q100,252 99,192Z",
-  foot:"M74,374 Q66,388 72,394 L92,394 Q94,384 90,374Z"
+/* ============ BODY ART (left side; mirrored for right) ============
+   Limb groups get a relaxed pose: arms hang slightly out with a soft elbow bend, legs in a light A-stance. */
+const POSE = {
+  u:'rotate(13 70 80)',                          // upper arm swings out from the shoulder
+  l:'rotate(13 70 80) rotate(-7 54 146)',        // forearm follows, then bends back in at the elbow
+  g:'rotate(3.5 92 196)',                        // legs open slightly from the hip
+  f:'rotate(3.5 92 196) rotate(9 82 384)'        // feet turn out
 };
-const CENTER = `<ellipse cx="100" cy="28" rx="15" ry="19"/><path d="M92,44 L108,44 L110,64 L90,64Z"/><path d="M72,64 Q100,58 128,64 Q138,88 130,112 Q132,150 124,190 L76,190 Q68,150 70,112 Q62,88 72,64Z"/><path d="M76,186 L124,186 Q122,206 100,212 Q78,206 76,186Z"/>`;
-const DELT = "M72,70 Q56,70 51,86 Q49,100 55,110 Q64,104 70,94 Q74,82 72,70Z";
+const NEUTRAL = [
+  ["M72,72 Q50,74 47,104 Q45,130 48,152 L62,152 Q68,132 70,108Z",'u'],
+  ["M55,142 a8,9 0 1 0 0.1,0Z",'u'],
+  ["M45,138 Q40,170 39,192 Q40,198 46,198 Q58,176 64,140 Q55,132 45,138Z",'l'],
+  ["M38,196 Q33,206 37,215 Q44,222 50,213 Q51,203 47,196Z",'l'],
+  ["M99,192 Q76,186 70,206 Q64,252 72,298 Q68,334 74,376 L90,376 Q94,334 92,300 Q100,252 99,192Z",'g'],
+  ["M74,374 Q66,388 72,394 L92,394 Q94,384 90,374Z",'f']
+];
+const CENTER = `<path d="M100,9 Q114,9 115,26 Q115,40 108,46 Q100,51 92,46 Q85,40 85,26 Q86,9 100,9Z"/><path d="M92,42 L108,42 L111,64 L89,64Z"/><path d="M72,64 Q100,57 128,64 Q141,84 133,112 Q127,150 122,190 L78,190 Q73,150 67,112 Q59,84 72,64Z"/><path d="M77,186 L123,186 Q122,206 100,212 Q78,206 77,186Z"/>`;
+const DELT = "M72,68 Q55,69 50,86 Q48,101 55,111 Q65,104 71,93 Q75,80 72,68Z";
 const FOREARM = "M50,152 Q42,166 42,184 Q44,194 48,194 Q56,180 60,156 Q56,148 50,152Z";
 const FRONT = [
-  ['chest',"M99,74 L99,114 Q86,120 74,112 Q66,100 70,86 Q76,74 99,74Z",1],
+  ['chest',"M99,74 L99,114 Q86,121 73,112 Q65,99 70,85 Q77,73 99,74Z",1],
   ['shoulders',DELT,1],
-  ['traps',"M90,58 Q84,66 72,70 Q84,73 95,68Z",1],
-  ['biceps',"M55,112 Q48,124 50,140 Q54,150 60,146 Q66,132 64,114 Q60,108 55,112Z",1],
-  ['forearms',FOREARM,1],
+  ['traps',"M90,57 Q84,65 72,69 Q84,73 95,67Z",1],
+  ['biceps',"M55,112 Q48,124 50,140 Q54,150 60,146 Q66,132 64,114 Q60,108 55,112Z",1,'u'],
+  ['forearms',FOREARM,1,'l'],
   ['abs',"M88.5,118 h10 v15 h-10Z M88.5,135 h10 v15 h-10Z M88.5,152 h10 v16 h-10Z M89,170 h9.5 v17 Q93,186 89,178Z",1],
-  ['obliques',"M86,118 Q76,120 74,130 Q74,158 82,186 L87,186Z",1],
-  ['quads',"M98,196 Q80,192 73,206 Q67,248 75,288 Q85,298 93,290 Q100,252 98,196Z",1],
-  ['calves',"M75,314 Q70,340 76,370 L84,370 Q87,342 85,314Z",1]
+  ['obliques',"M86,118 Q76,120 73,130 Q75,158 82,186 L87,186Z",1],
+  ['quads',"M98,196 Q80,192 73,206 Q67,248 75,288 Q85,298 93,290 Q100,252 98,196Z",1,'g'],
+  ['calves',"M75,314 Q70,340 76,370 L84,370 Q87,342 85,314Z",1,'g']
 ];
 const BACK = [
-  ['lats',"M84,82 Q72,92 74,118 Q80,150 96,164 L98,126 Q92,96 84,82Z",1],
-  ['traps',"M100,48 L88,60 Q76,66 72,72 Q90,78 100,120 Q110,78 128,72 Q124,66 112,60Z",0],
+  ['lats',"M84,82 Q71,92 73,118 Q80,150 96,164 L98,126 Q92,96 84,82Z",1],
+  ['traps',"M100,46 L88,59 Q76,65 72,71 Q90,78 100,120 Q110,78 128,71 Q124,65 112,59Z",0],
   ['shoulders',DELT,1],
-  ['triceps',"M54,108 Q46,124 48,144 Q54,150 60,146 Q66,130 66,114Z",1],
-  ['forearms',FOREARM,1],
+  ['triceps',"M54,108 Q46,124 48,144 Q54,150 60,146 Q66,130 66,114Z",1,'u'],
+  ['forearms',FOREARM,1,'l'],
   ['lowerback',"M90,160 Q100,167 110,160 L112,188 L88,188Z",0],
   ['glutes',"M99,190 Q78,186 74,204 Q74,226 88,232 Q99,232 99,226Z",1],
-  ['hamstrings',"M97,236 Q82,232 74,240 Q68,268 76,294 Q86,300 94,292 Q100,262 97,236Z",1],
-  ['calves',"M76,310 Q67,332 74,356 Q82,364 90,352 Q94,330 90,310Z",1]
+  ['hamstrings',"M97,236 Q82,232 74,240 Q68,268 76,294 Q86,300 94,292 Q100,262 97,236Z",1,'g'],
+  ['calves',"M76,310 Q67,332 74,356 Q82,364 90,352 Q94,330 90,310Z",1,'g']
 ];
-const MIR = 'transform="translate(200 0) scale(-1 1)"';
+const MIRT = 'translate(200 0) scale(-1 1)';
+const tf = (mirror, limb) => { const t = [mirror ? MIRT : '', limb ? POSE[limb] : ''].join(' ').trim(); return t ? ` transform="${t}"` : ''; };
 function fig(parts, x, col, tap){
   let s = `<g transform="translate(${x} 0)"><g class="base">${CENTER}`;
-  for (const k in NEUTRAL) s += `<path d="${NEUTRAL[k]}"/><path d="${NEUTRAL[k]}" ${MIR}/>`;
+  for (const [d, limb] of NEUTRAL) s += `<path d="${d}"${tf(0,limb)}/><path d="${d}"${tf(1,limb)}/>`;
   s += '</g>';
-  for (const [m,d,mir] of parts){
+  for (const [m,d,mir,limb] of parts){
     const a = `class="mus" fill="${col(m)}"${tap?` data-act="muscle" data-m="${m}"`:''}`;
-    s += `<path d="${d}" ${a}/>`;
-    if (mir) s += `<path d="${d}" ${MIR} ${a}/>`;
+    s += `<path d="${d}"${tf(0,limb)} ${a}/>`;
+    if (mir) s += `<path d="${d}"${tf(1,limb)} ${a}/>`;
   }
   return s + '</g>';
 }
 function bodySVG(col, {tap=false, labels=true}={}){
-  return `<svg class="body${tap?' tap':''}" viewBox="0 0 420 ${labels?426:400}" xmlns="http://www.w3.org/2000/svg">${fig(FRONT,5,col,tap)}${fig(BACK,215,col,tap)}${labels?'<text x="105" y="420">FRONT</text><text x="315" y="420">BACK</text>':''}</svg>`;
+  return `<svg class="body${tap?' tap':''}" viewBox="0 0 440 ${labels?426:400}" xmlns="http://www.w3.org/2000/svg">${fig(FRONT,10,col,tap)}${fig(BACK,230,col,tap)}${labels?'<text x="110" y="420">FRONT</text><text x="330" y="420">BACK</text>':''}</svg>`;
 }
 const exColor = ex => m => ex.p.includes(m) ? GOLD : ex.s.includes(m) ? TEAL : UNTR;
 
