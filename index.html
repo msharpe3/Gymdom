@@ -183,12 +183,12 @@ select{font:16px Inter;background:var(--panel2);color:var(--text);border:1px sol
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.02.4"></script>
+<script src="exercises.js?v=2026.10.02.5"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.02.4';
+const APP_VERSION = '2026.10.02.5';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -215,57 +215,65 @@ const lvl = xp => Math.floor(Math.sqrt((xp||0) / 250));
 const lvlXP = L => 250 * L * L;
 const rankOf = L => { let r = RANKS[0]; for (const x of RANKS) if (L >= x[0]) r = x; return r; };
 
-/* ============ BODY ART (left side; mirrored for right) ============
-   Limb groups get a relaxed pose: arms hang slightly out with a soft elbow bend, legs in a light A-stance. */
-const POSE = {
-  u:'rotate(13 70 80)',                          // upper arm swings out from the shoulder
-  l:'rotate(13 70 80) rotate(-7 54 146)',        // forearm follows, then bends back in at the elbow
-  g:'rotate(3.5 92 196)',                        // legs open slightly from the hip
-  f:'rotate(3.5 92 196) rotate(9 82 384)'        // feet turn out
-};
-const NEUTRAL = [
-  ["M72,72 Q50,74 47,104 Q45,130 48,152 L62,152 Q68,132 70,108Z",'u'],
-  ["M55,142 a8,9 0 1 0 0.1,0Z",'u'],
-  ["M45,138 Q40,170 39,192 Q40,198 46,198 Q58,176 64,140 Q55,132 45,138Z",'l'],
-  ["M38,196 Q33,206 37,215 Q44,222 50,213 Q51,203 47,196Z",'l'],
-  ["M99,192 Q76,186 70,206 Q64,252 72,298 Q68,334 74,376 L90,376 Q94,334 92,300 Q100,252 99,192Z",'g'],
-  ["M74,374 Q66,388 72,394 L92,394 Q94,384 90,374Z",'f']
+/* ============ BODY ART ============
+   One smooth silhouette (left half mirrored) with muscle shapes drawn as smooth splines on top. */
+function spline(pts, closed = true, t = 1){
+  const n = pts.length, P = i => pts[(i + n) % n];
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 0; i < (closed ? n : n - 1); i++){
+    const p0 = P(i - 1), p1 = P(i), p2 = P(i + 1), p3 = P(i + 2);
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6 * t, p1[1] + (p2[1] - p0[1]) / 6 * t];
+    const c2 = [p2[0] - (p3[0] - p1[0]) / 6 * t, p2[1] - (p3[1] - p1[1]) / 6 * t];
+    d += `C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p2[0]},${p2[1]}`;
+  }
+  return d + (closed ? 'Z' : '');
+}
+const mirrorPts = pts => pts.map(([x, y]) => [200 - x, y]);
+// Shape tweaks: widen the upper body (full effect above the chest, fading out by the hips) and enlarge the head
+const WIDEN = 1.13, HEAD = 1.18;
+const widenK = y => y <= 120 ? WIDEN : y >= 195 ? 1 : WIDEN - (WIDEN - 1) * (y - 120) / 75;
+const R1 = v => Math.round(v * 10) / 10;
+const shape = ([x, y]) => [R1(100 - (100 - x) * widenK(y)), y];
+const shapeHead = ([x, y]) => [R1(100 - (100 - x) * HEAD), R1(48 - (48 - y) * HEAD)];
+// Left half of the body outline, from top of head down around the arm and leg to the crotch
+const HALF = [[100,10],[91,12],[86.5,21],[86.5,32],[89.5,41],[94.5,48],[92,54],[80,58],[67,63],[56,67],[46,77],[42,92],[38,108],[34,124],[32,140],[34,156],[39,172],[45,186],
+  [44,195],[49,204],[58,206],[64,199],[63,189],[56,176],[50,162],[47,148],[50,132],[56,118],[63,108],[69,104],[72,120],[76,141],[80,160],[81,178],
+  [77,196],[72,220],[68,246],[66,268],[64,284],[59,302],[58,322],[61,346],[63,368],[56,381],[58,391],[80,391],[81,380],[78,368],[80,346],[84,318],[86,290],[87,274],[92,248],[96,226],[100,212]];
+const HALF_S = HALF.map((p, i) => i < 6 ? shapeHead(p) : shape(p));
+const OUTLINE = spline([...HALF_S, ...mirrorPts(HALF_S).reverse().slice(1, -1)]);
+const FRONT2 = [
+  ['chest', [[98,70],[98,110],[88,116],[76,112],[70,100],[70,84],[78,73],[90,69]], 1],
+  ['shoulders', [[68,62],[55,67],[46,77],[42,92],[46,102],[55,97],[62,86],[68,74]], 1],
+  ['traps', [[93,53],[81,58],[69,63],[84,63],[94,59]], 1],
+  ['biceps', [[45,104],[40,118],[38,134],[43,142],[50,132],[54,116],[51,106]], 1],
+  ['forearms', [[38,148],[37,162],[43,180],[50,184],[53,170],[49,154],[43,146]], 1],
+  ['obliques', [[86,117],[77,119],[75,134],[78,157],[81,176],[87,182]], 1],
+  ['quads', [[97,214],[86,203],[76,206],[70,230],[69,258],[75,276],[85,278],[91,260],[95,236]], 1],
+  ['calves', [[63,296],[59,314],[61,336],[67,342],[70,322],[68,300]], 1]
 ];
-const CENTER = `<path d="M100,9 Q114,9 115,26 Q115,40 108,46 Q100,51 92,46 Q85,40 85,26 Q86,9 100,9Z"/><path d="M92,42 L108,42 L111,64 L89,64Z"/><path d="M72,64 Q100,57 128,64 Q141,84 133,112 Q127,150 122,190 L78,190 Q73,150 67,112 Q59,84 72,64Z"/><path d="M77,186 L123,186 Q122,206 100,212 Q78,206 77,186Z"/>`;
-const DELT = "M72,68 Q55,69 50,86 Q48,101 55,111 Q65,104 71,93 Q75,80 72,68Z";
-const FOREARM = "M50,152 Q42,166 42,184 Q44,194 48,194 Q56,180 60,156 Q56,148 50,152Z";
-const FRONT = [
-  ['chest',"M99,74 L99,114 Q86,121 73,112 Q65,99 70,85 Q77,73 99,74Z",1],
-  ['shoulders',DELT,1],
-  ['traps',"M90,57 Q84,65 72,69 Q84,73 95,67Z",1],
-  ['biceps',"M55,112 Q48,124 50,140 Q54,150 60,146 Q66,132 64,114 Q60,108 55,112Z",1,'u'],
-  ['forearms',FOREARM,1,'l'],
-  ['abs',"M88.5,118 h10 v15 h-10Z M88.5,135 h10 v15 h-10Z M88.5,152 h10 v16 h-10Z M89,170 h9.5 v17 Q93,186 89,178Z",1],
-  ['obliques',"M86,118 Q76,120 73,130 Q75,158 82,186 L87,186Z",1],
-  ['quads',"M98,196 Q80,192 73,206 Q67,248 75,288 Q85,298 93,290 Q100,252 98,196Z",1,'g'],
-  ['calves',"M75,314 Q70,340 76,370 L84,370 Q87,342 85,314Z",1,'g']
+const ABS = "M88.5,118 h10 v14 h-10Z M88.5,134 h10 v15 h-10Z M88.5,151 h10 v15 h-10Z M89,168 h9.5 v17 Q93,186 89,178Z";
+const BACK2 = [
+  ['traps', [[100,46],[88,56],[69,63],[86,74],[100,124],[114,74],[131,63],[112,56]], 0],
+  ['shoulders', FRONT2[1][1], 1],
+  ['lats', [[84,80],[71,96],[70,114],[76,140],[90,160],[98,150],[98,122],[92,97]], 1],
+  ['triceps', [[44,102],[38,118],[36,136],[42,142],[49,128],[53,112]], 1],
+  ['forearms', FRONT2[4][1], 1],
+  ['lowerback', [[89,158],[100,165],[111,158],[112,186],[88,186]], 0],
+  ['glutes', [[99,190],[85,186],[78,196],[76,214],[83,230],[98,232]], 1],
+  ['hamstrings', [[96,236],[84,232],[73,240],[69,262],[74,280],[85,282],[91,264]], 1],
+  ['calves', [[65,292],[60,312],[62,332],[71,342],[80,330],[83,306],[78,292]], 1]
 ];
-const BACK = [
-  ['lats',"M84,82 Q71,92 73,118 Q80,150 96,164 L98,126 Q92,96 84,82Z",1],
-  ['traps',"M100,46 L88,59 Q76,65 72,71 Q90,78 100,120 Q110,78 128,71 Q124,65 112,59Z",0],
-  ['shoulders',DELT,1],
-  ['triceps',"M54,108 Q46,124 48,144 Q54,150 60,146 Q66,130 66,114Z",1,'u'],
-  ['forearms',FOREARM,1,'l'],
-  ['lowerback',"M90,160 Q100,167 110,160 L112,188 L88,188Z",0],
-  ['glutes',"M99,190 Q78,186 74,204 Q74,226 88,232 Q99,232 99,226Z",1],
-  ['hamstrings',"M97,236 Q82,232 74,240 Q68,268 76,294 Q86,300 94,292 Q100,262 97,236Z",1,'g'],
-  ['calves',"M76,310 Q67,332 74,356 Q82,364 90,352 Q94,330 90,310Z",1,'g']
-];
-const MIRT = 'translate(200 0) scale(-1 1)';
-const tf = (mirror, limb) => { const t = [mirror ? MIRT : '', limb ? POSE[limb] : ''].join(' ').trim(); return t ? ` transform="${t}"` : ''; };
+
+const MIR = 'transform="translate(200 0) scale(-1 1)"';
+// precompute muscle paths once: [muscle, path, mirrored]
+const toParts = list => list.map(([m, pts, mir]) => [m, spline(pts.map(shape)), mir]);
+const FRONT = [...toParts(FRONT2), ['abs', ABS, 1]], BACK = toParts(BACK2);
 function fig(parts, x, col, tap){
-  let s = `<g transform="translate(${x} 0)"><g class="base">${CENTER}`;
-  for (const [d, limb] of NEUTRAL) s += `<path d="${d}"${tf(0,limb)}/><path d="${d}"${tf(1,limb)}/>`;
-  s += '</g>';
-  for (const [m,d,mir,limb] of parts){
-    const c = col(m), a = `class="mus" fill="${Array.isArray(c) ? c[0] : c}"${Array.isArray(c) && c[1] < 1 ? ` fill-opacity="${c[1]}"` : ''}${tap?` data-act="muscle" data-m="${m}"`:''}`;
-    s += `<path d="${d}"${tf(0,limb)} ${a}/>`;
-    if (mir) s += `<path d="${d}"${tf(1,limb)} ${a}/>`;
+  let s = `<g transform="translate(${x} 0)"><path d="${OUTLINE}" class="base"/>`;
+  for (const [m, d, mir] of parts){
+    const c = col(m), a = `class="mus" fill="${Array.isArray(c) ? c[0] : c}"${Array.isArray(c) && c[1] < 1 ? ` fill-opacity="${c[1]}"` : ''}${tap ? ` data-act="muscle" data-m="${m}"` : ''}`;
+    s += `<path d="${d}" ${a}/>`;
+    if (mir) s += `<path d="${d}" ${MIR} ${a}/>`;
   }
   return s + '</g>';
 }
