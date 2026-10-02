@@ -9,8 +9,8 @@
 <title>Gymdom</title>
 <meta name="apple-mobile-web-app-title" content="Gymdom">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" id="appleIcon" href="apple-touch-icon.png">
+<link rel="icon" id="favIcon" type="image/png" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -241,6 +241,10 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 .reqs{margin:10px 0 2px}
 .req{display:flex;justify-content:space-between;align-items:center;gap:10px;background:color-mix(in srgb,var(--teal) 10%,var(--panel2));border:1px solid color-mix(in srgb,var(--teal) 40%,transparent);border-radius:12px;padding:9px 10px;margin-bottom:6px;font-size:14px}
 .reqdot{display:inline-grid;place-items:center;min-width:18px;height:18px;border-radius:9px;background:var(--red);color:#fff;font:700 11px Inter;margin-left:4px;padding:0 5px}
+.icons-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.icon-tile{background:none;border:2px solid transparent;border-radius:16px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--text);cursor:pointer;font:inherit}
+.icon-tile img{width:52px;height:52px;border-radius:12px;display:block}.icon-tile small{font-size:10px;color:var(--mute);text-align:center;line-height:1.2}
+.icon-tile.on{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 10%,transparent)}
 </style>
 </head>
 <body>
@@ -254,12 +258,12 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.02.16"></script>
+<script src="exercises.js?v=2026.10.02.17"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.02.16';
+const APP_VERSION = '2026.10.02.17';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -535,6 +539,7 @@ function migrate(s){
   return s;
 }
 try { state = migrate(JSON.parse(localStorage.getItem(KEY))); } catch(e){ state = migrate(null); }
+try { const ip = new URLSearchParams(location.search).get('icon'); if (ip && /^[a-z]+$/.test(ip)){ state.cosmetics = state.cosmetics || {}; state.cosmetics.icon = ip; saveLocal(); } } catch(e){}
 let pushT;
 function save(){
   state.updatedAt = Date.now();
@@ -1478,7 +1483,28 @@ function titleList(L = curLevel()){
 }
 const autoTitle = L => TITLES[Math.min(Math.floor(L / 3), TITLES.length - 1)];
 const myTitle = (L = curLevel()) => { const t = state.cosmetics.title; return t && titleList(L).some(x => x[0] === t && x[2]) ? t : autoTitle(L); };
+/* ---- Alternate app icons (iPhone saves the icon when the app is added to the Home Screen) ---- */
+const APP_ICONS = [['classic','Classic'],['gold','Midnight Gold'],['crimson','Crimson'],['royal','Royal'],['iron','Iron Crown'],['arctic','Arctic'],['emerald','Emerald'],['stealth','Stealth']];
+const iconId = () => APP_ICONS.some(i => i[0] === state.cosmetics.icon) ? state.cosmetics.icon : 'classic';
+function applyIcon(){
+  const id = iconId(), a = document.getElementById('appleIcon'), f = document.getElementById('favIcon');
+  if (a) a.setAttribute('href', id === 'classic' ? 'apple-touch-icon.png' : `icons/${id}-180.png`);
+  if (f) f.setAttribute('href', `icons/${id}-180.png`);
+}
+function openIconHelp(){
+  const id = iconId(), name = APP_ICONS.find(i => i[0] === id)[1], url = location.origin + location.pathname + '?icon=' + id;
+  openSheet(`<div class="row between"><h3 style="margin:0">Update Home Screen icon</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    <div class="row gap" style="margin:12px 0"><img src="icons/${id}-180.png" alt="" style="width:64px;height:64px;border-radius:15px"><div><b>${name}</b><br><small class="mute">iPhone only changes the icon when the app is added again.</small></div></div>
+    <ol class="cues">
+      <li>Check <b>⚙ Settings</b> says <b>Synced</b> so your data comes with you.</li>
+      <li>Tap <b>Open in Safari</b> below.</li>
+      <li>In Safari tap <b>Share → Add to Home Screen</b>. The new icon shows up.</li>
+      <li>Open the new icon, enter your sync code in <b>⚙ Settings</b>, then delete the old icon.</li>
+    </ol>
+    <a class="btn gold block" style="text-align:center;text-decoration:none;box-sizing:border-box" href="${url}" target="_blank" rel="noopener">Open in Safari</a>`);
+}
 function applyTheme(){
+  applyIcon();
   const id = state.cosmetics.theme, th = THEMES.find(t => t[0] === id) && isUnlocked(id, THEMES.find(t => t[0] === id)[2]) ? id : 'classic';
   document.documentElement.dataset.theme = th;
   const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', THEMES.find(t => t[0] === th)[3][2]);
@@ -1572,6 +1598,8 @@ function openArmory(){
     <div style="max-width:250px;margin:4px auto 0">${bodySVG(m => rankOf(lvl(t[m]))[2], {labels:false, skin:sk})}</div>
     <label class="lbl">Title</label><div class="chips wrap">${got.map(([n]) => `<button class="chip${n === cur ? ' on' : ''}" data-act="eqTitle" data-v="${esc(n)}">${esc(n)}</button>`).join('')}</div>
     <small class="mute">${tl.length - got.length} more to unlock through levels, trophies and loot</small>
+    <label class="lbl">App icon</label><div class="icons-grid">${APP_ICONS.map(([id, n]) => `<button class="icon-tile${iconId() === id ? ' on' : ''}" data-act="eqIcon" data-v="${id}"><img src="icons/${id}-180.png" alt="" loading="lazy"><small>${n}</small></button>`).join('')}</div>
+    <button class="btn ghost sm block" style="margin-top:8px" data-act="iconHelp">Update Home Screen icon</button>
     <label class="lbl">Theme</label><div class="themes">${THEMES.map(([id, n, u, c]) => { const ok = isUnlocked(id, u, L), on = (state.cosmetics.theme || 'classic') === id;
       return `<button class="theme-tile${on ? ' on' : ''}${ok ? '' : ' locked'}" data-act="eqTheme" data-v="${id}" style="--a:${c[0]};--b:${c[1]};--p:${c[2]}"><span class="sw"><i></i><i></i></span><b>${n}</b><small>${ok ? (on ? 'Equipped' : 'Unlocked') : '🔒 ' + unlockLabel(u)}</small></button>`; }).join('')}</div>
     ${SLOTS.map(([slot, sn]) => `<label class="lbl">${sn}</label><div class="chips wrap"><button class="chip${!sk[slot] ? ' on' : ''}" data-act="eqSkin" data-s="${slot}" data-v="">None</button>${SKINS.filter(s => s[2] === slot).map(([id, n, , u]) => { const ok = isUnlocked(id, u, L);
@@ -2092,6 +2120,8 @@ const ACT = {
     state.friends = state.friends.filter(f => f !== d.id); ui.lb = (ui.lb || []).filter(p => p.id !== d.id); save(); openFriends(); render(); },
   armory: openArmory,
   eqTitle: d => { state.cosmetics.title = d.v === autoTitle(curLevel()) ? '' : d.v; save(); render(); openArmory(); publishStats(true); },
+  eqIcon: d => { state.cosmetics.icon = d.v; save(); applyIcon(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; toast('Icon picked: tap "Update Home Screen icon" to apply it'); },
+  iconHelp: openIconHelp,
   eqTheme: d => { const th = THEMES.find(t => t[0] === d.v); if (!isUnlocked(d.v, th[2])) return toast(`Unlocks with ${unlockLabel(th[2])}`); state.cosmetics.theme = d.v; save(); applyTheme(); render(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; },
   eqSkin: d => { const it = SKINS.find(s => s[0] === d.v); if (it && !isUnlocked(d.v, it[3])) return toast(`Unlocks with ${unlockLabel(it[3])}`); state.cosmetics[d.s] = d.v; save(); render(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; },
   closeLvlUp: () => { const d = document.getElementById('lvlUp'); if (d){ d.classList.add('out'); setTimeout(() => d.remove(), 300); } },
