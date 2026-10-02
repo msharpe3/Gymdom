@@ -238,6 +238,9 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 .fsrc{display:inline-block;font:600 9px Inter;letter-spacing:.06em;text-transform:uppercase;padding:1px 5px;border-radius:4px;margin-left:6px;vertical-align:1px}
 .fsrc.usda{background:rgba(79,209,197,.15);color:var(--teal)}.fsrc.quick{background:var(--panel2);color:var(--mute)}.fsrc.off{background:rgba(242,201,76,.15);color:var(--gold)}
 .mextra summary{cursor:pointer;color:var(--teal);font-weight:600;font-size:14px;margin:14px 0 4px}
+.reqs{margin:10px 0 2px}
+.req{display:flex;justify-content:space-between;align-items:center;gap:10px;background:color-mix(in srgb,var(--teal) 10%,var(--panel2));border:1px solid color-mix(in srgb,var(--teal) 40%,transparent);border-radius:12px;padding:9px 10px;margin-bottom:6px;font-size:14px}
+.reqdot{display:inline-grid;place-items:center;min-width:18px;height:18px;border-radius:9px;background:var(--red);color:#fff;font:700 11px Inter;margin-left:4px;padding:0 5px}
 </style>
 </head>
 <body>
@@ -251,12 +254,12 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.02.15"></script>
+<script src="exercises.js?v=2026.10.02.16"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.02.15';
+const APP_VERSION = '2026.10.02.16';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1375,15 +1378,39 @@ let lastPublish = 0;
 async function publishStats(force){
   if (!FIREBASE_CONFIG || (!force && Date.now() - lastPublish < 5 * 60e3)) return;
   lastPublish = Date.now();
-  try { const db = await ensureFirebase(); await db.collection('gymdom_players').doc(state.profile.playerId).set(myStats()); }
+  try { const db = await ensureFirebase(); await db.collection('gymdom_players').doc(state.profile.playerId).set(myStats(), {merge:true}); }
   catch(e){ ui.lbErr = 'Leaderboard unavailable: ' + (e.message || e); }
 }
+// Friend requests: adding someone leaves your code in their card's "followers" list.
+// On launch we read our own followers; anyone who isn't already a friend shows up as a request to accept or ignore.
+const FV = () => firebase.firestore.FieldValue;
+let followSynced = false;
+async function syncFollowers(){
+  if (!FIREBASE_CONFIG) return [];
+  const db = await ensureFirebase(), me = state.profile.playerId, col = db.collection('gymdom_players');
+  if (!followSynced){ followSynced = true;  // let everyone we've added know (covers friends added before requests existed)
+    await Promise.all(state.friends.map(id => col.doc(id).set({followers: FV().arrayUnion(me)}, {merge:true}).catch(() => {}))); }
+  const mine = await col.doc(me).get(), followers = (mine.exists && mine.data().followers) || [];
+  const pending = followers.filter(id => id && id !== me && !state.friends.includes(id) && !(state.friendsRemoved || []).includes(id));
+  const docs = await Promise.all(pending.map(id => col.doc(id).get().then(d => d.exists ? {id, ...d.data()} : null).catch(() => null)));
+  const reqs = docs.filter(Boolean), seen = state.reqSeen || [], fresh = reqs.filter(r => !seen.includes(r.id));
+  ui.friendReqs = reqs;
+  if (fresh.length){
+    state.reqSeen = [...new Set([...seen, ...fresh.map(r => r.id)])]; saveLocal();
+    toast(fresh.length === 1 ? `${fresh[0].name} sent you a friend request` : `${fresh.length} new friend requests`);
+  }
+  if (ui.tab === 'progress' && !document.querySelector('#sheetWrap.open')) render();
+  return reqs;
+}
+const reqRows = () => (ui.friendReqs || []).map(r => `<div class="req"><span>🤝 <b>${esc(r.name)}</b> <small class="mute">Lv ${r.level ?? 0}</small><br><small class="mute">wants to be friends</small></span>
+  <span class="row gap"><button class="btn ghost xs" data-act="ignoreReq" data-id="${r.id}">Ignore</button><button class="btn xs" data-act="acceptReq" data-id="${r.id}">Accept</button></span></div>`).join('');
 async function loadLeaderboard(){
   if (!FIREBASE_CONFIG || ui.lbLoading) return;
   ui.lbLoading = true;
   try {
     const db = await ensureFirebase();
     await publishStats();
+    await syncFollowers().catch(() => {});
     const ids = [...new Set([state.profile.playerId, ...state.friends])];
     const docs = await Promise.all(ids.map(id => db.collection('gymdom_players').doc(id).get().then(d => d.exists ? {id, ...d.data()} : null).catch(() => null)));
     ui.lb = docs.filter(Boolean); ui.lbErr = '';
@@ -1398,7 +1425,8 @@ function leaderboardCard(){
   const metric = LB_METRICS.find(m => m[0] === (ui.lbMetric || 'level'));
   const me = {id: state.profile.playerId, ...myStats()};
   const rows = [me, ...(ui.lb || []).filter(p => p.id !== me.id)].sort((a, b) => metric[2](b) - metric[2](a));
-  return `<div class="card"><div class="row between"><h3 style="margin:0">Leaderboard</h3><button class="btn ghost sm" data-act="friends">${state.friends.length ? 'Friends' : '+ Add friends'}</button></div>
+  return `<div class="card"><div class="row between"><h3 style="margin:0">Leaderboard</h3><button class="btn ghost sm" data-act="friends">${state.friends.length ? 'Friends' : '+ Add friends'}${(ui.friendReqs || []).length ? ` <span class="reqdot">${ui.friendReqs.length}</span>` : ''}</button></div>
+    ${(ui.friendReqs || []).length ? `<div class="reqs">${reqRows()}</div>` : ''}
     <div class="chips" style="margin:10px 0 4px">${LB_METRICS.map(([k, n]) => `<button class="chip${metric[0] === k ? ' on' : ''}" data-act="lbMetric" data-v="${k}">${n}</button>`).join('')}</div>
     ${rows.map((p, i) => `<div class="lbrow${p.id === me.id ? ' me' : ''}"><span class="lbrank">${i < 3 && rows.length > 1 ? ['🥇','🥈','🥉'][i] : i + 1}</span><span class="lbname">${esc(p.name)}${p.id === me.id ? ' <small class="mute">(you)</small>' : ''}${p.title ? `<br><small class="mute">${esc(p.title)}</small>` : ''}</span><span class="lbval">${metric[3](p)}</span></div>`).join('')}
     ${!state.friends.length ? `<p class="mute" style="font-size:13px;margin:8px 0 0">Share your friend code so friends can add you, and add theirs to compete.</p>` : ''}
@@ -1411,6 +1439,7 @@ function openFriends(){
     <div class="fcode">${code}</div>
     <div class="row gap"><button class="btn ghost sm" style="flex:1" data-act="shareCode">Share</button><button class="btn ghost sm" style="flex:1" data-act="copyCode">Copy</button></div>
     ${!state.profile.name ? `<p class="hint" style="margin-top:10px">Set a display name in ⚙ Settings so friends know it's you.</p>` : ''}
+    ${(ui.friendReqs || []).length ? `<label class="lbl">Friend requests</label>${reqRows()}` : ''}
     <label class="lbl">Add a friend</label>
     <div class="row gap"><input id="friendIn" placeholder="Their friend code" autocapitalize="characters" maxlength="8"><button class="btn sm" data-act="addFriend">Add</button></div>
     <label class="lbl">Your friends</label>
@@ -2041,9 +2070,26 @@ const ACT = {
     if (state.friends.includes(id)) return toast('Already on your list');
     try { const db = await ensureFirebase(); const doc = await db.collection('gymdom_players').doc(id).get();
       if (!doc.exists) return toast('No player with that code yet — have them open their Progress tab first');
-      state.friends.push(id); save(); ui.lb = [...(ui.lb || []), {id, ...doc.data()}]; openFriends(); render(); toast(`Added ${doc.data().name}`); }
+      state.friends.push(id); state.friendsRemoved = (state.friendsRemoved || []).filter(f => f !== id); save();
+      db.collection('gymdom_players').doc(id).set({followers: FV().arrayUnion(state.profile.playerId)}, {merge:true}).catch(() => {});
+      ui.lb = [...(ui.lb || []), {id, ...doc.data()}]; openFriends(); render(); toast(`Added ${doc.data().name}`); }
     catch(e){ toast("Couldn't reach the leaderboard — check your connection"); } },
-  rmFriend: d => { state.friends = state.friends.filter(f => f !== d.id); ui.lb = (ui.lb || []).filter(p => p.id !== d.id); save(); openFriends(); render(); },
+  acceptReq: d => { const r = (ui.friendReqs || []).find(x => x.id === d.id); if (!r) return;
+    if (!state.friends.includes(r.id)) state.friends.push(r.id);
+    state.friendsRemoved = (state.friendsRemoved || []).filter(f => f !== r.id);
+    try { firebase.firestore().collection('gymdom_players').doc(r.id).set({followers: FV().arrayUnion(state.profile.playerId)}, {merge:true}).catch(() => {}); } catch(e){}
+    ui.friendReqs = ui.friendReqs.filter(x => x.id !== r.id); ui.lb = [...(ui.lb || []).filter(p => p.id !== r.id), r];
+    save(); render(); if (document.querySelector('#sheetWrap.open') && $('#friendIn')) openFriends(); toast(`You and ${r.name} are now friends`); },
+  ignoreReq: d => { const r = (ui.friendReqs || []).find(x => x.id === d.id); if (!r) return;
+    state.friendsRemoved = [...new Set([...(state.friendsRemoved || []), r.id])];
+    try { firebase.firestore().collection('gymdom_players').doc(state.profile.playerId).set({followers: FV().arrayRemove(r.id)}, {merge:true}).catch(() => {}); } catch(e){}
+    ui.friendReqs = ui.friendReqs.filter(x => x.id !== r.id);
+    save(); render(); if (document.querySelector('#sheetWrap.open') && $('#friendIn')) openFriends(); toast('Request ignored'); },
+  rmFriend: d => { const me = state.profile.playerId;
+    try { if (FIREBASE_CONFIG && window.firebase){ const col = firebase.firestore().collection('gymdom_players');
+      col.doc(d.id).set({followers: FV().arrayRemove(me)}, {merge:true}).catch(() => {}); col.doc(me).set({followers: FV().arrayRemove(d.id)}, {merge:true}).catch(() => {}); } } catch(e){}
+    state.friendsRemoved = [...new Set([...(state.friendsRemoved || []), d.id])];
+    state.friends = state.friends.filter(f => f !== d.id); ui.lb = (ui.lb || []).filter(p => p.id !== d.id); save(); openFriends(); render(); },
   armory: openArmory,
   eqTitle: d => { state.cosmetics.title = d.v === autoTitle(curLevel()) ? '' : d.v; save(); render(); openArmory(); publishStats(true); },
   eqTheme: d => { const th = THEMES.find(t => t[0] === d.v); if (!isUnlocked(d.v, th[2])) return toast(`Unlocks with ${unlockLabel(th[2])}`); state.cosmetics.theme = d.v; save(); applyTheme(); render(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; },
@@ -2089,6 +2135,7 @@ if (state.active) ui.tab = 'train';
 render();
 initSync();
 setTimeout(backfillNutrition, 2500);
+setTimeout(() => { if (FIREBASE_CONFIG) syncFollowers().catch(() => {}); }, 4000);
 async function checkForUpdate(){
   try {
     const r = await fetch('version.json?t=' + Date.now(), {cache:'no-store'});
