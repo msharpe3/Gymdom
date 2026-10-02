@@ -251,12 +251,12 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.02.14"></script>
+<script src="exercises.js?v=2026.10.02.15"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.02.14';
+const APP_VERSION = '2026.10.02.15';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1087,6 +1087,7 @@ async function ensureUSDA(){
   if (!window.USDA_RAW) await loadScript('usda-foods.js?v=' + APP_VERSION);
   USDA = window.USDA_RAW.split('\n').map(line => { const i = line.indexOf('|'), j = line.indexOf('|', i + 1); return {id: line.slice(0, i), line, nl: line.slice(i + 1, j).toLowerCase()}; });
   USDA_BY_ID = Object.fromEntries(USDA.map(x => [x.id, x]));
+  attachQuickNutrients();
   return USDA;
 }
 function usdaFood(line){
@@ -1119,6 +1120,35 @@ const OFF_MAP = [['sat','saturated-fat',1],['trans','trans-fat',1],['mono','mono
   ['fol','folates',1e6],['b12','vitamin-b12',1e6],['mg','magnesium',1000],['ph','phosphorus',1000],['zn','zinc',1000],['caf','caffeine',1000]];
 const offNuts = n => { const o = {}; for (const [k, key, mul] of OFF_MAP){ const v = n[key + '_100g']; if (v != null && v !== '' && isFinite(+v)) o[k] = +v * mul; } return o; };
 const MANUAL_EXTRA = [['sat','Saturated fat','g'],['trans','Trans fat','g'],['chol','Cholesterol','mg'],['na','Sodium','mg'],['fib','Fiber','g'],['sug','Total sugars','g'],['asug','Added sugars','g'],['vd','Vitamin D','µg'],['ca','Calcium','mg'],['fe','Iron','mg'],['pot','Potassium','mg']];
+
+/* ---- Built-in foods get USDA nutrients; older logs get backfilled ---- */
+// Built-in food name → matching USDA food id (macros stay as listed; vitamins, sodium, etc. come from USDA)
+const QUICK_USDA = {"Chicken breast, cooked":"05064","Chicken thigh, cooked":"05098","Ground beef 90/10, cooked":"23563","Ground beef 80/20, cooked":"23573","Sirloin steak, cooked":"13455","Ground turkey 93/7, cooked":"05306","Pork chop, cooked":"10030","Shrimp, cooked":"15271","Deli turkey slices":"07081","Egg, whole":"01123","Egg whites":"01124","Scrambled eggs":"01132","Tofu, firm":"16426","Whey protein powder":"14066","Milk, whole":"01077","Milk, skim":"01085","Greek yogurt, nonfat plain":"01256","Yogurt, nonfat vanilla":"01295","Cottage cheese, 2%":"01015","Cheddar cheese":"01009","Mozzarella, part-skim":"01028","Butter":"01001","White rice, cooked":"20045","Brown rice, cooked":"20037","Pasta, cooked":"20121","Bread, white":"18069","Bread, whole wheat":"18075","Bagel, plain":"18001","Flour tortilla":"18364","Oats, dry":"08120","Granola":"08037","Quinoa, cooked":"20137","Potato, baked":"11674","Sweet potato, baked":"11508","Black beans, cooked":"16315","Chickpeas, cooked":"16357","Lentils, cooked":"16070","Banana":"09040","Apple":"09003","Grapes":"09132","Pineapple":"09266","Watermelon":"09326","Avocado":"09037","Spinach, raw":"11457","Carrots":"11124","Bell pepper":"11821","Green beans, cooked":"11061","Corn, cooked":"11168","Onion":"11282","Cucumber":"11205","Olive oil":"04053","Peanut butter":"16098","Almonds":"12061","Cashews":"12087","Walnuts":"12155","Ranch dressing":"04639","Hummus":"16158","Salsa":"06164","Ketchup":"11935","Marinara sauce":"06931","Honey":"19296","Sugar":"19335","Dark chocolate (70–85%)":"19904","Potato chips":"19411","Pizza, cheese":"21505","Orange juice":"09206","Cola":"14148","Chicken wings, cooked":"05106","Chicken tenders, breaded":"05326","Chicken nuggets":"22975","Ground chicken, cooked":"05333","Turkey breast, roasted":"05220","Deli ham":"07029","Pork tenderloin, cooked":"10061","Pork sausage, cooked":"07089","Pepperoni":"07057","Beef jerky":"19002","Filet mignon, cooked":"23624","Lamb chop, cooked":"17024","Cod, cooked":"15016","Tilapia, cooked":"15262","Sardines, canned in oil":"15088","Scallops, cooked":"90240","Tempeh":"16174","Edamame, shelled":"11212","Veggie burger patty":"16147","Fried egg":"01128","Plant protein powder":"14067","Greek yogurt, 2% plain":"01287","Greek yogurt, whole milk plain":"01293","Greek yogurt, nonfat vanilla":"01286","Kefir, lowfat":"01289","Almond milk, unsweetened":"14091","Soy milk, unsweetened":"16222","Half and half":"01049","Heavy cream":"01053","Cream cheese":"01017","Sour cream":"01056","Parmesan, grated":"01032","Swiss cheese":"01040","Feta cheese":"01019","String cheese":"01029","Ice cream, vanilla":"19095","Egg noodles, cooked":"20110","Instant ramen (dry block)":"06583","Couscous, cooked":"20029","Barley, cooked":"20006","Oatmeal, cooked with water":"08121","Instant oatmeal, flavored":"08130","Cheerios":"08013","Frosted Flakes":"08069","Raisin Bran":"08060","Cinnamon Toast Crunch":"08272","Pancakes":"18293","Waffle, frozen":"18935","Maple syrup":"19353","English muffin":"18258","Blueberry muffin":"18274","Glazed donut":"18250","Pita bread":"18041","Naan":"28307","Sourdough bread":"18029","Rye bread":"18060","Corn tortilla":"18363","Hamburger bun":"18350","Tortilla chips":"25028","Saltine crackers":"18228","Rice cakes":"42204","Pretzels":"19047","Popcorn, air-popped":"19034","Popcorn, microwave butter":"25026","Granola bar (typical)":"19015","Graham crackers":"18173","Chocolate chip cookie":"18164","Brownie":"18151","Chocolate cake, frosted":"18096","Apple pie":"18302","Trail mix":"19059","Pickles":"11941","Olives":"09193","Mango":"09176","Peach":"09236","Pear":"09252","Blackberries":"09042","Kiwi":"09148","Cantaloupe":"09181","Grapefruit":"09112","Clementine":"09433","Medjool dates":"09421","Raisins":"09298","Dried cranberries":"09079","Applesauce, unsweetened":"09401","Asparagus, cooked":"11012","Brussels sprouts, cooked":"11745","Cauliflower rice":"11135","Zucchini, cooked":"11861","Romaine lettuce":"11251","Cabbage":"11109","Celery":"11143","Peas, cooked":"11811","Mixed vegetables, cooked":"11894","Potato salad":"11414","Mashed potatoes":"31036","Refried beans":"16172","Kidney beans, cooked":"16333","Pinto beans, cooked":"16343","Pistachios":"12151","Peanuts":"16090","Sunflower seeds":"12037","Chia seeds":"12006","Almond butter":"12695","Coconut oil":"04047","Vegetable oil":"04044","Mustard":"02046","Teriyaki sauce":"06112","Sriracha":"06631","Energy drink (Red Bull)":"14154","Apple juice":"09016","Light beer":"14006","Liquor, 80 proof":"14050","Pizza, pepperoni":"22903","Cheeseburger (fast food)":"21096","Bacon, cooked":"10860","Salmon, cooked":"15237","Tuna, canned in water":"15121","Milk, 2%":"01079","French fries":"11841","Orange":"09200","Strawberries":"09316","Blueberries":"09050","Broccoli, cooked":"11091","Salad greens":"11253","Tomato":"11529","Mayonnaise":"04025","Beer":"14003","Coffee, black":"14209","Hot dog (beef)":"07945","Ribeye steak, cooked":"23176","Canned chicken breast":"05336","Tuna steak, cooked":"15221","Yogurt, whole milk plain":"01116","Skyr, plain":"01256","Coffee creamer, flavored":"01205","American cheese":"01042","Mac and cheese":"32005","Croissant":"18239","Hot dog bun":"18350","Gummy candy":"19106","Milk chocolate":"19120","Cherries":"09070","Raspberries":"09302","Cauliflower, cooked":"11136","Mushrooms":"11260","Kale":"11233","Coleslaw":"21127","Hash browns":"11370","Baked beans":"16006","Nutella":"19125","BBQ sauce":"06150","Soy sauce":"16123","Hot sauce":"06168","Italian dressing":"04114","Caesar dressing":"43015","Jam / jelly":"19297","Sports drink (Gatorade)":"14460","Lemonade":"14293","Red wine":"14096","Diet soda":"14146","Hamburger (fast food)":"21107","McDonald's Big Mac (est.)":"21237","McDonald's Quarter Pounder w/ Cheese (est.)":"21235","McDonald's McChicken (est.)":"21355","McDonald's McNuggets (est.)":"21309","McDonald's Egg McMuffin (est.)":"21357","Chick-fil-A Chicken Sandwich (est.)":"21526","Panda Express Orange Chicken (est.)":"36629"};
+function attachQuickNutrients(){ for (const f of FOODS){ const id = QUICK_USDA[f.name]; if (id && USDA_BY_ID[id]){ f.n = usdaFood(USDA_BY_ID[id].line).n; f.usda = id; } } }
+function entryGrams(e){
+  const q = +e.q || 0; if (e.u === 'g') return q; if (e.u === 'oz') return q * 28.35;
+  const s = e.d && e.d.sv && e.d.sv[+String(e.u || '').slice(1)]; return s ? q * s[1] : 0;
+}
+let backfilling = false;
+async function backfillNutrition(){
+  if (backfilling) return; backfilling = true;
+  try {
+    const entries = [];
+    for (const k in state.food) for (const [m] of MEALS) (state.food[k][m] || []).forEach(e => entries.push(e));
+    state.savedMeals.forEach(sm => (sm.items || []).forEach(e => entries.push(e)));
+    const todo = entries.filter(e => e && !e.m && !e.x && e.d), recent = state.foodRecent.filter(f => !f.fixed && !f.n);
+    if (!todo.length && !recent.length) return;
+    if (todo.some(e => e.d.src !== 'off') || recent.some(f => f.src !== 'off')){ try { await ensureUSDA(); } catch(e){} }
+    const offCache = {};
+    const offN = async code => { if (!(code in offCache)){ try { const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=nutriments`); const j = await r.json(); offCache[code] = j && j.status === 1 ? offNuts((j.product || {}).nutriments || {}) : null; } catch(e){ offCache[code] = null; } } return offCache[code]; };
+    const nutsFor = async (name, src, code, n) => { if (n) return n; if (src === 'off' && code) return offN(code); const f = FOODS.find(x => x.name === name); return f && f.n ? f.n : null; };
+    let filled = 0;
+    for (const e of todo){ const nn = await nutsFor(e.n, e.d.src, e.d.code, e.d.n), g = entryGrams(e); if (nn && Object.keys(nn).length && g > 0){ e.d.n = nn; e.x = scaleN(nn, g); filled++; } }
+    for (const f of recent){ const nn = await nutsFor(f.name, f.src, f.code, null); if (nn && Object.keys(nn).length) f.n = nn; }
+    if (filled){ save(); if (ui.tab === 'food' && !document.querySelector('#sheetWrap.open')) render(); toast(`Added full nutrition facts to ${filled} logged food${filled === 1 ? '' : 's'}`); }
+    else if (recent.length) saveLocal();
+  } finally { backfilling = false; }
+}
 
 /* ---- Add food: search, scan, manual, recent ---- */
 function openAddFood(meal, mode){
@@ -1153,7 +1183,7 @@ function renderFoodRes(){
   el.innerHTML = (words.length ? `<small class="mute">${hits.length} USDA match${hits.length === 1 ? '' : 'es'} · full nutrition facts</small>` : '<small class="mute">Common foods · full nutrition facts</small>')
     + ui.foodList.map((f, i) => foodRow(f, i, 'usda')).join('')
     + (hits.length > n ? `<button class="btn ghost block" style="margin-top:8px" data-act="foodMore">Show more (${hits.length - n} left)</button>` : '')
-    + (ui.quickList.length ? `<small class="mute" style="display:block;margin-top:12px">Quick estimates & restaurants · macros only</small>` + ui.quickList.map((f, i) => foodRow({...f, src:'local'}, i, 'local')).join('') : '')
+    + (ui.quickList.length ? `<small class="mute" style="display:block;margin-top:12px">More foods & restaurants</small>` + ui.quickList.map((f, i) => foodRow({...f, src: f.n ? 'quickfull' : 'local'}, i, 'local')).join('') : '')
     + (words.length ? `<button class="btn ghost block" style="margin-top:10px" data-act="offSearch">Search packaged & brand-name foods for "${esc(ui.foodQ.trim())}"</button><div id="offRes"></div>` : '')
     + (none ? '<p class="mute" style="font-size:13px">No matches — try fewer or different words, the packaged food search, or add it manually.</p>' : '');
 }
@@ -1869,7 +1899,7 @@ async function initSync(preferRemote = false){
       const d = snap.data();
       if (d && preferRemote){
         preferRemote = false;
-        state = migrate(JSON.parse(d.data)); state.profile.syncCode = code; saveLocal(); render(); toast('Synced from cloud');
+        state = migrate(JSON.parse(d.data)); state.profile.syncCode = code; saveLocal(); render(); toast('Synced from cloud'); setTimeout(backfillNutrition, 500);
       }
       else if (!d || d.updatedAt < state.updatedAt) { preferRemote = false; pushRemote(); }
       else if (d.updatedAt > state.updatedAt){
@@ -2058,6 +2088,7 @@ setInterval(() => { const el = $('#elapsed'); if (el && state.active){ const s =
 if (state.active) ui.tab = 'train';
 render();
 initSync();
+setTimeout(backfillNutrition, 2500);
 async function checkForUpdate(){
   try {
     const r = await fetch('version.json?t=' + Date.now(), {cache:'no-store'});
