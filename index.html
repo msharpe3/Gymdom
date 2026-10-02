@@ -174,12 +174,12 @@ select{font:16px Inter;background:var(--panel2);color:var(--text);border:1px sol
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.02.1"></script>
+<script src="exercises.js?v=2026.10.02.2"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.02.1';
+const APP_VERSION = '2026.10.02.2';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -915,7 +915,7 @@ const TABS = [
   ['train','Train','<path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11"/>'],
   ['food','Food','<path d="M7 3v7a2 2 0 0 0 4 0V3M9 10v11M17 21V3c-2.5 1.5-3.5 4.5-3.5 8h3.5"/>'],
   ['library','Library','<path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2V5Zm0 16h14"/>'],
-  ['coach','Coach','<path d="M12 3l2.2 5.2L20 9l-4.4 3.8L17 19l-5-3-5 3 1.4-6.2L4 9l5.8-.8L12 3Z"/>']
+  ['coach','Coach','<path d="M3 14a6 6 0 0 0 12 0v-2h6V8H9a6 6 0 0 0-6 6Z"/><circle cx="9" cy="14" r="2"/><path d="M5.5 9.5 3.5 6.5"/><circle cx="3" cy="5.5" r="1.2"/>']
 ];
 function renderTabs(){
   $('#tabs').innerHTML = TABS.map(([k,n,ic]) => `<button class="${ui.tab===k?'on':''}" data-act="tab" data-tab="${k}"><svg viewBox="0 0 24 24">${ic}</svg>${n}</button>`).join('');
