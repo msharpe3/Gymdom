@@ -238,12 +238,12 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.02.11"></script>
+<script src="exercises.js?v=2026.10.02.12"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.02.11';
+const APP_VERSION = '2026.10.02.12';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1191,9 +1191,9 @@ function cupSVG(fill, i){
 }
 function waterCard(){
   const day = foodDay(), oz = day.water || 0, goal = state.waterGoal, glasses = Math.ceil(goal / GLASS);
-  return `<div class="card water-card"><div class="row between"><div class="row gap" style="align-items:baseline"><h3 style="margin:0">Water</h3><span class="wamt">${oz} <small class="mute">/ ${goal} oz</small></span></div><button class="btn ghost xs" data-act="waterGoal">Goal</button></div>
+  return `<div class="card water-card"><div class="row between"><div class="row gap" style="align-items:baseline"><h3 style="margin:0">Water</h3><span class="wamt">${r1(oz)} <small class="mute">/ ${goal} fl oz</small></span></div><button class="btn ghost xs" data-act="waterGoal">Goal</button></div>
     <div class="water-row"><div class="drops" aria-label="${r1(oz / GLASS)} of ${glasses} glasses">${Array.from({length:Math.min(glasses, 16)}, (_, i) => cupSVG(Math.max(0, Math.min(1, oz / GLASS - i)), i)).join('')}</div>
-    <div class="row" style="gap:6px"><button class="btn ghost xs" data-act="water" data-v="-${GLASS}" aria-label="Remove a glass">−</button><button class="btn xs water" data-act="water" data-v="${GLASS}">+${GLASS}</button><button class="btn xs water" data-act="water" data-v="16">+16</button></div></div></div>`;
+    <div class="row" style="gap:6px"><button class="btn ghost xs" data-act="water" data-v="-${GLASS}" aria-label="Remove a glass">−</button><button class="btn xs water" data-act="water" data-v="${GLASS}">+${GLASS}</button><button class="btn xs water" data-act="waterCustom" aria-label="Add a custom amount">+ fl oz</button></div></div></div>`;
 }
 
 /* ============ LEADERBOARD ============ */
@@ -1857,10 +1857,18 @@ const ACT = {
     (day[ui.foodMeal] = day[ui.foodMeal] || []).push(...JSON.parse(JSON.stringify(m.items))); save(); closeSheet(); render(); toast(`Added ${m.name}`); },
   mealDel: async d => { const m = state.savedMeals[+d.i]; const meal = ui.foodMeal;
     if (m && await confirmBox(`Delete saved meal "${m.name}"?`, 'Delete')){ state.savedMeals.splice(+d.i, 1); save(); } openAddFood(meal, 'meals'); },
-  water: d => { const day = foodDay(); day.water = Math.max(0, (day.water || 0) + (+d.v)); save(); render(); },
+  water: d => { const day = foodDay(); day.water = Math.max(0, r1((day.water || 0) + (+d.v))); save(); render(); },
+  waterCustom: () => { openSheet(`<div class="row between"><h3 style="margin:0">Add water</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    <label class="lbl">Amount (fl oz)</label><input id="wcIn" type="number" inputmode="decimal" step="0.1" min="0" placeholder="e.g. 16.9">
+    <div class="chips wrap" style="margin-top:10px">${[[8,'8 · cup'],[12,'12 · can'],[16.9,'16.9 · bottle'],[20,'20'],[24,'24'],[32,'32'],[40,'40 · jug']].map(([v, l]) => `<button class="chip" data-act="wcPick" data-v="${v}">${l}</button>`).join('')}</div>
+    <div class="row gap" style="margin-top:14px"><button class="btn ghost" style="flex:1" data-act="wcSave" data-sign="-1">Remove</button><button class="btn water" style="flex:2" data-act="wcSave" data-sign="1">Add</button></div>`);
+    setTimeout(() => { const i = $('#wcIn'); if (i) i.focus(); }, 50); },
+  wcPick: d => { $('#wcIn').value = d.v; },
+  wcSave: d => { const v = +$('#wcIn').value; if (!(v > 0 && v <= 200)) return toast('Enter an amount between 0 and 200 fl oz');
+    const day = foodDay(); day.water = Math.max(0, r1((day.water || 0) + v * (+d.sign))); save(); closeSheet(); render(); toast(`${+d.sign > 0 ? 'Added' : 'Removed'} ${r1(v)} fl oz`); },
   waterGoal: () => openSheet(`<div class="row between"><h3 style="margin:0">Daily water goal</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
-    <label class="lbl">Goal (oz)</label><input id="wgIn" type="number" inputmode="numeric" value="${state.waterGoal}"><button class="btn gold block" style="margin-top:14px" data-act="waterGoalSave">Save</button>`),
-  waterGoalSave: () => { const v = Math.round(+$('#wgIn').value); if (!(v >= 8 && v <= 300)) return toast('Enter a goal between 8 and 300 oz'); state.waterGoal = v; save(); closeSheet(); render(); },
+    <label class="lbl">Goal (fl oz)</label><input id="wgIn" type="number" inputmode="numeric" value="${state.waterGoal}"><button class="btn gold block" style="margin-top:14px" data-act="waterGoalSave">Save</button>`),
+  waterGoalSave: () => { const v = Math.round(+$('#wgIn').value); if (!(v >= 8 && v <= 300)) return toast('Enter a goal between 8 and 300 fl oz'); state.waterGoal = v; save(); closeSheet(); render(); },
   friends: openFriends,
   lbMetric: d => { ui.lbMetric = d.v; render(); },
   shareCode: async () => { const text = `Add me on Gymdom! My friend code is ${state.profile.playerId} — ${location.origin + location.pathname}`;
