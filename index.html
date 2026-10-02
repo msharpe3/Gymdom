@@ -161,6 +161,15 @@ select{font:16px Inter;background:var(--panel2);color:var(--text);border:1px sol
 .scanline{position:absolute;left:10%;right:10%;top:50%;height:2px;background:var(--red);box-shadow:0 0 12px var(--red);animation:scan 1.8s ease-in-out infinite}
 @keyframes scan{0%,100%{transform:translateY(-60px)}50%{transform:translateY(60px)}}
 #updBar{position:fixed;left:12px;right:12px;top:calc(62px + env(safe-area-inset-top));z-index:40;display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--panel2);border:1px solid var(--gold);border-radius:14px;padding:10px 12px;font-size:14px;box-shadow:0 8px 30px rgba(0,0,0,.5);max-width:536px;margin:0 auto}
+:root{--water:#5fa8f5}
+.btn.water{background:var(--water);color:#06182b}
+.drops{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.drops span{width:14px;height:18px;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;border:2px solid var(--water);opacity:.35}
+.drops span.on{background:var(--water);opacity:1}
+.lbrow{display:grid;grid-template-columns:32px 1fr auto;gap:8px;align-items:center;padding:9px 6px;border-bottom:1px solid var(--line);font-size:14px}
+.lbrow:last-of-type{border-bottom:0}.lbrow.me{background:rgba(79,209,197,.08);border-radius:10px}
+.lbrank{font:700 15px 'Chakra Petch';text-align:center}.lbval{font:700 14px 'Chakra Petch';color:var(--gold)}
+.fcode{font:700 34px 'Chakra Petch';letter-spacing:.25em;text-align:center;background:var(--panel2);border:1px dashed var(--teal);border-radius:12px;padding:12px;margin-bottom:10px;color:var(--teal)}
 </style>
 </head>
 <body>
@@ -174,12 +183,12 @@ select{font:16px Inter;background:var(--panel2);color:var(--text);border:1px sol
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.02.3"></script>
+<script src="exercises.js?v=2026.10.02.4"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.02.3';
+const APP_VERSION = '2026.10.02.4';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -438,6 +447,8 @@ function migrate(s){
   s.updatedAt = s.updatedAt || 0;
   s.bwLog = s.bwLog || []; s.achievements = s.achievements || {}; s.questsDone = s.questsDone || {};
   s.bonusXP = s.bonusXP || 0; s.prCount = s.prCount || 0;
+  s.savedMeals = s.savedMeals || []; s.waterGoal = s.waterGoal || 64; s.friends = s.friends || [];
+  if (!s.profile.playerId) s.profile.playerId = newPlayerId();
   s.food = s.food || {}; s.foodRecent = s.foodRecent || []; s.foodTargets = s.foodTargets || null;
   s.foodProfile = Object.assign({sex:'m', age:'', lb:'', ft:'', inch:'', act:1.55, goal:'recomp'}, s.foodProfile || {});
   return s;
@@ -728,12 +739,13 @@ function renderFood(){
     if (t.k) h += `<div style="font:700 22px 'Chakra Petch'">${fmt(t.k)} kcal <small class="mute" style="font:500 13px Inter">· P ${Math.round(t.p)} · C ${Math.round(t.c)} · F ${Math.round(t.f)}</small></div>`;
   }
   h += `${t.k ? macroSplit(t) : ''}</div>`;
+  h += waterCard();
   for (const [m, name] of MEALS){
     const list = day[m] || [], mt = sumEntries(list);
     h += `<div class="card"><div class="row between"><h3 style="margin:0">${name}</h3>${list.length ? `<span class="xp" style="color:var(--text)">${fmt(mt.k)} kcal</span>` : ''}</div>
       ${list.length ? `<small class="mute">Protein ${Math.round(mt.p)} g · Carbs ${Math.round(mt.c)} g · Fat ${Math.round(mt.f)} g</small>${macroSplit(mt)}` : ''}
       ${list.map((e, i) => `<div class="frow" data-act="foodEdit" data-m="${m}" data-i="${i}"><span><b>${esc(e.n)}</b><br><small class="mute">${esc(e.a || '')}</small></span><span class="fk">${fmt(e.k)}<small> kcal</small><br><small class="mute">${Math.round(e.p)}P · ${Math.round(e.c)}C · ${Math.round(e.f)}F</small></span></div>`).join('')}
-      <button class="btn ghost sm" style="margin-top:8px" data-act="foodAdd" data-m="${m}">+ Add food</button></div>`;
+      <div class="ex-actions" style="margin-top:8px"><button class="btn ghost sm" data-act="foodAdd" data-m="${m}">+ Add food</button>${list.length ? `<button class="btn ghost sm" data-act="mealSave" data-m="${m}">Save meal</button>` : ''}</div></div>`;
   }
   return h;
 }
@@ -744,9 +756,9 @@ function openAddFood(meal, mode){
   ui.foodMeal = meal; ui.foodMode = mode || ui.foodMode || 'search';
   const mn = MEALS.find(x => x[0] === meal)[1];
   openSheet(`<div class="row between"><h3 style="margin:0">Add to ${mn}</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
-    <div class="chips" style="margin:12px 0">${[['search','Search'],['scan','Scan barcode'],['manual','Manual'],['recent','Recent']].map(([k, v]) => `<button class="chip${ui.foodMode === k ? ' on' : ''}" data-act="foodMode" data-v="${k}">${v}</button>`).join('')}</div>
+    <div class="chips" style="margin:12px 0">${[['search','Search'],['scan','Scan barcode'],['meals','Saved meals'],['recent','Recent'],['manual','Manual']].map(([k, v]) => `<button class="chip${ui.foodMode === k ? ' on' : ''}" data-act="foodMode" data-v="${k}">${v}</button>`).join('')}</div>
     <div id="foodArea"></div>`);
-  ({search:foodSearchUI, scan:startScan, manual:() => manualUI(), recent:recentUI})[ui.foodMode]();
+  ({search:foodSearchUI, scan:startScan, meals:savedMealsUI, manual:() => manualUI(), recent:recentUI})[ui.foodMode]();
 }
 const foodRow = (f, i, list) => `<div class="frow" data-act="foodPick" data-list="${list}" data-i="${i}"><span><b>${esc(f.name)}</b><br><small class="mute">${f.sv && f.sv[0] ? esc(f.sv[0][0]) + ' · ' + Math.round(f.per.k * f.sv[0][1] / 100) + ' kcal' : Math.round(f.per.k) + ' kcal / 100 g'}</small></span><span class="sr">+</span></div>`;
 function foodSearchUI(){
@@ -890,6 +902,99 @@ function openTargets(){
     <button class="btn gold block" data-act="tpSave">Save targets</button>`);
 }
 function readTp(){ const fp = ui.tp; fp.age = $('#tpAge').value; fp.lb = $('#tpLb').value; fp.ft = $('#tpFt').value; fp.inch = $('#tpIn').value; return fp; }
+/* ============ SAVED MEALS ============ */
+function savedMealsUI(){
+  const ms = state.savedMeals;
+  $('#foodArea').innerHTML = ms.length ? ms.map((m, i) => { const t = sumEntries(m.items);
+    return `<div class="frow" data-act="mealUse" data-i="${i}"><span><b>${esc(m.name)}</b><br><small class="mute">${m.items.length} item${m.items.length === 1 ? '' : 's'} · ${fmt(t.k)} kcal · ${Math.round(t.p)}P ${Math.round(t.c)}C ${Math.round(t.f)}F</small></span>
+      <span class="row gap"><span class="sr">+</span><button class="icon-btn sm" data-act="mealDel" data-i="${i}" aria-label="Delete saved meal">✕</button></span></div>`; }).join('')
+    : '<p class="mute">No saved meals yet. Log a meal, then tap <b>Save meal</b> on it to reuse it here with one tap.</p>';
+}
+function openSaveMeal(m){
+  const list = foodDay()[m] || []; if (!list.length) return;
+  ui.saveMealFrom = m;
+  openSheet(`<div class="row between"><h3 style="margin:0">Save meal</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    <label class="lbl">Name</label><input id="smName" placeholder="e.g. Usual breakfast" value="${esc('My ' + MEALS.find(x => x[0] === m)[1].toLowerCase())}">
+    <div style="margin-top:10px">${list.map(e => `<div class="mini-row"><span>${esc(e.n)} <small class="mute">${esc(e.a || '')}</small></span><span>${fmt(e.k)} kcal</span></div>`).join('')}</div>
+    <button class="btn gold block" style="margin-top:14px" data-act="mealSaveGo">Save</button>`);
+}
+
+/* ============ WATER ============ */
+const GLASS = 8; // oz per tap
+function waterCard(){
+  const day = foodDay(), oz = day.water || 0, goal = state.waterGoal, glasses = Math.ceil(goal / GLASS), full = Math.floor(oz / GLASS);
+  return `<div class="card"><div class="row between"><h3 style="margin:0">Water</h3><button class="btn ghost sm" data-act="waterGoal">Goal</button></div>
+    <div style="font:700 24px 'Chakra Petch';margin:4px 0">${oz} <small class="mute" style="font:500 14px Inter">/ ${goal} oz</small></div>
+    <div class="bar"><i style="width:${Math.min(100, oz / goal * 100)}%;background:var(--water)"></i></div>
+    <div class="drops" aria-label="${full} of ${glasses} glasses">${Array.from({length:Math.min(glasses, 16)}, (_, i) => `<span class="${i < full ? 'on' : ''}"></span>`).join('')}</div>
+    <div class="row gap"><button class="btn ghost sm" data-act="water" data-v="-${GLASS}" aria-label="Remove a glass">−</button><button class="btn sm water" data-act="water" data-v="${GLASS}">+ ${GLASS} oz</button><button class="btn sm water" data-act="water" data-v="16">+ 16 oz</button></div></div>`;
+}
+
+/* ============ LEADERBOARD ============ */
+async function ensureFirebase(){
+  if (!FIREBASE_CONFIG) throw new Error('Firebase not configured');
+  if (!window.firebase){
+    await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+    await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js');
+  }
+  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  return firebase.firestore();
+}
+function myStats(){
+  const total = sumObj(muscleTotals()) + state.bonusXP;
+  return {name: state.profile.name || 'Lifter', level: playerLvl(total), xp: Math.round(total), streak: weekStreak(),
+    week: state.workouts.filter(w => w.date > Date.now() - 7 * DAY).length, workouts: state.workouts.length,
+    trophies: Object.keys(state.achievements).length, updatedAt: Date.now()};
+}
+let lastPublish = 0;
+async function publishStats(force){
+  if (!FIREBASE_CONFIG || (!force && Date.now() - lastPublish < 5 * 60e3)) return;
+  lastPublish = Date.now();
+  try { const db = await ensureFirebase(); await db.collection('gymdom_players').doc(state.profile.playerId).set(myStats()); }
+  catch(e){ ui.lbErr = 'Leaderboard unavailable: ' + (e.message || e); }
+}
+async function loadLeaderboard(){
+  if (!FIREBASE_CONFIG || ui.lbLoading) return;
+  ui.lbLoading = true;
+  try {
+    const db = await ensureFirebase();
+    await publishStats();
+    const ids = [...new Set([state.profile.playerId, ...state.friends])];
+    const docs = await Promise.all(ids.map(id => db.collection('gymdom_players').doc(id).get().then(d => d.exists ? {id, ...d.data()} : null).catch(() => null)));
+    ui.lb = docs.filter(Boolean); ui.lbErr = '';
+  } catch(e){ ui.lbErr = 'Leaderboard unavailable: ' + (e.message || e); }
+  ui.lbLoading = false; ui.lbAt = Date.now();
+  if (ui.tab === 'progress') render();
+}
+const LB_METRICS = [['level','Level', p => p.level, p => `Lv ${p.level}`], ['streak','Week streak', p => p.streak, p => `${p.streak} 🔥`], ['week','This week', p => p.week, p => `${p.week} workout${p.week === 1 ? '' : 's'}`], ['xp','Total XP', p => p.xp, p => `${fmt(p.xp)} XP`]];
+function leaderboardCard(){
+  if (!FIREBASE_CONFIG) return '';
+  if (!ui.lbAt || Date.now() - ui.lbAt > 60e3) setTimeout(loadLeaderboard, 0);
+  const metric = LB_METRICS.find(m => m[0] === (ui.lbMetric || 'level'));
+  const me = {id: state.profile.playerId, ...myStats()};
+  const rows = [me, ...(ui.lb || []).filter(p => p.id !== me.id)].sort((a, b) => metric[2](b) - metric[2](a));
+  return `<div class="card"><div class="row between"><h3 style="margin:0">Leaderboard</h3><button class="btn ghost sm" data-act="friends">${state.friends.length ? 'Friends' : '+ Add friends'}</button></div>
+    <div class="chips" style="margin:10px 0 4px">${LB_METRICS.map(([k, n]) => `<button class="chip${metric[0] === k ? ' on' : ''}" data-act="lbMetric" data-v="${k}">${n}</button>`).join('')}</div>
+    ${rows.map((p, i) => `<div class="lbrow${p.id === me.id ? ' me' : ''}"><span class="lbrank">${i < 3 && rows.length > 1 ? ['🥇','🥈','🥉'][i] : i + 1}</span><span class="lbname">${esc(p.name)}${p.id === me.id ? ' <small class="mute">(you)</small>' : ''}</span><span class="lbval">${metric[3](p)}</span></div>`).join('')}
+    ${!state.friends.length ? `<p class="mute" style="font-size:13px;margin:8px 0 0">Share your friend code so friends can add you, and add theirs to compete.</p>` : ''}
+    ${ui.lbErr ? `<p class="mute" style="font-size:12px;margin:8px 0 0">${esc(ui.lbErr)}</p>` : ''}</div>`;
+}
+function openFriends(){
+  const code = state.profile.playerId, byId = Object.fromEntries((ui.lb || []).map(p => [p.id, p]));
+  openSheet(`<div class="row between"><h2 style="margin:0">Friends</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    <label class="lbl">Your friend code</label>
+    <div class="fcode">${code}</div>
+    <div class="row gap"><button class="btn ghost sm" style="flex:1" data-act="shareCode">Share</button><button class="btn ghost sm" style="flex:1" data-act="copyCode">Copy</button></div>
+    ${!state.profile.name ? `<p class="hint" style="margin-top:10px">Set a display name in ⚙ Settings so friends know it's you.</p>` : ''}
+    <label class="lbl">Add a friend</label>
+    <div class="row gap"><input id="friendIn" placeholder="Their friend code" autocapitalize="characters" maxlength="8"><button class="btn sm" data-act="addFriend">Add</button></div>
+    <label class="lbl">Your friends</label>
+    ${state.friends.length ? state.friends.map(id => `<div class="prow"><span><b>${esc(byId[id]?.name || 'Friend')}</b> <small class="mute">${id}</small></span><button class="icon-btn sm" data-act="rmFriend" data-id="${id}" aria-label="Remove friend">✕</button></div>`).join('') : '<p class="mute" style="font-size:13px">None yet.</p>'}
+    <p class="mute" style="font-size:11px;margin-top:12px">Friends only see your name, level, XP, streak, workout counts and trophies — never your workouts, food or weight.</p>`);
+}
+// function declaration so it's available when saved data is loaded at startup
+function newPlayerId(){ return Array.from({length:6}, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join(''); }
+
 /* ============ UI HELPERS ============ */
 function openSheet(html){ $('#sheet').innerHTML = html; $('#sheetWrap').classList.add('open'); $('#sheet').scrollTop = 0; }
 function closeSheet(){ $('#sheetWrap').classList.remove('open'); ui.pick = null; stopScan(); }
@@ -946,7 +1051,7 @@ function renderBody(){
 }
 function renderProgress(){
   const t = muscleTotals(), hit = lastHit();
-  let h = `<h2>Progress</h2>`;
+  let h = `<h2>Progress</h2>` + leaderboardCard();
   // Quests
   h += `<div class="card"><div class="row between"><h3 style="margin:0">Quests</h3><small class="mute">Daily · weekly</small></div>${questList().map(q => { const ok = q.done || q.prog >= q.n;
     return `<div class="quest${q.done ? ' done' : ''}"><div class="row between gap"><span><span class="qscope">${q.scope}${q.weak ? ' · Weak point' : ''}</span><br><b style="font-size:14px">${q.title}</b></span><span class="xp">${ok ? '✓' : '+' + q.xp}</span></div>
@@ -1038,7 +1143,7 @@ async function finishWorkout(){
   state.bonusXP += bonus;
   save();
   const after = muscleTotals(), plA = playerLvl(sumObj(after) + state.bonusXP);
-  ui.tab = 'body'; render();
+  ui.tab = 'body'; render(); publishStats(true);
   const gained = Object.keys(w.xp).filter(m => w.xp[m] > 0).sort((x,y) => w.xp[y]-w.xp[x]);
   const lvUps = gained.filter(m => lvl(after[m]) > lvl(before[m])).length;
   const party = w.prs.length || achs.length || lvUps || plA > plB;
@@ -1232,12 +1337,7 @@ async function initSync(preferRemote = false){
   const code = (state.profile.syncCode || '').trim();
   if (!code){ syncStatus = 'Enter a sync code to sync devices'; return; }
   try {
-    if (!window.firebase){
-      await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
-      await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js');
-    }
-    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-    fbRef = firebase.firestore().collection('gymdom').doc(code);
+    fbRef = (await ensureFirebase()).collection('gymdom').doc(code);
     syncStatus = 'Connecting…';
     fbUnsub = fbRef.onSnapshot(snap => {
       const d = snap.data();
@@ -1353,9 +1453,33 @@ const ACT = {
   tpSave: () => { const fp = readTp(); const t = {kcal:+$('#tK').value, p:+$('#tP').value, c:+$('#tC').value, f:+$('#tF').value};
     if (!(t.kcal > 0)) return toast('Calculate or enter your calories first');
     state.foodProfile = {sex:fp.sex, age:fp.age, lb:fp.lb, ft:fp.ft, inch:fp.inch, act:fp.act, goal:fp.goal}; state.foodTargets = t; save(); closeSheet(); render(); toast('Targets saved'); },
+  mealSave: d => openSaveMeal(d.m),
+  mealSaveGo: () => { const name = $('#smName').value.trim() || 'Saved meal'; const items = JSON.parse(JSON.stringify(foodDay()[ui.saveMealFrom] || []));
+    state.savedMeals.unshift({id:uid(), name, items}); save(); closeSheet(); toast('Meal saved'); },
+  mealUse: d => { const m = state.savedMeals[+d.i]; if (!m) return; const day = foodDay();
+    (day[ui.foodMeal] = day[ui.foodMeal] || []).push(...JSON.parse(JSON.stringify(m.items))); save(); closeSheet(); render(); toast(`Added ${m.name}`); },
+  mealDel: async d => { const m = state.savedMeals[+d.i]; const meal = ui.foodMeal;
+    if (m && await confirmBox(`Delete saved meal "${m.name}"?`, 'Delete')){ state.savedMeals.splice(+d.i, 1); save(); } openAddFood(meal, 'meals'); },
+  water: d => { const day = foodDay(); day.water = Math.max(0, (day.water || 0) + (+d.v)); save(); render(); },
+  waterGoal: () => openSheet(`<div class="row between"><h3 style="margin:0">Daily water goal</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    <label class="lbl">Goal (oz)</label><input id="wgIn" type="number" inputmode="numeric" value="${state.waterGoal}"><button class="btn gold block" style="margin-top:14px" data-act="waterGoalSave">Save</button>`),
+  waterGoalSave: () => { const v = Math.round(+$('#wgIn').value); if (!(v >= 8 && v <= 300)) return toast('Enter a goal between 8 and 300 oz'); state.waterGoal = v; save(); closeSheet(); render(); },
+  friends: openFriends,
+  lbMetric: d => { ui.lbMetric = d.v; render(); },
+  shareCode: async () => { const text = `Add me on Gymdom! My friend code is ${state.profile.playerId} — ${location.origin + location.pathname}`;
+    if (navigator.share){ try { await navigator.share({text}); } catch(e){} } else ACT.copyCode(); },
+  copyCode: async () => { try { await navigator.clipboard.writeText(state.profile.playerId); toast('Code copied'); } catch(e){ toast('Your code: ' + state.profile.playerId); } },
+  addFriend: async () => { const id = $('#friendIn').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (!id) return toast('Enter a friend code'); if (id === state.profile.playerId) return toast("That's your own code");
+    if (state.friends.includes(id)) return toast('Already on your list');
+    try { const db = await ensureFirebase(); const doc = await db.collection('gymdom_players').doc(id).get();
+      if (!doc.exists) return toast('No player with that code yet — have them open their Progress tab first');
+      state.friends.push(id); save(); ui.lb = [...(ui.lb || []), {id, ...doc.data()}]; openFriends(); render(); toast(`Added ${doc.data().name}`); }
+    catch(e){ toast("Couldn't reach the leaderboard — check your connection"); } },
+  rmFriend: d => { state.friends = state.friends.filter(f => f !== d.id); ui.lb = (ui.lb || []).filter(p => p.id !== d.id); save(); openFriends(); render(); },
   saveSettings: () => { const p = state.profile, oldCode = p.syncCode;
     p.name = $('#sName').value.trim(); p.bw = +$('#sBw').value || 180; p.syncCode = $('#sCode').value.trim();
-    save(); closeSheet(); render(); toast('Saved'); if (p.syncCode !== oldCode) initSync(true); },
+    save(); closeSheet(); render(); toast('Saved'); publishStats(true); if (p.syncCode !== oldCode) initSync(true); },
   exportData: () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(state, null, 1)], {type:'application/json'}));
     a.download = 'gymdom-backup-' + new Date().toISOString().slice(0,10) + '.json'; a.click(); },
   importData: () => $('#importFile').click(),
