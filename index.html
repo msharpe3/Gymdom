@@ -227,6 +227,14 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 .h-task .ck{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:14px}
 .h-task.done{border-color:color-mix(in srgb,var(--teal) 50%,transparent);background:color-mix(in srgb,var(--teal) 10%,var(--panel2))}
 .h-task.done b{opacity:.55;text-decoration:line-through}.h-task.done .ck{background:var(--teal);border-color:var(--teal);color:#06231f;animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
+.lbrow{cursor:pointer;grid-template-columns:32px 1fr auto 12px!important}.lbgo{font-style:normal;color:var(--mute);font-size:18px}
+.pp-head{display:flex;gap:14px;align-items:center;margin:12px 0 4px;padding:12px;border-radius:14px;background:linear-gradient(135deg,color-mix(in srgb,var(--acc) 16%,var(--panel2)),var(--panel2) 70%);border:1px solid color-mix(in srgb,var(--acc) 35%,var(--line))}
+.pp-head .lvl-badge{border-color:var(--acc)}.pp-head .title-tag{color:var(--acc)}
+.pp-map{max-width:330px;margin:6px auto 10px}
+.pp-gear{cursor:default}.pp-gear small{color:var(--mute);font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+.pp-ranks{display:grid;gap:4px}.pp-ranks>div{display:flex;align-items:center;gap:9px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:14px}
+.pp-ranks i{width:10px;height:10px;border-radius:50%;flex:none}.pp-ranks span{flex:1}.pp-ranks small{color:var(--mute);font-size:12px}
+.pp-ranks em{font-style:normal;font-size:11px;color:var(--mute);min-width:44px;text-align:right}.pp-ranks em.up{color:var(--teal)}.pp-ranks em.dn{color:#f2667a}
 .h-sec{margin-bottom:6px;border-radius:14px;transition:background .15s,box-shadow .15s}
 .h-sec.drop{background:color-mix(in srgb,var(--teal) 10%,transparent);box-shadow:0 0 0 2px var(--teal) inset}
 .h-task{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
@@ -333,12 +341,12 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.05.5"></script>
+<script src="exercises.js?v=2026.10.05.6"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.05.5';
+const APP_VERSION = '2026.10.05.6';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1733,7 +1741,10 @@ function myStats(){
   const total = sumObj(muscleTotals()) + state.bonusXP;
   return {name: state.profile.name || 'Lifter', title: myTitle(playerLvl(total)), level: playerLvl(total), xp: Math.round(total), streak: weekStreak(),
     week: state.workouts.filter(w => w.date > Date.now() - 7 * DAY).length, workouts: state.workouts.length,
-    trophies: Object.keys(state.achievements).length, updatedAt: Date.now()};
+    trophies: Object.keys(state.achievements).length, updatedAt: Date.now(),
+    // muscle map + gear so friends can see your figure
+    ml: Object.fromEntries(Object.entries(muscleTotals()).map(([m, x]) => [m, lvl(x)])), gear: equippedSkin(), theme: state.cosmetics.theme || 'classic',
+    gearCount: SKINS.filter(s => isUnlocked(s[0], s[3])).length, habits: habitTotal(), hstreak: habitStreak()};
 }
 let lastPublish = 0;
 async function publishStats(force){
@@ -1789,7 +1800,8 @@ function leaderboardCard(){
   return `<div class="card"><div class="row between"><h3 style="margin:0">Leaderboard</h3><button class="btn ghost sm" data-act="friends">${state.friends.length ? 'Friends' : '+ Add friends'}${(ui.friendReqs || []).length ? ` <span class="reqdot">${ui.friendReqs.length}</span>` : ''}</button></div>
     ${(ui.friendReqs || []).length ? `<div class="reqs">${reqRows()}</div>` : ''}
     <div class="chips" style="margin:10px 0 4px">${LB_METRICS.map(([k, n]) => `<button class="chip${metric[0] === k ? ' on' : ''}" data-act="lbMetric" data-v="${k}">${n}</button>`).join('')}</div>
-    ${rows.map((p, i) => `<div class="lbrow${p.id === me.id ? ' me' : ''}"><span class="lbrank">${i < 3 && rows.length > 1 ? ['🥇','🥈','🥉'][i] : i + 1}</span><span class="lbname">${esc(p.name)}${p.id === me.id ? ' <small class="mute">(you)</small>' : ''}${p.title ? `<br><small class="mute">${esc(p.title)}</small>` : ''}</span><span class="lbval">${metric[3](p)}</span></div>`).join('')}
+    ${rows.map((p, i) => `<div class="lbrow${p.id === me.id ? ' me' : ''}" data-act="viewPlayer" data-id="${p.id}"><span class="lbrank">${i < 3 && rows.length > 1 ? ['🥇','🥈','🥉'][i] : i + 1}</span><span class="lbname">${esc(p.name)}${p.id === me.id ? ' <small class="mute">(you)</small>' : ''}${p.title ? `<br><small class="mute">${esc(p.title)}</small>` : ''}</span><span class="lbval">${metric[3](p)}</span><i class="lbgo">›</i></div>`).join('')}
+    ${rows.length > 1 ? `<p class="mute" style="font-size:12px;margin:8px 0 0;text-align:center">Tap anyone to see their muscle map and gear</p>` : ''}
     ${!state.friends.length ? `<p class="mute" style="font-size:13px;margin:8px 0 0">Share your friend code so friends can add you, and add theirs to compete.</p>` : ''}
     ${ui.lbErr ? `<p class="mute" style="font-size:12px;margin:8px 0 0">${esc(ui.lbErr)}</p>` : ''}</div>`;
 }
@@ -1804,8 +1816,28 @@ function openFriends(){
     <label class="lbl">Add a friend</label>
     <div class="row gap"><input id="friendIn" placeholder="Their friend code" autocapitalize="characters" maxlength="8"><button class="btn sm" data-act="addFriend">Add</button></div>
     <label class="lbl">Your friends</label>
-    ${state.friends.length ? state.friends.map(id => `<div class="prow"><span><b>${esc(byId[id]?.name || 'Friend')}</b> <small class="mute">${id}</small></span><button class="icon-btn sm" data-act="rmFriend" data-id="${id}" aria-label="Remove friend">✕</button></div>`).join('') : '<p class="mute" style="font-size:13px">None yet.</p>'}
-    <p class="mute" style="font-size:11px;margin-top:12px">Friends only see your name, level, XP, streak, workout counts and trophies — never your workouts, food or weight.</p>`);
+    ${state.friends.length ? state.friends.map(id => `<div class="prow" data-act="viewPlayer" data-id="${id}" style="cursor:pointer"><span><b>${esc(byId[id]?.name || 'Friend')}</b> <small class="mute">${id}</small></span><button class="icon-btn sm" data-act="rmFriend" data-id="${id}" aria-label="Remove friend">✕</button></div>`).join('') : '<p class="mute" style="font-size:13px">None yet.</p>'}
+    <p class="mute" style="font-size:11px;margin-top:12px">Friends only see your name, level, XP, streaks, workout counts, trophies, muscle ranks and gear — never your workouts, food or weight.</p>`);
+}
+
+/* ---- Player profile: a friend's muscle map wearing their gear ---- */
+function openPlayer(id){
+  const me = state.profile.playerId, mine = {id:me, ...myStats()}, p = id === me ? mine : (ui.lb || []).find(x => x.id === id);
+  if (!p) return toast('Still loading — try again in a second');
+  const th = THEMES.find(t => t[0] === p.theme) || THEMES[0], acc = th[3][0], isMe = id === me;
+  const gear = p.gear || {}, gearNames = Object.entries(gear).map(([sl, gid]) => { const it = SKINS.find(x => x[0] === gid); return it ? [SLOTS.find(x => x[0] === sl)?.[1] || sl, it[1]] : null; }).filter(Boolean);
+  const ml = p.ml, mm = mine.ml;
+  const muscles = ml ? Object.keys(MUSCLES).sort((a, b) => (ml[b] || 0) - (ml[a] || 0)) : [];
+  openSheet(`<div class="row between"><h2 style="margin:0">${esc(p.name)}${isMe ? ' <small class="mute" style="font-size:14px">(you)</small>' : ''}</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    <div class="pp-head" style="--acc:${acc}"><div class="lvl-badge"><small>LV</small><b>${p.level ?? 0}</b></div><div><span class="title-tag">${esc(p.title || '')}</span><small class="mute" style="display:block;margin-top:4px">${fmt(p.xp || 0)} XP${p.gearCount != null ? ` · ${p.gearCount} gear collected` : ''}</small></div></div>
+    ${ml ? `<div class="pp-map">${bodySVG(m => rankOf(ml[m] || 0)[2], {labels:true, skin:Object.keys(gear).length ? gear : null})}</div>`
+      : `<div class="card empty" style="margin:12px 0"><p class="mute" style="margin:0">${esc(p.name)}'s muscle map will show up here once they open the latest version of Gymdom.</p></div>`}
+    <div class="stats"><div class="stat"><b>${p.streak ?? 0}🔥</b><small>Week streak</small></div><div class="stat"><b>${p.week ?? 0}</b><small>This week</small></div><div class="stat"><b>${p.workouts ?? 0}</b><small>Workouts</small></div></div>
+    <div class="stats" style="margin-top:8px"><div class="stat"><b>${p.trophies ?? 0}</b><small>Trophies</small></div><div class="stat"><b>${p.habits ?? '—'}</b><small>Habits done</small></div><div class="stat"><b>${p.hstreak != null ? p.hstreak + '🌱' : '—'}</b><small>Habit streak</small></div></div>
+    ${gearNames.length ? `<label class="lbl">Wearing</label><div class="chips wrap">${gearNames.map(([sl, n]) => `<span class="chip pp-gear"><small>${esc(sl)}</small> ${esc(n)}</span>`).join('')}</div>` : ''}
+    ${ml ? `<label class="lbl">Muscle ranks${isMe || !mm ? '' : ' <small class="mute" style="text-transform:none;letter-spacing:0">· you vs them</small>'}</label>
+      <div class="pp-ranks">${muscles.map(m => { const L = ml[m] || 0, r = rankOf(L), y = mm ? mm[m] || 0 : null;
+        return `<div><i style="background:${r[2]}"></i><span>${MUSCLES[m]}</span><small>${r[1]} · Lv ${L}</small>${!isMe && y != null ? `<em class="${y > L ? 'up' : y < L ? 'dn' : ''}">you ${y}</em>` : ''}</div>`; }).join('')}</div>` : ''}`);
 }
 // function declaration so it's available when saved data is loaded at startup
 function newPlayerId(){ return Array.from({length:6}, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join(''); }
@@ -2786,6 +2818,7 @@ const ACT = {
     <label class="lbl">Goal (fl oz)</label><input id="wgIn" type="number" inputmode="numeric" value="${state.waterGoal}"><button class="btn gold block" style="margin-top:14px" data-act="waterGoalSave">Save</button>`),
   waterGoalSave: () => { const v = Math.round(+$('#wgIn').value); if (!(v >= 8 && v <= 300)) return toast('Enter a goal between 8 and 300 fl oz'); state.waterGoal = v; save(); closeSheet(); render(); },
   friends: openFriends,
+  viewPlayer: d => openPlayer(d.id),
   lbMetric: d => { ui.lbMetric = d.v; render(); },
   shareCode: async () => { const text = `Add me on Gymdom! My friend code is ${state.profile.playerId} — ${location.origin + location.pathname}`;
     if (navigator.share){ try { await navigator.share({text}); } catch(e){} } else ACT.copyCode(); },
@@ -2853,12 +2886,12 @@ const ACT = {
     else habitList().push({id:'c:' + uid(), i:f.i, ...(f.c ? {c:f.c} : {}), n, g:f.g || 'anytime', ...(r ? {r} : {})});
     ui.hEditId = null; ui.hName = ''; ui.hForm = null; save(); render(); openHabitEdit(); toast(t ? 'Task updated' : 'Task added'); },
   hDel: d => { state.habits.tasks = habitList().filter(t => t.id !== d.id); if (ui.hEditId === d.id) ui.hEditId = null; save(); render(); openHabitEdit(true); },
-  hEquip: d => { state.cosmetics[d.s] = d.id; save(); ACT.closeLvlUp(); render(); if ($('#sheetWrap').classList.contains('open') && $('.h-track')){ const y = $('#sheet').scrollTop; openHabitTrack(); $('#sheet').scrollTop = y; } toast('Equipped — check out your map'); },
+  hEquip: d => { state.cosmetics[d.s] = d.id; save(); publishStats(true); ACT.closeLvlUp(); render(); if ($('#sheetWrap').classList.contains('open') && $('.h-track')){ const y = $('#sheet').scrollTop; openHabitTrack(); $('#sheet').scrollTop = y; } toast('Equipped — check out your map'); },
   eqTitle: d => { state.cosmetics.title = d.v === autoTitle(curLevel()) ? '' : d.v; save(); render(); openArmory(); publishStats(true); },
   eqIcon: d => { ui.iconOpen = true; state.cosmetics.icon = d.v; save(); applyIcon(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; toast('Icon picked: tap "Update Home Screen icon" to apply it'); },
   iconHelp: openIconHelp,
-  eqTheme: d => { const th = THEMES.find(t => t[0] === d.v); if (!isUnlocked(d.v, th[2])) return toast(`Unlocks with ${unlockLabel(th[2])}`); state.cosmetics.theme = d.v; save(); applyTheme(); render(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; },
-  eqSkin: d => { const it = SKINS.find(s => s[0] === d.v); if (it && !isUnlocked(d.v, it[3])) return toast(`Unlocks with ${unlockLabel(it[3])}`); state.cosmetics[d.s] = d.v; save(); render(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; },
+  eqTheme: d => { const th = THEMES.find(t => t[0] === d.v); if (!isUnlocked(d.v, th[2])) return toast(`Unlocks with ${unlockLabel(th[2])}`); state.cosmetics.theme = d.v; save(); applyTheme(); render(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; publishStats(true); },
+  eqSkin: d => { const it = SKINS.find(s => s[0] === d.v); if (it && !isUnlocked(d.v, it[3])) return toast(`Unlocks with ${unlockLabel(it[3])}`); state.cosmetics[d.s] = d.v; save(); render(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; publishStats(true); },
   closeLvlUp: () => { const d = document.getElementById('lvlUp'); if (d){ d.classList.add('out'); setTimeout(() => d.remove(), 300); } },
   openLoot: (d, b) => { if (b.classList.contains('opening') || b.classList.contains('open')) return; b.classList.add('opening'); if (navigator.vibrate) navigator.vibrate([20, 40, 20, 40, 20]);
     setTimeout(() => { b.classList.remove('opening'); b.classList.add('open'); if (navigator.vibrate) navigator.vibrate(80); }, 900); },
