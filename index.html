@@ -227,7 +227,12 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 .h-task .ck{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:14px}
 .h-task.done{border-color:color-mix(in srgb,var(--teal) 50%,transparent);background:color-mix(in srgb,var(--teal) 10%,var(--panel2))}
 .h-task.done b{opacity:.55;text-decoration:line-through}.h-task.done .ck{background:var(--teal);border-color:var(--teal);color:#06231f;animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
-.h-sec{margin-bottom:6px}
+.h-sec{margin-bottom:6px;border-radius:14px;transition:background .15s,box-shadow .15s}
+.h-sec.drop{background:color-mix(in srgb,var(--teal) 10%,transparent);box-shadow:0 0 0 2px var(--teal) inset}
+.h-task{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+.h-sec-body .h-task{transition:transform .2s cubic-bezier(.2,.8,.3,1),background .2s,border-color .2s}
+.h-task.lift{position:relative;z-index:20;transition:none;box-shadow:0 14px 34px #000a;border-color:var(--teal);background:var(--panel2)}
+.h-hint{display:block;text-align:center;font-size:11px;margin-top:4px}
 .h-sec-hd{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;color:var(--text);font:inherit;padding:8px 2px;cursor:pointer;text-align:left}
 .h-sec-hd b{font:700 13px 'Chakra Petch';letter-spacing:.12em;text-transform:uppercase}
 .h-sec-hd .now{font:700 9px Inter;letter-spacing:.1em;color:#06231f;background:var(--teal);border-radius:99px;padding:2px 7px}
@@ -2122,10 +2127,10 @@ function renderHabits(){
   const now = nowSection(), shut = ui.hShut || (ui.hShut = {});
   h += tasks.length ? HABIT_SECTIONS.map(([g, gn, gi]) => { const L = tasks.filter(t => (t.g || 'anytime') === g); if (!L.length) return '';
     const dn = L.filter(t => today.includes(t.id)).length, closed = shut[g] != null ? shut[g] : dn === L.length && g !== now;
-    const sorted = [...L.filter(t => !today.includes(t.id)), ...L.filter(t => today.includes(t.id))];
-    return `<div class="h-sec${closed ? ' shut' : ''}${dn === L.length ? ' all' : ''}"><button class="h-sec-hd" data-act="hSec" data-g="${g}" data-closed="${closed ? 1 : ''}">${hIcon({i:gi}, ' sm')}<b>${gn}</b>${g === now ? '<span class="now">NOW</span>' : ''}<small>${dn === L.length ? '✓ ' : ''}${dn}/${L.length}</small><i>›</i></button>
+    const sorted = L;
+    return `<div class="h-sec${closed ? ' shut' : ''}${dn === L.length ? ' all' : ''}" data-g="${g}"><button class="h-sec-hd" data-act="hSec" data-g="${g}" data-closed="${closed ? 1 : ''}">${hIcon({i:gi}, ' sm')}<b>${gn}</b>${g === now ? '<span class="now">NOW</span>' : ''}<small>${dn === L.length ? '✓ ' : ''}${dn}/${L.length}</small><i>›</i></button>
       ${closed ? '' : `<div class="h-sec-body">${sorted.map(t => { const on = today.includes(t.id);
-        return `<button class="h-task${on ? ' done' : ''}" data-act="hToggle" data-id="${esc(t.id)}">${hIcon(t)}<b>${esc(t.n)}</b><span class="ck">${on ? '✓' : ''}</span></button>`; }).join('')}</div>`}</div>`; }).join('')
+        return `<button class="h-task${on ? ' done' : ''}" data-act="hToggle" data-id="${esc(t.id)}">${hIcon(t)}<b>${esc(t.n)}</b><span class="ck">${on ? '✓' : ''}</span></button>`; }).join('')}</div>`}</div>`; }).join('') + `<small class="mute h-hint">Hold a task to drag it up or down</small>`
     : `<p class="mute" style="margin:4px 0 0">No tasks yet — tap Edit tasks to pick some.</p>`;
   h += `</div>${tasks.length && done === tasks.length ? `<div class="h-alldone">🌱 All done for today!</div>` : ''}</div>`;
   // Week
@@ -2166,6 +2171,76 @@ function openHabitEdit(keep){
       <label class="lbl">Icon</label><div class="chips h-jump">${HICON_GROUPS.map(([gn], k) => `<button class="chip" data-act="hJump" data-v="${k}">${gn}</button>`).join('')}</div>${HICON_GROUPS.map(([gn, ids], k) => `<label class="lbl" id="hg${k}">${gn}</label><div class="h-icons">${ids.filter(i => HICONS[i]).map(i => `<button class="${f.i === i ? 'on' : ''}" data-act="hIconPick" data-v="${i}">${hIcon({i, c:f.c})}</button>`).join('')}</div>`).join('')}</div>`);
   if (keep) $('#sheet').scrollTop = y;
 }
+
+/* ---- Habits: hold-and-drag to reorder (like moving apps on the Home Screen) ---- */
+let hd = null;
+const pageY = y => y + window.scrollY;
+function hdDown(el, x, y){
+  if (hd) return;
+  hd = {el, x0:x, y0:y, timer:setTimeout(() => hdBegin(y), 380)};
+}
+function hdBegin(y){
+  if (!hd) return;
+  const el = hd.el, sec = el.closest('.h-sec'); if (!sec){ hd = null; return; }
+  const items = [...sec.querySelectorAll('.h-task')], from = items.indexOf(el);
+  const sy = window.scrollY, rects = items.map(i => { const r = i.getBoundingClientRect(); return {top:r.top + sy, h:r.height}; });
+  Object.assign(hd, {on:true, sec, g:sec.dataset.g, items, from, to:from, rects, gap:8, startPY:pageY(y), lastY:y, other:null});
+  el.classList.add('lift'); document.body.classList.add('h-dragging');
+  if (navigator.vibrate) navigator.vibrate(25);
+  hdTick();
+}
+function hdMove(x, y, e){
+  if (!hd) return;
+  if (!hd.on){ if (Math.abs(x - hd.x0) > 8 || Math.abs(y - hd.y0) > 8){ clearTimeout(hd.timer); hd = null; } return; }
+  if (e && e.cancelable) e.preventDefault();
+  hd.lastY = y; hdLayout();
+}
+function hdLayout(){
+  const {el, items, from, rects, gap} = hd, dy = pageY(hd.lastY) - hd.startPY, cy = rects[from].top + rects[from].h / 2 + dy;
+  el.style.transform = `translateY(${dy}px) scale(1.04)`;
+  // Over a different section? Highlight it as the drop target
+  let other = null;
+  document.querySelectorAll('.h-sec').forEach(sc => { const r = sc.getBoundingClientRect(), t = r.top + window.scrollY;
+    const hit = sc !== hd.sec && cy >= t && cy <= t + r.height; sc.classList.toggle('drop', hit); if (hit) other = sc; });
+  hd.other = other;
+  const to = other ? from : items.filter((_, j) => j !== from && rects[j].top + rects[j].h / 2 < cy).length;
+  hd.to = to; const H = rects[from].h + gap;
+  items.forEach((it, j) => { if (j === from) return; it.style.transform = j < from && j >= to ? `translateY(${H}px)` : j > from && j <= to ? `translateY(${-H}px)` : ''; });
+}
+function hdTick(){ // auto-scroll when the dragged task nears the top or bottom of the screen
+  if (!hd || !hd.on) return;
+  const y = hd.lastY, edge = 110, sp = y < edge ? -Math.ceil((edge - y) / 10) : y > innerHeight - edge - 70 ? Math.ceil((y - (innerHeight - edge - 70)) / 10) : 0;
+  if (sp){ window.scrollBy(0, sp); hdLayout(); }
+  requestAnimationFrame(hdTick);
+}
+function hdUp(){
+  if (!hd) return; clearTimeout(hd.timer);
+  if (!hd.on){ hd = null; return; }
+  const {items, from, to, other, rects} = hd, arr = habitList(), moved = arr.find(t => t.id === items[from].dataset.id);
+  if (moved && other){ // drop into another section, at the spot under the finger
+    const g = other.dataset.g, cy = rects[from].top + rects[from].h / 2 + pageY(hd.lastY) - hd.startPY;
+    const tgt = [...other.querySelectorAll('.h-task')].find(it => { const r = it.getBoundingClientRect(); return r.top + window.scrollY + r.height / 2 > cy; });
+    arr.splice(arr.indexOf(moved), 1); moved.g = g;
+    const before = tgt && arr.find(t => t.id === tgt.dataset.id);
+    if (before) arr.splice(arr.indexOf(before), 0, moved);
+    else { let last = -1; arr.forEach((t, i) => { if ((t.g || 'anytime') === g) last = i; }); arr.splice(last >= 0 ? last + 1 : arr.length, 0, moved); }
+    if (ui.hShut) ui.hShut[g] = false;
+    toast(`Moved to ${HABIT_SECTIONS.find(x => x[0] === g)[1]}`);
+  } else if (moved && to !== from){
+    const nb = arr.find(t => t.id === items[to].dataset.id);
+    arr.splice(arr.indexOf(moved), 1); const ni = arr.indexOf(nb); arr.splice(to > from ? ni + 1 : ni, 0, moved);
+  }
+  hd = null; ui.dragEnd = Date.now(); document.body.classList.remove('h-dragging');
+  if (moved && (other || to !== from)) save();
+  render();
+}
+document.addEventListener('touchstart', e => { const el = e.target.closest('.h-sec-body .h-task'); if (el && e.touches.length === 1) hdDown(el, e.touches[0].clientX, e.touches[0].clientY); }, {passive:true});
+document.addEventListener('touchmove', e => { if (hd) hdMove(e.touches[0].clientX, e.touches[0].clientY, e); }, {passive:false});
+document.addEventListener('touchend', hdUp); document.addEventListener('touchcancel', hdUp);
+document.addEventListener('mousedown', e => { const el = e.button === 0 && e.target.closest('.h-sec-body .h-task'); if (el) hdDown(el, e.clientX, e.clientY); });
+document.addEventListener('mousemove', e => { if (hd) hdMove(e.clientX, e.clientY, e); });
+document.addEventListener('mouseup', hdUp);
+document.addEventListener('contextmenu', e => { if (e.target.closest('.h-task')) e.preventDefault(); });
 /* ============ UI HELPERS ============ */
 function openSheet(html){ $('#sheet').innerHTML = html; $('#sheetWrap').classList.add('open'); $('#sheet').scrollTop = 0; }
 function closeSheet(){ $('#sheetWrap').classList.remove('open'); ui.pick = null; stopScan(); }
@@ -2681,7 +2756,7 @@ const ACT = {
     state.friendsRemoved = [...new Set([...(state.friendsRemoved || []), d.id])];
     state.friends = state.friends.filter(f => f !== d.id); ui.lb = (ui.lb || []).filter(p => p.id !== d.id); save(); openFriends(); render(); },
   armory: openArmory,
-  hToggle: d => { const k = dkey(Date.now()), day = (state.habits.log[k] = state.habits.log[k] || []), i = day.indexOf(d.id);
+  hToggle: d => { if (Date.now() - (ui.dragEnd || 0) < 450) return; const k = dkey(Date.now()), day = (state.habits.log[k] = state.habits.log[k] || []), i = day.indexOf(d.id);
     if (i >= 0) day.splice(i, 1); else { day.push(d.id); if (navigator.vibrate) navigator.vibrate(15); }
     if (!day.length) delete state.habits.log[k];
     const got = claimHabitRewards(); save(); render();
