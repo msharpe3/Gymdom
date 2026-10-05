@@ -219,7 +219,11 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 .reward-prev .fz.zoom,.hmini .fz.zoom{aspect-ratio:.68;overflow:hidden}.reward-prev .fz.zoom svg,.hmini .fz.zoom svg{width:300%;margin-left:-25%}
 .reward-fig{max-width:260px;margin:10px auto 0;animation:pop .7s .15s cubic-bezier(.2,1.6,.4,1) both}
 .h-task{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);margin-bottom:8px;cursor:pointer;text-align:left;color:var(--text);font:inherit;transition:background .2s,border-color .2s}
-.h-task .em{font-size:22px;width:30px;text-align:center;flex:none}.h-task b{flex:1;font-weight:500;font-size:15px}
+.hic{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:color-mix(in srgb,var(--c) 17%,transparent);color:var(--c);font-size:19px}
+.hic svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hic.sm{width:22px;height:22px;border-radius:7px;font-size:13px}.hic.sm svg{width:14px;height:14px;stroke-width:2.2}
+.hic.lg{width:44px;height:44px;border-radius:13px}.hic.lg svg{width:25px;height:25px}
+.h-chip{display:inline-flex;align-items:center;gap:7px;padding-left:6px}.h-chip.on .hic{background:#06231f26;color:#06231f}.h-task b{flex:1;font-weight:500;font-size:15px}
 .h-task .ck{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:14px}
 .h-task.done{border-color:color-mix(in srgb,var(--teal) 50%,transparent);background:color-mix(in srgb,var(--teal) 10%,var(--panel2))}
 .h-task.done b{opacity:.55;text-decoration:line-through}.h-task.done .ck{background:var(--teal);border-color:var(--teal);color:#06231f;animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
@@ -237,10 +241,17 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 .h-track>div{display:flex;align-items:center;gap:12px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:6px 10px}
 .h-track>div span{flex:1;display:flex;flex-direction:column}.h-track small{color:var(--mute);font-size:11px}.h-track .goal{font-weight:600}
 .h-track>div:not(.got) .hmini{opacity:.45;filter:grayscale(.6)}.h-track .next{border-color:var(--gold)}.h-track .next .goal{color:var(--gold)}
-.h-cust{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:6px 6px 6px 12px;margin-bottom:6px}
-.h-cust span{font-size:20px}.h-cust b{flex:1;font-weight:500}
-.h-add{display:flex;gap:8px;margin-top:10px}.h-add #hEm{width:52px;text-align:center;font-size:20px;flex:none}.h-add #hName{flex:1;min-width:0}
-.em-chip{font-size:18px;padding:5px 9px}
+.h-cust{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:6px;margin-bottom:6px;cursor:pointer}
+.h-cust.on{border-color:var(--gold)}.h-cust b{flex:1;font-weight:500}
+.h-form{margin-top:14px;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px}
+.h-colors{display:flex;flex-wrap:wrap;gap:8px}
+.h-sw{width:28px;height:28px;border-radius:50%;background:var(--c);border:2px solid transparent;cursor:pointer;padding:0;box-shadow:0 0 0 2px var(--panel2) inset}
+.h-sw.on{border-color:var(--text)}
+.h-sw.auto{background:conic-gradient(#ff6b6b,#f2c94c,#5ad17a,#46d3f0,#8b8cff,#ff7eb6,#ff6b6b)}
+.h-icons{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:6px}
+.h-icons button{background:none;border:2px solid transparent;border-radius:13px;padding:2px;display:grid;place-items:center;cursor:pointer}
+.h-icons button.on{border-color:var(--text)}
+.h-add{display:flex;gap:8px;margin-top:8px;align-items:center}.h-add #hName{flex:1;min-width:0}
 @keyframes slideUp{from{opacity:0;transform:translateY(12px)}}
 .loot{position:relative;display:flex;align-items:center;gap:12px;background:var(--panel2);border:1px solid color-mix(in srgb,var(--rc) 60%,transparent);border-radius:14px;padding:10px 12px;margin:12px 0;cursor:pointer;overflow:hidden;text-align:left}
 .loot .chest{width:64px;flex:none;position:relative;z-index:1}
@@ -296,12 +307,12 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.04.2"></script>
+<script src="exercises.js?v=2026.10.05.1"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.04.2';
+const APP_VERSION = '2026.10.05.1';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -562,12 +573,137 @@ const photo = (ex, i = 0) => ex.img ? IMG_BASE + ex.img + '/' + i + '.jpg' : '';
 const KEY = 'gymdom_v1';
 let state, ui = {tab:'body', libQ:'', libM:'', edit:null, plan:null, pick:null,
   coach:{goal:'recomp',days:5,len:60,equip:'full',exp:'intermediate',focus:[],weak:false,seed:0}};
+/* Habit icons: line icons in the tab-bar style, each with a default color */
+const HC = {teal:'#4fd1c5', blue:'#5aa9ff', indigo:'#8b8cff', purple:'#b18cff', pink:'#ff7eb6', red:'#ff6b6b', orange:'#ff9f43', gold:'#f2c94c', green:'#5ad17a', cyan:'#46d3f0', amber:'#d9a066', gray:'#b8c4d6'};
+const _P = d => `<path d="${d}"/>`, _C = (x, y, r) => `<circle cx="${x}" cy="${y}" r="${r}"/>`;
+const HICONS = {
+  // health & body
+  water:['blue', _P('M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11Z')],
+  glass:['blue', _P('M6 3h12l-1.6 17.1a1 1 0 0 1-1 .9H8.6a1 1 0 0 1-1-.9ZM6.6 9h10.8')],
+  coffee:['amber', _P('M4 9h13v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5ZM17 11h1.5a2.5 2.5 0 0 1 0 5H17M8 3.5v3M12 3.5v3')],
+  pill:['pink', '<rect x="3" y="8.5" width="18" height="7" rx="3.5" transform="rotate(-45 12 12)"/>' + _P('M9.5 9.5l5 5')],
+  heart:['red', _P('M12 20s-7.5-4.5-7.5-10.2A4.3 4.3 0 0 1 12 7a4.3 4.3 0 0 1 7.5 2.8C19.5 15.5 12 20 12 20Z')],
+  tooth:['cyan', _P('M7 3C4.5 3 3 5 3 7.5c0 3 2 5 2.5 8S6.5 21 8 21s1.5-3 2-5 1-2 2-2 1.5 0 2 2 .5 5 2 5 2-2.5 2.5-5.5S21 10.5 21 7.5C21 5 19.5 3 17 3c-2 0-3 1-5 1S9 3 7 3Z')],
+  lotion:['pink', '<rect x="7" y="9" width="10" height="12" rx="2"/>' + _P('M10 9V6h4v3M10 6V3h5M10 14h4')],
+  shower:['cyan', _P('M4 21V7a4 4 0 0 1 7.6-1.7M8.5 7.5h8L15 4.5M10 11v1M13 11v1M16 11v1M10 15v1M13 15v1M16 15v1M11.5 19v1M14.5 19v1')],
+  snow:['cyan', _P('M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7M9.5 3.5 12 6l2.5-2.5M9.5 20.5 12 18l2.5 2.5')],
+  bed:['indigo', _P('M3 19V5M3 14h18v5M21 14v-2.5a3 3 0 0 0-3-3h-7V14') + _C(7, 11, 1.8)],
+  moon:['indigo', _P('M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z')],
+  sunrise:['orange', _P('M3 18h18M6 21h12M7 18a5 5 0 0 1 10 0M12 3v5M9.5 5.5 12 3l2.5 2.5M4.9 10.9l1.4 1.4M19.1 10.9l-1.4 1.4')],
+  sun:['gold', _C(12, 12, 4) + _P('M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4')],
+  scale:['gray', '<rect x="3" y="4" width="18" height="16" rx="3"/>' + _P('M8 10.5a5 5 0 0 1 8 0M12 10.5l1.6-2.2')],
+  eye:['teal', _P('M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z') + _C(12, 12, 3)],
+  breathe:['teal', _P('M3 8h10.5a3 3 0 1 0-3-3M3 12h15.5a3 3 0 1 1-3 3M3 16h7')],
+  meditate:['purple', _C(12, 5, 2) + _P('M12 8v5M6.5 10.5 12 13l5.5-2.5M4 19.5c3.5-3 12.5-3 16 0M8 16.5l4 1.5 4-1.5')],
+  stretch:['purple', _C(12, 4.5, 2) + _P('M5 8.5l7 2.5 7-2.5M12 11v4l-4 6M12 15l4 6')],
+  // fitness
+  dumbbell:['teal', _P('M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11')],
+  run:['green', _C(14.5, 4, 2) + _P('M6 20l3.5-4.5 3 2.5 1-5 3 3h3M8.5 10.5 12 8l3 2.5-1.5 4M12 8l-1.5 3.5')],
+  walk:['green', _C(12.5, 4, 2) + _P('M10 21l2-6 3 3v3M12 15l-1-5.5 4 1.5 2 3M11 9.5 8 12v3')],
+  steps:['teal', _P('M8 3c2 0 3 2.5 3 5s-1 4-3 4-3-1.5-3-4 1-5 3-5ZM6 15h4v1.5a2 2 0 0 1-4 0ZM16 7c2 0 3 2.5 3 5s-1 4-3 4-3-1.5-3-4 1-5 3-5ZM14 19h4v.5a2 2 0 0 1-4 0Z')],
+  bike:['green', _C(6, 16, 3.5) + _C(18, 16, 3.5) + _P('M6 16l4-7h6l2 7M10 9l2 7M14 5.5h3l-1 3.5')],
+  swim:['cyan', _C(16.5, 6, 2) + _P('M2 16c2 0 2-1.5 4-1.5S8 16 10 16s2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5M2 20c2 0 2-1.5 4-1.5S8 20 10 20s2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5M5 12l5-4 3.5 3')],
+  hike:['green', _P('M3 20l6.5-11 4 6 2.5-3.5L21 20ZM8 11.5l1.5 1 1.5-1')],
+  flame:['orange', _P('M12 21c-4 0-6.5-2.5-6.5-6 0-4 3.5-6 3.5-10 2.5 1.5 4 3.5 4.5 6 1-1 1.5-2 1.5-3.5 2 2 3.5 4.5 3.5 7.5 0 3.5-2.5 6-6.5 6Z')],
+  zap:['gold', _P('M13 2 4 14h7l-1 8 9-12h-7Z')],
+  trophy:['gold', _P('M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4ZM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3')],
+  target:['red', _C(12, 12, 9) + _C(12, 12, 5) + _C(12, 12, 1)],
+  timer:['orange', _C(12, 13, 8) + _P('M12 9v4l2.5 1.5M10 2h4M19 6l1.5-1.5')],
+  // food
+  apple:['red', _P('M12 7.5C9 5.5 5 7 5 12s3 9 5 9c1 0 1.5-.5 2-.5s1 .5 2 .5c2 0 5-4 5-9s-4-6.5-7-4.5ZM12 7.5c0-2 1-4 3-4.5')],
+  leaf:['green', _P('M5 19C5 10 10 5 20 4c0 10-5 15-15 15ZM5 19l8-8')],
+  salad:['green', _P('M3 11h18a9 9 0 0 1-18 0ZM7 11c0-3 2-5 4-5M12 11c0-3 2-6 5-6M15.5 11c1-2 2.5-3 4-3')],
+  protein:['orange', _P('M15.5 4A4.6 4.6 0 0 1 20 8.5c0 3-3 5.5-6 5.5l-3.5 3.5a2 2 0 1 1-3 3 2 2 0 1 1-3-3 2 2 0 0 1 3-.5L11 10c0-3 2.5-6 4.5-6Z')],
+  chef:['orange', _P('M7 14a4 4 0 0 1-.6-8 5.5 5.5 0 0 1 11.2 0 4 4 0 0 1-.6 8v6H7ZM7 17h10')],
+  cart:['amber', _C(9, 20, 1.5) + _C(17, 20, 1.5) + _P('M3 4h2l2.5 11h11L21 7H6')],
+  nosugar:['red', _C(12, 12, 9) + _P('M5.6 5.6l12.8 12.8')],
+  // mind & growth
+  book:['amber', _P('M4 19.5V5a2 2 0 0 1 2-2h14v15H6a2 2 0 0 0-2 2 2 2 0 0 0 2 2h14')],
+  journal:['amber', '<rect x="5" y="3" width="14" height="18" rx="2"/>' + _P('M9 3v18M12 8h4M12 12h4')],
+  pencil:['gold', _P('M4 20h4L19 9l-4-4L4 16ZM13 7l4 4')],
+  bulb:['gold', _P('M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3Z')],
+  study:['blue', _P('M2 9l10-5 10 5-10 5ZM6 11v5c3 2 9 2 12 0v-5M22 9v6')],
+  globe:['blue', _C(12, 12, 9) + _P('M3 12h18M12 3c2.5 2.5 3.5 5.5 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-5.5-3.5-9s1-6.5 3.5-9Z')],
+  code:['indigo', _P('M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16')],
+  sparkle:['gold', _P('M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8ZM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8Z')],
+  star:['gold', _P('M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6l-5.4 2.9 1.2-6-4.5-4.2 6.1-.7Z')],
+  smile:['gold', _C(12, 12, 9) + _P('M8.5 14.5a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01')],
+  phoneoff:['red', '<rect x="7" y="2" width="10" height="20" rx="2"/>' + _P('M11 18h2M3 3l18 18')],
+  // people
+  chat:['blue', _P('M4 5h16v11H9l-5 4Z')],
+  call:['green', _P('M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z')],
+  friends:['blue', _C(9, 8, 3.5) + _P('M2.5 20a6.5 6.5 0 0 1 13 0M16 14a5 5 0 0 1 6 5') + _C(17, 9, 2.5)],
+  mail:['blue', '<rect x="3" y="5" width="18" height="14" rx="2"/>' + _P('M3 7l9 6 9-6')],
+  gift:['pink', '<rect x="3" y="8" width="18" height="5" rx="1"/>' + _P('M5 13v8h14v-8M12 8v13M12 8c-1-3-5-4-5-1.5S10 8 12 8Zm0 0c1-3 5-4 5-1.5S14 8 12 8Z')],
+  paw:['amber', _C(12, 16, 3.5) + _C(6, 11, 1.8) + _C(18, 11, 1.8) + _C(9, 6.5, 1.8) + _C(15, 6.5, 1.8)],
+  // home & chores
+  home:['amber', _P('M3 11l9-7 9 7M5 9.5V20h14V9.5M10 20v-6h4v6')],
+  broom:['amber', _P('M20 3l-8 8M9.5 10.5l4 4-2.5 6.5c-3 0-6-1.5-8-4ZM7 18l2-2')],
+  shirt:['blue', _P('M8 3 3 6l2 4 2-1v12h10V9l2 1 2-4-5-3c0 2-1.5 3-4 3S8 5 8 3Z')],
+  trash:['gray', _P('M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3')],
+  sprout:['green', _P('M12 21v-8M12 13C12 8 9 5 4 5c0 5 3 8 8 8ZM12 15c0-4 3-7 8-7 0 4-3 7-8 7Z')],
+  tree:['green', _P('M12 21v-5M12 3l6 8h-3l4 5H5l4-5H6Z')],
+  flower:['pink', _C(12, 5, 2) + _C(16, 9, 2) + _C(12, 13, 2) + _C(8, 9, 2) + _P('M12 15v6M12 19c-2 0-3.5-1-4-3M12 18c2 0 3.5-1 4-3')],
+  car:['gray', _P('M5 17H3.5a1 1 0 0 1-1-1v-3.5l2-5A2 2 0 0 1 6.4 6h11.2a2 2 0 0 1 1.9 1.5l2 5V16a1 1 0 0 1-1 1H19M9.5 17h5M2.5 12.5h19') + _C(7.5, 17, 2) + _C(16.5, 17, 2)],
+  // work & money
+  briefcase:['amber', '<rect x="3" y="7" width="18" height="13" rx="2"/>' + _P('M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 13h18')],
+  laptop:['gray', '<rect x="5" y="5" width="14" height="10" rx="1.5"/>' + _P('M3 19h18')],
+  money:['green', _C(12, 12, 9) + _P('M15 9c-.5-1-1.5-1.5-3-1.5-2 0-3 1-3 2.2 0 3 6 1.6 6 4.6 0 1.2-1 2.2-3 2.2-1.5 0-2.5-.5-3-1.5M12 6v1.5M12 16.5V18')],
+  calendar:['red', '<rect x="3" y="5" width="18" height="16" rx="2"/>' + _P('M3 10h18M8 3v4M16 3v4')],
+  checklist:['teal', _P('M4 6l1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17M11 6h9M11 12h9M11 18h9')],
+  clock:['gray', _C(12, 12, 9) + _P('M12 7v5l3 2')],
+  // fun
+  music:['purple', _P('M9 18V5l11-2v13') + _C(6.5, 18, 2.5) + _C(17.5, 16, 2.5)],
+  headphones:['purple', _P('M4 15v-3a8 8 0 0 1 16 0v3') + '<rect x="3" y="14" width="4" height="7" rx="1.5"/><rect x="17" y="14" width="4" height="7" rx="1.5"/>'],
+  game:['purple', _P('M6 8h12a4 4 0 0 1 4 4l-1 5a2.5 2.5 0 0 1-4.5 1L15 16H9l-1.5 2A2.5 2.5 0 0 1 3 17l-1-5a4 4 0 0 1 4-4ZM7 11v3M5.5 12.5h3M16 12h.01M18 13.5h.01')],
+  camera:['gray', _P('M3 8a2 2 0 0 1 2-2h2.5l1.5-2h6l1.5 2H19a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z') + _C(12, 13, 3.5)],
+  palette:['pink', _P('M12 3a9 9 0 0 0 0 18c1.5 0 2-1 2-2 0-1.5-1-2 0-3s2-.5 3.5-.5A3.5 3.5 0 0 0 21 12c0-5-4-9-9-9Z') + _C(7.5, 11, 1) + _C(10, 7, 1) + _C(15, 7.5, 1)],
+  shield:['indigo', _P('M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6Z')],
+  key:['gold', _C(7.5, 15.5, 4) + _P('M10.5 12.5 20 3M16 7l3 3M14 9l2 2')],
+  // more fitness & recovery
+  kettlebell:['teal', _P('M8.5 10V7a3.5 3.5 0 0 1 7 0v3') + _C(12, 15, 6.5)],
+  rope:['green', '<rect x="3.5" y="2" width="3.5" height="7" rx="1.75"/><rect x="17" y="2" width="3.5" height="7" rx="1.75"/>' + _P('M5.25 9v1.5c0 11.5 13.5 11.5 13.5 0V9')],
+  ball:['orange', _C(12, 12, 9) + _P('M3 12h18M12 3v18M5.6 5.6c3 3 3 9.8 0 12.8M18.4 5.6c-3 3-3 9.8 0 12.8')],
+  medal:['gold', _C(12, 15, 5) + _P('M8.5 11.5 6 3h4l2 5 2-5h4l-2.5 8.5')],
+  flag:['red', _P('M5 21V4h11l-2 4 2 4H5')],
+  battery:['green', '<rect x="2" y="7" width="17" height="10" rx="2"/>' + _P('M22 11v2M6 10v4M9.5 10v4M13 10v4')],
+  bandage:['pink', '<rect x="2.5" y="8" width="19" height="8" rx="4" transform="rotate(-45 12 12)"/>' + _P('M10.5 10.5h.01M13.5 13.5h.01M10.5 13.5h.01M13.5 10.5h.01')],
+  bottle:['blue', _P('M10 2h4v3l1.5 2.5V20a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2V7.5L10 5ZM8.5 12h7')],
+  bath:['cyan', _P('M3 12h18v2a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5ZM6 12V5.5a2 2 0 0 1 3.6-1.2M7 19l-1 2M17 19l1 2')],
+  hourglass:['amber', _P('M6 3h12M6 21h12M7 3c0 4 5 6 5 9s-5 5-5 9M17 3c0 4-5 6-5 9s5 5 5 9')],
+  // more food
+  carrot:['orange', _P('M3.5 20.5 14 10a3.5 3.5 0 0 0-4.9-4.9L3.5 20.5ZM14 10l3.5-1.5M14 10l1.5-3.5M15.5 6.5 19 3M17.5 8.5 21 6.5M7 15l1.5 1.5M9.5 10.5 11 12')],
+  egg:['amber', _P('M12 3c-3.5 0-6 5.5-6 10a6 6 0 0 0 12 0c0-4.5-2.5-10-6-10Z')],
+  fish:['cyan', _P('M3 12c3-4.5 7-6 11-6 3 0 5.5 2 7 6-1.5 4-4 6-7 6-4 0-8-1.5-11-6ZM3 12 1.5 8M3 12l-1.5 4M16.5 10.5h.01')],
+  pizza:['orange', _P('M3 6c6-3 12-3 18 0l-9 15ZM5 9.5c4.5-2 9.5-2 14 0M10 12h.01M13.5 14h.01M12 17h.01')],
+  nodrink:['red', _P('M6 7h9v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2ZM15 10h2a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2M6 4h9M3 3l18 18')],
+  nosmoke:['gray', _P('M2 14h13v4H2ZM18 14v4M21 14v4M18 10c0-2-2-2-2-4.5M21 10c0-2-2-2-2-4.5M3 3l18 18')],
+  // more home, travel & fun
+  candle:['orange', _P('M9 10h6v11H9ZM12 10V8.5M12 3c1.6 1.4 1.6 3 0 4.2-1.6-1.2-1.6-2.8 0-4.2Z')],
+  cloud:['gray', _P('M7 18a4.5 4.5 0 0 1-.5-9 6 6 0 0 1 11.5 1.5 3.75 3.75 0 0 1-.5 7.5Z')],
+  bell:['gold', _P('M6 16v-5a6 6 0 0 1 12 0v5l2 2H4ZM10 21h4')],
+  thumbs:['gold', _P('M7 10v11H3V10ZM7 10l4-7c1.5 0 2.5 1 2.5 2.5V9H19a2 2 0 0 1 2 2.3l-1.3 7.5a2.5 2.5 0 0 1-2.5 2.2H7')],
+  plane:['blue', _P('M3 13.5 21 6l-4 14-5-5-3 3v-5ZM12 15l9-9')],
+  map:['green', _P('M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2ZM9 4v14M15 6v14')],
+  compass:['teal', _C(12, 12, 9) + _P('M15.5 8.5l-2 5-5 2 2-5Z')],
+  tv:['indigo', '<rect x="3" y="6" width="18" height="12" rx="2"/>' + _P('M8 21h8M9 2l3 4 3-4')],
+  film:['gray', '<rect x="3" y="3" width="18" height="18" rx="2"/>' + _P('M7 3v18M17 3v18M3 8h4M3 12h18M3 16h4M17 8h4M17 16h4')],
+  mic:['purple', '<rect x="9" y="3" width="6" height="11" rx="3"/>' + _P('M5 11a7 7 0 0 0 14 0M12 18v3')],
+  wallet:['amber', '<rect x="3" y="7" width="18" height="13" rx="2"/>' + _P('M3 11h18M16 15.5h2M6 7l9-3.5 1.5 3.5')],
+  piggy:['pink', _P('M19 11.5c0-3.5-3.5-6-8-6s-8 2.5-8 6c0 2 1 3.7 2.5 4.7V19h3v-2h5v2h3v-2.8c.9-.6 1.6-1.5 2-2.7H21v-3h-1.6M15 10h.01M10 5.5V3.5')]
+};
+const HICON_ORDER = Object.keys(HICONS);
+const hIcon = (t, sz = '') => { const ic = HICONS[t.i]; if (!ic) return `<span class="hic${sz}" style="--c:${HC.gold}">${esc(t.e || '⭐')}</span>`;
+  return `<span class="hic${sz}" style="--c:${t.c || HC[ic[0]]}"><svg viewBox="0 0 24 24">${ic[1]}</svg></span>`; };
+const EMOJI_ICON = {'⭐':'star','💪':'dumbbell','🏃':'run','🧠':'bulb','📚':'book','🎧':'headphones','🧘':'meditate','🥤':'glass','🍎':'apple','🛌':'bed','🧼':'shower','✍️':'pencil','🎯':'target','💼':'briefcase','🐶':'paw','🎸':'music','🌱':'sprout','❤️':'heart'};
 const HABIT_PRESETS = [
-  ['p:water','💧','Drink a glass of water'], ['p:bed','🛏️','Make your bed'], ['p:stretch','🧘','Stretch for 5 minutes'], ['p:sun','🌞','Get some sunlight'],
-  ['p:walk','🚶','Go for a walk'], ['p:vitamins','💊','Take your vitamins'], ['p:veg','🥦','Eat a vegetable'], ['p:protein','🍗','Hit your protein'],
-  ['p:read','📖','Read 10 pages'], ['p:floss','🦷','Floss'], ['p:skin','🧴','Skincare routine'], ['p:shower','🚿','Shower'],
-  ['p:grateful','🙏','Write 3 things you\'re grateful for'], ['p:breathe','🌬️','Take 5 deep breaths'], ['p:tidy','🧹','Tidy up for 5 minutes'], ['p:friend','💬','Text a friend'],
-  ['p:nophone','📵','No phone for the first 30 min'], ['p:sleep','😴','In bed by 11'], ['p:outside','🌳','Spend time outside'], ['p:meal','🍳','Cook a meal']
+  ['p:water','glass','Drink a glass of water'], ['p:bed','bed','Make your bed'], ['p:stretch','stretch','Stretch for 5 minutes'], ['p:sun','sun','Get some sunlight'],
+  ['p:walk','walk','Go for a walk'], ['p:steps','steps','Hit 10k steps'], ['p:vitamins','pill','Take your vitamins'], ['p:veg','leaf','Eat a vegetable'],
+  ['p:protein','protein','Hit your protein'], ['p:sugar','nosugar','No added sugar'], ['p:meal','chef','Cook a meal'], ['p:read','book','Read 10 pages'],
+  ['p:journal','journal','Journal'], ['p:meditate','meditate','Meditate 10 minutes'], ['p:grateful','sparkle','Write 3 things you\'re grateful for'], ['p:breathe','breathe','Take 5 deep breaths'],
+  ['p:floss','tooth','Floss'], ['p:skin','lotion','Skincare routine'], ['p:shower','shower','Shower'], ['p:cold','snow','Cold shower'],
+  ['p:tidy','broom','Tidy up for 5 minutes'], ['p:friend','chat','Text a friend'], ['p:nophone','phoneoff','No phone for the first 30 min'], ['p:screen','eye','Take a screen break'],
+  ['p:wake','sunrise','Wake up on time'], ['p:sleep','moon','In bed by 11'], ['p:outside','tree','Spend time outside']
 ];
 const HABIT_DEFAULT = ['p:water','p:bed','p:stretch','p:sun','p:vitamins'];
 function migrate(s){
@@ -579,7 +715,8 @@ function migrate(s){
   s.bonusXP = s.bonusXP || 0; s.prCount = s.prCount || 0;
   s.cosmetics = Object.assign({theme:'classic', head:'', face:'', back:'', aura:'', title:'', owned:[]}, s.cosmetics || {});
   s.habits = Object.assign({tasks:null, log:{}}, s.habits || {});
-  if (!s.habits.tasks) s.habits.tasks = HABIT_DEFAULT.map(id => { const p = HABIT_PRESETS.find(x => x[0] === id); return {id, e:p[1], n:p[2]}; });
+  if (!s.habits.tasks) s.habits.tasks = HABIT_DEFAULT.map(id => { const p = HABIT_PRESETS.find(x => x[0] === id); return {id, i:p[1], n:p[2]}; });
+  s.habits.tasks.forEach(t => { if (!t.i){ const p = HABIT_PRESETS.find(x => x[0] === t.id); t.i = p ? p[1] : EMOJI_ICON[t.e] || 'star'; } delete t.e; });
   s.savedMeals = s.savedMeals || []; s.waterGoal = s.waterGoal || 64; s.friends = s.friends || [];
   if (!s.profile.playerId) s.profile.playerId = newPlayerId();
   s.food = s.food || {}; s.foodRecent = s.foodRecent || []; s.foodTargets = s.foodTargets || null;
@@ -1781,7 +1918,6 @@ function openArmory(){
       <button class="btn ghost sm block" style="margin-top:8px" data-act="iconHelp">Update Home Screen icon</button></details>`);
 }
 /* ---- Habits (self-care tasks → cosmetic rewards) ---- */
-const HABIT_EMOJI = ['⭐','💪','🏃','🧠','📚','🎧','🧘','🥤','🍎','🛌','🧼','✍️','🎯','💼','🐶','🎸','🌱','❤️'];
 const habitList = () => state.habits.tasks;
 const habitDay = (k = dkey(Date.now())) => state.habits.log[k] || [];
 function habitTotal(){ let t = 0; for (const k in state.habits.log) t += state.habits.log[k].length; return t; }
@@ -1831,7 +1967,7 @@ function renderHabits(){
   // Today's tasks
   h += `<div class="card"><div class="row between"><h3 style="margin:0">Today</h3><small class="mute">${new Date().toLocaleDateString(undefined, {weekday:'long', month:'short', day:'numeric'})}</small></div><div style="margin-top:10px">`;
   h += tasks.length ? tasks.map(t => { const on = today.includes(t.id);
-    return `<button class="h-task${on ? ' done' : ''}" data-act="hToggle" data-id="${esc(t.id)}"><span class="em">${esc(t.e)}</span><b>${esc(t.n)}</b><span class="ck">${on ? '✓' : ''}</span></button>`; }).join('')
+    return `<button class="h-task${on ? ' done' : ''}" data-act="hToggle" data-id="${esc(t.id)}">${hIcon(t)}<b>${esc(t.n)}</b><span class="ck">${on ? '✓' : ''}</span></button>`; }).join('')
     : `<p class="mute" style="margin:4px 0 0">No tasks yet — tap Edit tasks to pick some.</p>`;
   h += `</div>${tasks.length && done === tasks.length ? `<div class="h-alldone">🌱 All done for today!</div>` : ''}</div>`;
   // Week
@@ -1855,14 +1991,20 @@ function openHabitTrack(){
       return `<div class="${got ? 'got' : nxId === id ? 'next' : ''}"><div class="hmini">${figMini(it, t, true)}</div><span><b>${esc(it.name)}</b><small>${SLOT_NAME[it.slot]}</small></span>
         ${got ? `<button class="btn ghost xs" data-act="hEquip" data-id="${id}" data-s="${it.slot}">${equippedSkin()[it.slot] === id ? 'Equipped' : 'Equip'}</button>` : `<small class="goal">🔒 ${it.goal}</small>`}</div>`; }).join('')}</div>`);
 }
-function openHabitEdit(){
+function openHabitEdit(keep){
+  const y = keep ? $('#sheet').scrollTop : 0, nm = keep && $('#hName') ? $('#hName').value : (ui.hName || '');
   const on = new Set(habitList().map(t => t.id)), custom = habitList().filter(t => t.id.startsWith('c:'));
+  const f = ui.hForm = ui.hForm || {i:'star', c:''}, ed = ui.hEditId && custom.find(t => t.id === ui.hEditId);
   openSheet(`<div class="row between"><h2 style="margin:0">Edit tasks</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
-    <label class="lbl">Self-care</label><div class="chips wrap">${HABIT_PRESETS.map(([id, e, n]) => `<button class="chip${on.has(id) ? ' on' : ''}" data-act="hPreset" data-id="${id}">${e} ${esc(n)}</button>`).join('')}</div>
+    <label class="lbl">Self-care</label><div class="chips wrap">${HABIT_PRESETS.map(([id, i, n]) => `<button class="chip h-chip${on.has(id) ? ' on' : ''}" data-act="hPreset" data-id="${id}">${hIcon({i}, ' sm')}${esc(n)}</button>`).join('')}</div>
     <label class="lbl">Your own tasks</label>
-    ${custom.length ? custom.map(t => `<div class="h-cust"><span>${esc(t.e)}</span><b>${esc(t.n)}</b><button class="icon-btn sm" data-act="hDel" data-id="${esc(t.id)}">✕</button></div>`).join('') : `<small class="mute">None yet</small>`}
-    <div class="h-add"><input id="hEm" value="${ui.hEm || '⭐'}" maxlength="4" aria-label="Emoji"><input id="hName" placeholder="e.g. Meditate 10 min" maxlength="40"><button class="btn gold sm" data-act="hAdd">Add</button></div>
-    <div class="chips wrap" style="margin-top:8px">${HABIT_EMOJI.map(e => `<button class="chip em-chip" data-act="hEmoji" data-v="${e}">${e}</button>`).join('')}</div>`);
+    ${custom.length ? custom.map(t => `<div class="h-cust${ed && ed.id === t.id ? ' on' : ''}" data-act="hEditC" data-id="${esc(t.id)}">${hIcon(t)}<b>${esc(t.n)}</b><button class="icon-btn sm" data-act="hDel" data-id="${esc(t.id)}">✕</button></div>`).join('') : `<small class="mute">None yet — make one below</small>`}
+    <div class="h-form"><small class="kick">${ed ? 'EDIT TASK' : 'NEW TASK'}</small>
+      <div class="h-add">${hIcon(f, ' lg')}<input id="hName" placeholder="e.g. Practice guitar" maxlength="40" value="${esc(nm)}"><button class="btn gold sm" data-act="hAdd">${ed ? 'Save' : 'Add'}</button></div>
+      ${ed ? `<button class="btn ghost xs" style="margin-top:8px" data-act="hEditCancel">Cancel edit</button>` : ''}
+      <label class="lbl">Color</label><div class="h-colors"><button class="h-sw auto${!f.c ? ' on' : ''}" data-act="hColor" data-v="" aria-label="Default color"></button>${Object.values(HC).map(c => `<button class="h-sw${f.c === c ? ' on' : ''}" style="--c:${c}" data-act="hColor" data-v="${c}"></button>`).join('')}</div>
+      <label class="lbl">Icon</label><div class="h-icons">${HICON_ORDER.map(i => `<button class="${f.i === i ? 'on' : ''}" data-act="hIconPick" data-v="${i}">${hIcon({i, c:f.c})}</button>`).join('')}</div></div>`);
+  if (keep) $('#sheet').scrollTop = y;
 }
 /* ============ UI HELPERS ============ */
 function openSheet(html){ $('#sheet').innerHTML = html; $('#sheetWrap').classList.add('open'); $('#sheet').scrollTop = 0; }
@@ -2388,12 +2530,18 @@ const ACT = {
   hEdit: openHabitEdit,
   hTrack: () => openHabitTrack(),
   hPreset: d => { const L = habitList(), i = L.findIndex(t => t.id === d.id);
-    if (i >= 0) L.splice(i, 1); else { const p = HABIT_PRESETS.find(x => x[0] === d.id); L.push({id:p[0], e:p[1], n:p[2]}); }
-    save(); render(); const y = $('#sheet').scrollTop; openHabitEdit(); $('#sheet').scrollTop = y; },
-  hEmoji: d => { ui.hEm = d.v; $('#hEm').value = d.v; },
-  hAdd: () => { const n = $('#hName').value.trim(), e = $('#hEm').value.trim() || '⭐'; if (!n) return toast('Name your task');
-    ui.hEm = e; habitList().push({id:'c:' + uid(), e, n}); save(); render(); openHabitEdit(); toast('Task added'); },
-  hDel: d => { state.habits.tasks = habitList().filter(t => t.id !== d.id); save(); render(); openHabitEdit(); },
+    if (i >= 0) L.splice(i, 1); else { const p = HABIT_PRESETS.find(x => x[0] === d.id); L.push({id:p[0], i:p[1], n:p[2]}); }
+    save(); render(); openHabitEdit(true); },
+  hIconPick: d => { ui.hForm.i = d.v; openHabitEdit(true); },
+  hColor: d => { ui.hForm.c = d.v; openHabitEdit(true); },
+  hEditC: (d, b, e) => { if (e && e.target.closest && e.target.closest('[data-act="hDel"]')) return; const t = habitList().find(x => x.id === d.id); if (!t) return;
+    ui.hEditId = t.id; ui.hForm = {i:t.i || 'star', c:t.c || ''}; ui.hName = t.n; openHabitEdit(); const fm = $('.h-form'); if (fm && fm.scrollIntoView) fm.scrollIntoView({block:'start', behavior:'smooth'}); },
+  hEditCancel: () => { ui.hEditId = null; ui.hForm = {i:'star', c:''}; ui.hName = ''; openHabitEdit(); },
+  hAdd: () => { const n = $('#hName').value.trim(); if (!n) return toast('Name your task');
+    const f = ui.hForm || {i:'star', c:''}, t = ui.hEditId && habitList().find(x => x.id === ui.hEditId);
+    if (t){ t.n = n; t.i = f.i; if (f.c) t.c = f.c; else delete t.c; } else habitList().push({id:'c:' + uid(), i:f.i, ...(f.c ? {c:f.c} : {}), n});
+    ui.hEditId = null; ui.hName = ''; ui.hForm = {i:'star', c:''}; save(); render(); openHabitEdit(); toast(t ? 'Task updated' : 'Task added'); },
+  hDel: d => { state.habits.tasks = habitList().filter(t => t.id !== d.id); if (ui.hEditId === d.id) ui.hEditId = null; save(); render(); openHabitEdit(true); },
   hEquip: d => { state.cosmetics[d.s] = d.id; save(); ACT.closeLvlUp(); render(); if ($('#sheetWrap').classList.contains('open') && $('.h-track')){ const y = $('#sheet').scrollTop; openHabitTrack(); $('#sheet').scrollTop = y; } toast('Equipped — check out your map'); },
   eqTitle: d => { state.cosmetics.title = d.v === autoTitle(curLevel()) ? '' : d.v; save(); render(); openArmory(); publishStats(true); },
   eqIcon: d => { ui.iconOpen = true; state.cosmetics.icon = d.v; save(); applyIcon(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; toast('Icon picked: tap "Update Home Screen icon" to apply it'); },
