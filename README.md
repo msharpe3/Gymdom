@@ -7,13 +7,14 @@ A gamified gym tracker — every set you log earns XP for the muscles it works, 
 - Front/back muscle map that colors in by rank
 - Log workouts from saved splits or start empty
 - 900+ exercise library with photos, step-by-step instructions, muscle diagrams, and filters by muscle, equipment and type
-- Coach that builds a split from your goal, schedule and equipment
+- Coach (inside Train) that builds a split from your goal, schedule and equipment
+- Habits: daily self-care checklist (presets + your own tasks) with streaks and a 50-reward track that unlocks figure cosmetics
 - Daily & weekly quests, a trophy room, PR fanfare and bonus XP
 - Muscle decay (faded after 7 days, rusty after 14) with a comeback bonus
 - Progressive overload hints, plate calculator, supersets
 - Bodyweight log with trend chart
 - Food tracker: 8,000+ USDA foods with full Nutrition Facts labels (daily, per meal and per food), barcode scanning, packaged food search (Open Food Facts), manual entry, daily calorie/macro targets and per-meal macro breakdowns, saved meals and a water tracker
-- Armory: unlockable themes, figure gear (headband, shades, capes, crown, auras), equippable titles
+- Armory: unlockable themes, figure gear across 12 slots (outfits, shoes, body paint, accessories, wings, auras, map backgrounds), equippable titles
 - Level-up celebration screen and random loot chests after workouts
 - Friends leaderboard (level, streak, weekly workouts, XP) via friend codes
 - Optional Firebase sync across devices (paste your config at the top of `index.html`)

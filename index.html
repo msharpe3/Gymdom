@@ -209,6 +209,38 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 .lvlup-list{display:grid;gap:6px;margin-bottom:16px;text-align:left}
 .lvlup-list div{display:flex;gap:10px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;animation:slideUp .4s both}
 .lvlup-list span:first-child{font-size:20px}.lvlup-list small{display:block;font-size:10px;color:var(--mute);text-transform:uppercase;letter-spacing:.1em}.lvlup-list b{font-size:14px}
+.coach-card{display:flex;align-items:center;gap:12px;width:100%;text-align:left;color:var(--text);font:inherit;cursor:pointer}
+.coach-card svg{width:30px;height:30px;flex:none;fill:none;stroke:var(--teal);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.coach-card span{flex:1;display:flex;flex-direction:column;gap:2px}.coach-card small{color:var(--mute);font-size:12px}.coach-card i{font-style:normal;font-size:22px;color:var(--mute)}
+.kick{font:700 10px 'Chakra Petch';letter-spacing:.2em;color:var(--teal)}
+.reward-card{display:flex;gap:14px;align-items:center;cursor:pointer;background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 10%,var(--panel)),var(--panel) 65%)}
+.reward-prev,.mini{flex:none;overflow:hidden;border-radius:10px}.reward-prev{width:84px}.mini{width:44px}
+.reward-prev svg,.mini svg{width:200%;display:block}
+.reward-prev .fz.zoom,.mini .fz.zoom{aspect-ratio:.68;overflow:hidden}.reward-prev .fz.zoom svg,.mini .fz.zoom svg{width:300%;margin-left:-25%}
+.reward-fig{max-width:260px;margin:10px auto 0;animation:pop .7s .15s cubic-bezier(.2,1.6,.4,1) both}
+.h-task{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);margin-bottom:8px;cursor:pointer;text-align:left;color:var(--text);font:inherit;transition:background .2s,border-color .2s}
+.h-task .em{font-size:22px;width:30px;text-align:center;flex:none}.h-task b{flex:1;font-weight:500;font-size:15px}
+.h-task .ck{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:14px}
+.h-task.done{border-color:color-mix(in srgb,var(--teal) 50%,transparent);background:color-mix(in srgb,var(--teal) 10%,var(--panel2))}
+.h-task.done b{opacity:.55;text-decoration:line-through}.h-task.done .ck{background:var(--teal);border-color:var(--teal);color:#06231f;animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
+.h-alldone{text-align:center;color:var(--teal);font-weight:600;margin-top:6px}
+.h-week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.h-week .dot{display:grid;place-items:center;width:34px;height:34px;margin:0 auto 4px;border-radius:50%;background:conic-gradient(var(--teal) var(--p),var(--panel2) 0)}
+.h-week .dot b{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--panel);font-size:12px}
+.h-week small{color:var(--mute);font-size:11px}.h-week .today small{color:var(--teal);font-weight:700}
+.h-up{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;text-align:center}
+.h-up>div{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
+.h-up b{font-size:11px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}.h-up small{font-size:10px;color:var(--mute)}
+.h-up .mini{opacity:.75}
+.h-track{display:grid;gap:6px;margin-top:12px}
+.h-track .mini{width:38px}
+.h-track>div{display:flex;align-items:center;gap:12px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:6px 10px}
+.h-track>div span{flex:1;display:flex;flex-direction:column}.h-track small{color:var(--mute);font-size:11px}.h-track .goal{font-weight:600}
+.h-track>div:not(.got) .mini{opacity:.45;filter:grayscale(.6)}.h-track .next{border-color:var(--gold)}.h-track .next .goal{color:var(--gold)}
+.h-cust{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:6px 6px 6px 12px;margin-bottom:6px}
+.h-cust span{font-size:20px}.h-cust b{flex:1;font-weight:500}
+.h-add{display:flex;gap:8px;margin-top:10px}.h-add #hEm{width:52px;text-align:center;font-size:20px;flex:none}.h-add #hName{flex:1;min-width:0}
+.em-chip{font-size:18px;padding:5px 9px}
 @keyframes slideUp{from{opacity:0;transform:translateY(12px)}}
 .loot{position:relative;display:flex;align-items:center;gap:12px;background:var(--panel2);border:1px solid color-mix(in srgb,var(--rc) 60%,transparent);border-radius:14px;padding:10px 12px;margin:12px 0;cursor:pointer;overflow:hidden;text-align:left}
 .loot .chest{width:64px;flex:none;position:relative;z-index:1}
@@ -264,12 +296,12 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.02.18"></script>
+<script src="exercises.js?v=2026.10.04.1"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.02.18';
+const APP_VERSION = '2026.10.04.1';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -350,7 +382,7 @@ const MIR = 'transform="translate(200 0) scale(-1 1)"';
 const toParts = list => list.map(([m, pts, mir]) => [m, spline(pts.map(shape)), mir]);
 const FRONT = [...toParts(FRONT2), ['abs', ABS, 1]], BACK = toParts(BACK2);
 function fig(parts, x, col, tap, sk, front){
-  let s = `<g transform="translate(${x} 0)">${sk ? skinBehind(sk, front) : ''}<path d="${OUTLINE}" class="base"/>`;
+  let s = `<g transform="translate(${x} 0)">${sk ? skinBehind(sk, front) : ''}<path d="${OUTLINE}" class="base"/>${sk ? skinUnder(sk) : ''}`;
   for (const [m, d, mir] of parts){
     const c = col(m), a = `class="mus" fill="${Array.isArray(c) ? c[0] : c}"${Array.isArray(c) && c[1] < 1 ? ` fill-opacity="${c[1]}"` : ''}${tap ? ` data-act="muscle" data-m="${m}"` : ''}`;
     s += `<path d="${d}" ${a}/>`;
@@ -359,8 +391,8 @@ function fig(parts, x, col, tap, sk, front){
   return s + (sk ? skinFront(sk, front) : '') + '</g>';
 }
 function bodySVG(col, {tap=false, labels=true, skin=null}={}){
-  const sk = skin && Object.keys(skin).length ? skin : null, top = sk ? -14 : 0;
-  return `<svg class="body${tap?' tap':''}" viewBox="0 ${top} 440 ${(labels?426:400) - top}" xmlns="http://www.w3.org/2000/svg">${sk ? SKIN_DEFS : ''}${fig(FRONT,10,col,tap,sk,1)}${fig(BACK,230,col,tap,sk,0)}${labels?'<text x="110" y="420">FRONT</text><text x="330" y="420">BACK</text>':''}</svg>`;
+  const sk = skin && Object.keys(skin).length ? skin : null, top = sk ? -14 : 0, H = (labels?426:400) - top;
+  return `<svg class="body${tap?' tap':''}${sk && sk.bg ? ' has-bg' : ''}" viewBox="0 ${top} 440 ${H}" xmlns="http://www.w3.org/2000/svg">${sk ? SKIN_DEFS : ''}${sk && sk.bg ? mapBG(sk.bg, 440, top, H) : ''}${fig(FRONT,10,col,tap,sk,1)}${fig(BACK,230,col,tap,sk,0)}${labels?'<text x="110" y="420">FRONT</text><text x="330" y="420">BACK</text>':''}</svg>`;
 }
 const exColor = ex => m => ex.p.includes(m) ? GOLD : ex.s.includes(m) ? TEAL : UNTR;
 
@@ -530,6 +562,14 @@ const photo = (ex, i = 0) => ex.img ? IMG_BASE + ex.img + '/' + i + '.jpg' : '';
 const KEY = 'gymdom_v1';
 let state, ui = {tab:'body', libQ:'', libM:'', edit:null, plan:null, pick:null,
   coach:{goal:'recomp',days:5,len:60,equip:'full',exp:'intermediate',focus:[],weak:false,seed:0}};
+const HABIT_PRESETS = [
+  ['p:water','💧','Drink a glass of water'], ['p:bed','🛏️','Make your bed'], ['p:stretch','🧘','Stretch for 5 minutes'], ['p:sun','🌞','Get some sunlight'],
+  ['p:walk','🚶','Go for a walk'], ['p:vitamins','💊','Take your vitamins'], ['p:veg','🥦','Eat a vegetable'], ['p:protein','🍗','Hit your protein'],
+  ['p:read','📖','Read 10 pages'], ['p:floss','🦷','Floss'], ['p:skin','🧴','Skincare routine'], ['p:shower','🚿','Shower'],
+  ['p:grateful','🙏','Write 3 things you\'re grateful for'], ['p:breathe','🌬️','Take 5 deep breaths'], ['p:tidy','🧹','Tidy up for 5 minutes'], ['p:friend','💬','Text a friend'],
+  ['p:nophone','📵','No phone for the first 30 min'], ['p:sleep','😴','In bed by 11'], ['p:outside','🌳','Spend time outside'], ['p:meal','🍳','Cook a meal']
+];
+const HABIT_DEFAULT = ['p:water','p:bed','p:stretch','p:sun','p:vitamins'];
 function migrate(s){
   s = s || {};
   s.profile = Object.assign({name:'', bw:180, syncCode:''}, s.profile || {});
@@ -538,6 +578,8 @@ function migrate(s){
   s.bwLog = s.bwLog || []; s.achievements = s.achievements || {}; s.questsDone = s.questsDone || {};
   s.bonusXP = s.bonusXP || 0; s.prCount = s.prCount || 0;
   s.cosmetics = Object.assign({theme:'classic', head:'', face:'', back:'', aura:'', title:'', owned:[]}, s.cosmetics || {});
+  s.habits = Object.assign({tasks:null, log:{}}, s.habits || {});
+  if (!s.habits.tasks) s.habits.tasks = HABIT_DEFAULT.map(id => { const p = HABIT_PRESETS.find(x => x[0] === id); return {id, e:p[1], n:p[2]}; });
   s.savedMeals = s.savedMeals || []; s.waterGoal = s.waterGoal || 64; s.friends = s.friends || [];
   if (!s.profile.playerId) s.profile.playerId = newPlayerId();
   s.food = s.food || {}; s.foodRecent = s.foodRecent || []; s.foodTargets = s.foodTargets || null;
@@ -1472,15 +1514,45 @@ const THEMES = [
   ['diamond','Diamond',{trophy:'dia'},['#a5f3fc','#e9d5ff','#131728']]
 ];
 const SKINS = [
-  ['headband','Headband','head',{lvl:2}], ['shades','Shades','face',{lvl:5}], ['cape','Hero Cape','back',{lvl:8}],
-  ['crown','Crown','head',{lvl:12}], ['royalcape','Royal Cape','back',{lvl:18}], ['glow','Glow Aura','aura',{lvl:20}],
-  ['viking','Viking Helm','head',{loot:'epic'}], ['flame','Flame Aura','aura',{loot:'legendary'}]
+  // head
+  ['headband','Headband','head',{lvl:2}], ['crown','Crown','head',{lvl:12}], ['viking','Viking Helm','head',{loot:'epic'}],
+  ['cap','Ball Cap','head',{}], ['beanie','Beanie','head',{}], ['bandana','Bandana','head',{}], ['headphones','Headphones','head',{}],
+  ['halo','Halo','head',{}], ['horns','Devil Horns','head',{}],
+  // face
+  ['shades','Shades','face',{lvl:5}], ['aviators','Aviators','face',{}], ['visor','Sport Visor','face',{}],
+  // body paint
+  ['eyeblack','Eye Black','paint',{}], ['warpaint','War Paint','paint',{}], ['tribal','Tribal Tattoo','paint',{}], ['neon','Neon Lines','paint',{}],
+  // tops (drawn under the muscle colors)
+  ['tank_red','Red Tank','top',{}], ['tank_black','Black Tank','top',{}], ['stringer','White Stringer','top',{}], ['comp_blue','Blue Compression','top',{}], ['singlet_gold','Gold Singlet','top',{}],
+  // bottoms
+  ['shorts_black','Black Shorts','bottom',{}], ['shorts_red','Red Shorts','bottom',{}], ['board','Board Shorts','bottom',{}], ['joggers','Joggers','bottom',{}],
+  // neck
+  ['chain_gold','Gold Chain','neck',{}], ['chain_silver','Silver Chain','neck',{}], ['medal','Gold Medal','neck',{}],
+  // wrists / hands
+  ['bands_red','Red Wristbands','wrists',{}], ['bands_blue','Blue Wristbands','wrists',{}], ['wraps','Wrist Wraps','wrists',{}], ['gloves','Lifting Gloves','wrists',{}],
+  // waist
+  ['belt_brown','Leather Belt','waist',{}], ['belt_black','Black Belt','waist',{}], ['champ','Champion Belt','waist',{}],
+  // feet
+  ['kicks_white','White Kicks','feet',{}], ['kicks_red','Red Kicks','feet',{}], ['hightops','High-Tops','feet',{}], ['kicks_gold','Gold Kicks','feet',{}],
+  // back
+  ['cape','Hero Cape','back',{lvl:8}], ['royalcape','Royal Cape','back',{lvl:18}], ['shadowcape','Shadow Cape','back',{}], ['angel','Angel Wings','back',{}], ['dragon','Dragon Wings','back',{}],
+  // aura
+  ['glow','Glow Aura','aura',{lvl:20}], ['flame','Flame Aura','aura',{loot:'legendary'}], ['lightning','Lightning Aura','aura',{}], ['ice','Ice Aura','aura',{}], ['shadow','Shadow Aura','aura',{}], ['rainbow','Rainbow Aura','aura',{}],
+  // backgrounds behind the muscle map
+  ['bg_gym','Gym','bg',{}], ['bg_beach','Beach','bg',{}], ['bg_arena','Arena','bg',{}], ['bg_space','Space','bg',{}], ['bg_mountains','Mountains','bg',{}], ['bg_city','City Night','bg',{}], ['bg_dojo','Dojo','bg',{}], ['bg_volcano','Volcano','bg',{}]
 ];
-const SLOTS = [['head','Head'],['face','Face'],['back','Back'],['aura','Aura']];
+const SLOTS = [['head','Head'],['face','Face'],['paint','Body Paint'],['top','Top'],['bottom','Bottoms'],['neck','Neck'],['wrists','Wrists & Hands'],['waist','Waist'],['feet','Feet'],['back','Back'],['aura','Aura'],['bg','Background']];
+// Habits reward track: the order cosmetics unlock as you complete self-care tasks
+const HABIT_TRACK = ['tank_red','kicks_white','bands_red','shorts_black','bg_gym','cap','chain_gold','warpaint','bg_beach','aviators','tank_black','belt_brown',
+  'beanie','kicks_red','eyeblack','bg_mountains','shorts_red','bands_blue','visor','stringer','bg_city','headphones','chain_silver','tribal','wraps','bg_dojo',
+  'board','comp_blue','bandana','gloves','shadowcape','bg_arena','hightops','belt_black','medal','joggers','neon','bg_space','lightning','ice','singlet_gold',
+  'angel','kicks_gold','halo','horns','shadow','bg_volcano','dragon','champ','rainbow'];
+const habitGoal = i => { let t = 0; for (let k = 0; k <= i; k++) t += 3 + Math.floor(k / 2); return t; };  // 3, 6, 10, 14, 19, 24, 30…
+HABIT_TRACK.forEach((id, i) => { const it = SKINS.find(s => s[0] === id); if (it) it[3] = {habit: habitGoal(i)}; });
 const LOOT_TITLES = [['Treasure Hunter','epic'],['Chosen One','legendary']];
 const curLevel = () => playerLvl(sumObj(muscleTotals()) + state.bonusXP);
-const unlockLabel = u => u.lvl != null ? `Lv ${u.lvl}` : u.loot ? `${u.loot[0].toUpperCase() + u.loot.slice(1)} loot` : 'Trophy';
-function isUnlocked(id, u, L = curLevel()){ return (u.lvl != null && L >= u.lvl) || state.cosmetics.owned.includes(id) || (u.trophy && state.achievements[u.trophy]); }
+const unlockLabel = u => u.habit != null ? `${u.habit} tasks` : u.lvl != null ? `Lv ${u.lvl}` : u.loot ? `${u.loot[0].toUpperCase() + u.loot.slice(1)} loot` : 'Trophy';
+function isUnlocked(id, u, L = curLevel()){ return (u.lvl != null && L >= u.lvl) || (u.habit != null && typeof habitTotal === 'function' && habitTotal() >= u.habit) || state.cosmetics.owned.includes(id) || (u.trophy && state.achievements[u.trophy]); }
 function titleList(L = curLevel()){
   const t = TITLES.map((n, i) => [n, i * 3, L >= i * 3]);
   ACH.forEach(a => t.push([a[2], 'trophy', !!state.achievements[a[0]]]));
@@ -1521,27 +1593,123 @@ function equippedSkin(){
   return out;
 }
 
-/* ---- Figure skins (drawn in figure coordinates) ---- */
+/* ---- Figure gear art (figure coordinates). Garments use pre-shape points, run through shape() like the muscles ---- */
+const symPath = L => spline([...L, ...L.slice(1, -1).reverse().map(([x, y]) => [200 - x, y])].map(shape));
+const GEAR = {
+  tank: symPath([[100,66],[92,60],[86,57],[80,58],[79,66],[74,82],[72,100],[75,130],[78,160],[80,186],[100,190]]),
+  stringer: symPath([[100,74],[94,65],[89,57],[86,57],[84,64],[80,92],[77,112],[77,136],[79,160],[81,186],[100,190]]),
+  sleeve: spline([[68,61],[55,66],[46,77],[42,92],[39,110],[46,118],[56,113],[63,104],[69,95]].map(shape)),
+  shorts: symPath([[100,183],[82,183],[76,192],[72,212],[69,240],[70,262],[80,268],[92,266],[96,246],[99,226],[100,222]]),
+  board: symPath([[100,183],[82,183],[76,192],[72,214],[68,244],[67,272],[72,286],[90,286],[95,256],[99,228],[100,222]]),
+  joggers: symPath([[100,183],[82,183],[76,192],[72,214],[68,246],[66,270],[62,292],[58,312],[58,334],[61,354],[62,368],[81,368],[81,348],[83,318],[86,292],[89,270],[95,244],[99,226],[100,222]]),
+  shoe: 'M58,369 C55,374 53,380 54,385 C54,389 57,391 61,391 L82,391 C84,391 84,388 83,385 L81,370 Z',
+  hightop: 'M58,357 C56,366 53,378 54,385 C54,389 57,391 61,391 L82,391 C84,391 84,388 83,385 L81,358 Z',
+  band: 'M41,178 L56,177 L57,187 L42,188 Z',
+  wrap: 'M40,172 L56,171 L57,187 L42,188 Z',
+  glove: 'M43,185 C42,192 44,201 49,205 C53,208 60,207 64,200 C66,195 65,190 62,186 C57,182 48,182 43,185 Z'
+};
+const TOPS = {tank_red:['tank','#c0263f'], tank_black:['tank','#0b0a10'], stringer:['stringer','#e8e6f2'], comp_blue:['tank','#1d4ed8',1], singlet_gold:['tank','#d4a017']};
+const BOTTOMS = {shorts_black:['shorts','#0b0a10'], shorts_red:['shorts','#b91c1c'], board:['board','#0e7490','stripes'], joggers:['joggers','#5d5b78']};
+const SHOES = {kicks_white:['shoe','#f4f4f8','#e23b54'], kicks_red:['shoe','#d42d45','#f4f4f8'], hightops:['hightop','#4c46c8','#f4f4f8'], kicks_gold:['shoe','#e8b923','#7a5a00']};
+const WRISTS = {bands_red:['band','#e23b54'], bands_blue:['band','#3b82f6'], wraps:['wrap','#f1f0f6']};
+const AURA_C = {glow:'var(--gold)', flame:'#fb923c', lightning:'#60a5fa', ice:'#a5f3fc', shadow:'#7c3aed', rainbow:'url(#gdRainbow)'};
 const SKIN_DEFS = `<defs><filter id="gdBlur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5"/></filter>
+  <filter id="gdSoft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.6"/></filter>
   <clipPath id="gdBody"><path d="${OUTLINE}"/></clipPath>
   <linearGradient id="gdCape" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c0263f"/><stop offset="1" stop-color="#6e1222"/></linearGradient>
-  <linearGradient id="gdRoyal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6d28d9"/><stop offset="1" stop-color="#3b1478"/></linearGradient></defs>`;
+  <linearGradient id="gdRoyal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6d28d9"/><stop offset="1" stop-color="#3b1478"/></linearGradient>
+  <linearGradient id="gdShadow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1b4a"/><stop offset="1" stop-color="#0b0716"/></linearGradient>
+  <linearGradient id="gdAngel" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#c9d4f2"/></linearGradient>
+  <linearGradient id="gdDragon" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7f1d1d"/><stop offset="1" stop-color="#3b0a24"/></linearGradient>
+  <linearGradient id="gdRainbow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f2667a"/><stop offset=".25" stop-color="#f2c94c"/><stop offset=".5" stop-color="#4fd1c5"/><stop offset=".75" stop-color="#60a5fa"/><stop offset="1" stop-color="#a78bfa"/>
+    <animateTransform attributeName="gradientTransform" type="rotate" values="0 .5 .5;360 .5 .5" dur="4s" repeatCount="indefinite"/></linearGradient>
+  <pattern id="gdStripes" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(-20)"><rect width="8" height="8" fill="#0e7490"/><rect width="8" height="3" fill="#22d3ee"/></pattern></defs>`;
 const CAPE = 'M76,57 C54,62 28,118 24,182 C21,224 30,252 34,266 L166,266 C170,252 179,224 176,182 C172,118 146,62 124,57 Z';
+const WING_ANGEL = 'M84,74 C66,48 34,30 6,34 C16,42 18,48 12,56 C26,58 30,64 22,74 C36,76 40,82 32,92 C46,94 50,102 44,112 C60,106 74,96 84,86 Z';
+const WING_DRAGON = 'M84,72 C66,46 40,24 8,20 L22,46 L4,50 L24,66 L6,76 L30,86 L16,100 L44,104 C60,100 74,92 84,84 Z';
+const both = (d, attrs) => `<path d="${d}" ${attrs}/><path d="${d}" ${MIR} ${attrs}/>`;
 function skinBehind(sk, front){
   let s = '';
-  if (sk.aura) s += `<path d="${OUTLINE}" class="aura ${sk.aura}" fill="none" stroke="${sk.aura === 'flame' ? '#fb923c' : 'var(--gold)'}" stroke-width="${sk.aura === 'flame' ? 12 : 9}" filter="url(#gdBlur)"/>`;
-  if (sk.back && front) s += `<path d="${CAPE}" fill="url(#${sk.back === 'royalcape' ? 'gdRoyal' : 'gdCape'})"${sk.back === 'royalcape' ? ' stroke="#f2c94c" stroke-width="2"' : ''}/>`;
+  if (sk.aura) s += `<path d="${OUTLINE}" class="aura ${sk.aura}" fill="none" stroke="${AURA_C[sk.aura] || 'var(--gold)'}" stroke-width="${sk.aura === 'flame' || sk.aura === 'shadow' ? 12 : 9}" filter="url(#gdBlur)"/>`;
+  if (sk.back === 'angel') s += both(WING_ANGEL, 'fill="url(#gdAngel)" stroke="#aab4d6" stroke-width=".8"') + both('M80,76 C60,60 40,50 20,48 M78,84 C62,74 46,70 30,72', 'fill="none" stroke="#aab4d6" stroke-width=".8"');
+  if (sk.back === 'dragon') s += both(WING_DRAGON, 'fill="url(#gdDragon)" stroke="#2a0612" stroke-width="1"') + both('M84,76 L22,46 M84,78 L24,66 M84,82 L30,86', 'fill="none" stroke="#2a0612" stroke-width="1.2"');
+  if (front && ['cape','royalcape','shadowcape'].includes(sk.back)) s += `<path d="${CAPE}" fill="url(#${{cape:'gdCape', royalcape:'gdRoyal', shadowcape:'gdShadow'}[sk.back]})"${sk.back === 'royalcape' ? ' stroke="#f2c94c" stroke-width="2"' : ''}/>`;
+  return s;
+}
+// Clothing sits under the muscle colors so ranks stay visible
+function skinUnder(sk){
+  let s = '';
+  const TRIM = 'stroke="#d8d6ea" stroke-opacity=".55" stroke-width="1.1"';
+  const t = TOPS[sk.top]; if (t){ s += `<path d="${GEAR[t[0]]}" fill="${t[1]}" ${TRIM} clip-path="url(#gdBody)"/>`; if (t[2]) s += both(GEAR.sleeve, `fill="${t[1]}" ${TRIM} clip-path="url(#gdBody)"`); }
+  const b = BOTTOMS[sk.bottom]; if (b){ s += `<path d="${GEAR[b[0]]}" fill="${b[2] ? 'url(#gdStripes)' : b[1]}" ${TRIM} clip-path="url(#gdBody)"/>`;
+    if (b[0] !== 'board') s += `<g clip-path="url(#gdBody)">${both(b[0] === 'joggers' ? 'M70,200 L66,262 L61,300 L60,360' : 'M71,200 L69,262', 'fill="none" stroke="#f4f4f8" stroke-opacity=".7" stroke-width="1.6"')}</g>`; }
   return s;
 }
 function skinFront(sk, front){
   let s = '';
-  if (sk.back && front) s += `<circle cx="79" cy="61" r="3" fill="#f2c94c"/><circle cx="121" cy="61" r="3" fill="#f2c94c"/>`;
-  if (sk.back && !front) s += `<path d="M78,57 Q100,66 122,57 L120,64 Q100,72 80,64Z" fill="${sk.back === 'royalcape' ? '#6d28d9' : '#c0263f'}"/>`;
-  if (sk.face === 'shades' && front) s += `<rect x="87.5" y="22.5" width="11" height="6" rx="2.5" fill="#0b0a12"/><rect x="101.5" y="22.5" width="11" height="6" rx="2.5" fill="#0b0a12"/><path d="M98.5,24.5 h3" stroke="#0b0a12" stroke-width="1.6"/><path d="M89.5,24 l3,0" stroke="#fff" stroke-opacity=".5" stroke-width="1" stroke-linecap="round"/><path d="M103.5,24 l3,0" stroke="#fff" stroke-opacity=".5" stroke-width="1" stroke-linecap="round"/>`;
+  // body paint
+  if (sk.paint === 'tribal') s += both('M58,72 C52,80 54,88 62,90 M50,84 C46,92 50,100 57,100 M60,96 C56,104 58,110 64,110 M46,140 C42,148 46,156 52,154 M50,160 C46,168 50,174 55,172', 'fill="none" stroke="#a7a2cf" stroke-width="2.2" stroke-linecap="round" opacity=".85"');
+  if (sk.paint === 'neon') s += `<g filter="url(#gdSoft)" opacity=".9">${both('M76,70 C72,110 76,150 82,184 M50,90 L44,130 M42,140 L44,176', 'fill="none" stroke="#22d3ee" stroke-width="1.6"')}</g>` + both('M76,70 C72,110 76,150 82,184 M50,90 L44,130 M42,140 L44,176', 'fill="none" stroke="#a5f3fc" stroke-width=".7"');
+  if (front && sk.paint === 'eyeblack') s += `<rect x="88" y="29" width="8" height="3" rx="1.2" fill="#0b0a12"/><rect x="104" y="29" width="8" height="3" rx="1.2" fill="#0b0a12"/>`;
+  if (front && sk.paint === 'warpaint') s += `<path d="M88,26 l9,0 M87,30 l9,0 M103,26 l9,0 M104,30 l9,0" stroke="#e23b54" stroke-width="2" stroke-linecap="round"/><path d="M100,9 v12" stroke="#3b82f6" stroke-width="2.4" stroke-linecap="round"/>`;
+  // neck
+  if (front && (sk.neck === 'chain_gold' || sk.neck === 'chain_silver')){ const c = sk.neck === 'chain_gold' ? '#f2c94c' : '#d6dbe6';
+    s += `<path d="M86,58 Q100,78 114,58" fill="none" stroke="${c}" stroke-width="2" stroke-dasharray="2 1.2"/><circle cx="100" cy="70" r="3" fill="${c}"/>`; }
+  if (front && sk.neck === 'medal') s += `<path d="M88,57 L100,80 L112,57" fill="none" stroke="#e23b54" stroke-width="3"/><path d="M91,57 L100,76 L109,57" fill="none" stroke="#3b82f6" stroke-width="1.4"/><circle cx="100" cy="84" r="6" fill="#f2c94c" stroke="#b8891e" stroke-width="1"/><path d="M100,80.5 l1.1,2.3 2.5,.3 -1.8,1.7 .5,2.5 -2.3,-1.2 -2.3,1.2 .5,-2.5 -1.8,-1.7 2.5,-.3z" fill="#b8891e"/>`;
+  // waist
+  if (sk.waist === 'belt_brown' || sk.waist === 'belt_black'){ const c = sk.waist === 'belt_brown' ? '#7a4a28' : '#1a1a22';
+    s += `<path d="${spline([[78,184],[100,186],[122,184],[122,196],[100,198],[78,196]].map(shape))}" fill="${c}" stroke="#0b0a12" stroke-width=".6"/>` + (front ? `<rect x="94" y="186" width="12" height="10" rx="1.5" fill="none" stroke="#c9ccd6" stroke-width="1.8"/>` : ''); }
+  if (sk.waist === 'champ') s += `<path d="${spline([[78,183],[100,185],[122,183],[122,197],[100,199],[78,197]].map(shape))}" fill="#1a1a22"/>` + (front ? `<ellipse cx="100" cy="191" rx="14" ry="10" fill="#f2c94c" stroke="#b8891e" stroke-width="1.2"/><ellipse cx="100" cy="191" rx="8" ry="5.5" fill="none" stroke="#b8891e" stroke-width="1"/><circle cx="100" cy="191" r="2.2" fill="#e23b54"/><circle cx="84" cy="191" r="2.6" fill="#f2c94c"/><circle cx="116" cy="191" r="2.6" fill="#f2c94c"/>` : '');
+  // wrists / hands
+  const w = WRISTS[sk.wrists]; if (w) s += both(GEAR[w[0]], `fill="${w[1]}" stroke="#0b0a12" stroke-width=".5" transform-origin="0 0"`);
+  if (sk.wrists === 'gloves') s += both(GEAR.glove, 'fill="#0d0c12" stroke="#a9a6c2" stroke-width=".9"') + both('M44,186 L62,186', 'stroke="#e23b54" stroke-width="2.2"');
+  // feet
+  const f = SHOES[sk.feet]; if (f) s += both(GEAR[f[0]], `fill="${f[1]}" stroke="${f[1] === '#0d0c12' ? '#d8d6ea' : '#0b0a12'}" stroke-width="${f[1] === '#0d0c12' ? .9 : .6}"`) + both('M54,386 L83,386', 'stroke="#0b0a12" stroke-width="1.4" opacity=".5"') + both(f[0] === 'hightop' ? 'M60,364 L78,372 M60,372 L79,378' : 'M61,376 L77,381', `stroke="${f[2]}" stroke-width="1.8" stroke-linecap="round"`);
+  // capes: clasps / collar
+  if (['cape','royalcape','shadowcape'].includes(sk.back)){ const col = {cape:'#c0263f', royalcape:'#6d28d9', shadowcape:'#2a1b4a'}[sk.back];
+    s += front ? `<circle cx="79" cy="61" r="3" fill="#f2c94c"/><circle cx="121" cy="61" r="3" fill="#f2c94c"/>` : `<path d="M78,57 Q100,66 122,57 L120,64 Q100,72 80,64Z" fill="${col}"/>`; }
+  // face
+  if (front && sk.face === 'shades') s += `<rect x="87.5" y="22.5" width="11" height="6" rx="2.5" fill="#0b0a12"/><rect x="101.5" y="22.5" width="11" height="6" rx="2.5" fill="#0b0a12"/><path d="M98.5,24.5 h3" stroke="#0b0a12" stroke-width="1.6"/><path d="M89.5,24 l3,0" stroke="#fff" stroke-opacity=".5" stroke-width="1" stroke-linecap="round"/><path d="M103.5,24 l3,0" stroke="#fff" stroke-opacity=".5" stroke-width="1" stroke-linecap="round"/>`;
+  if (front && sk.face === 'aviators') s += `<path d="M87,22 h11 c0,5 -2,8 -5.5,8 c-3.5,0 -5.5,-3 -5.5,-8z M102,22 h11 c0,5 -2,8 -5.5,8 c-3.5,0 -5.5,-3 -5.5,-8z" fill="#3a3f55" stroke="#f2c94c" stroke-width="1"/><path d="M98,23 h4" stroke="#f2c94c" stroke-width="1"/><path d="M89,24 l3,0 M104,24 l3,0" stroke="#fff" stroke-opacity=".45" stroke-width="1" stroke-linecap="round"/>`;
+  if (front && sk.face === 'visor') s += `<path d="M85,21 Q100,18 115,21 L114,28 Q100,31 86,28 Z" fill="#4fd1c5" stroke="#0b0a12" stroke-width=".8" opacity=".95"/><path d="M89,23 Q100,21 111,23" stroke="#fff" stroke-opacity=".6" stroke-width="1" fill="none"/>`;
+  // head
   if (sk.head === 'headband') s += `<rect x="80" y="12.5" width="40" height="5.5" fill="#e23b54" clip-path="url(#gdBody)"/>` + (front ? '' : `<path d="M99,16 C104,22 106,30 103,36 M101,16 C108,20 112,27 111,33" stroke="#e23b54" stroke-width="2.6" fill="none" stroke-linecap="round"/>`);
   if (sk.head === 'crown') s += `<path d="M87,9 L86,-4 L93.5,2 L100,-9 L106.5,2 L114,-4 L113,9 Z" fill="#f2c94c" stroke="#b8891e" stroke-width="1" stroke-linejoin="round"/><circle cx="100" cy="4.5" r="2" fill="#e23b54"/><circle cx="91.5" cy="5.5" r="1.4" fill="#4fd1c5"/><circle cx="108.5" cy="5.5" r="1.4" fill="#4fd1c5"/>`;
   if (sk.head === 'viking') s += `<path d="M84.5,8 C78,6 72,-2 75,-11 C77,-4 81,0 87,2Z M115.5,8 C122,6 128,-2 125,-11 C123,-4 119,0 113,2Z" fill="#efe6cf" stroke="#b9ac8a" stroke-width=".8"/><path d="M83.5,19 C83.5,0 116.5,0 116.5,19Z" fill="#9aa3b5"/><rect x="83" y="16" width="34" height="4.5" rx="1.5" fill="#6b7280"/><path d="M100,3 v13" stroke="#6b7280" stroke-width="2"/>`;
+  if (sk.head === 'cap') s += `<path d="M83.5,17 C83.5,-1 116.5,-1 116.5,17Z" fill="#e23b54"/><path d="M100,0.5 v16" stroke="#9b1c31" stroke-width=".8"/>` + (front ? `<path d="M82,16 Q100,12 118,16 Q119,21 100,20 Q81,21 82,16Z" fill="#9b1c31"/>` : `<rect x="95" y="13" width="10" height="3.5" rx="1" fill="#9b1c31"/>`);
+  if (sk.head === 'beanie') s += `<path d="M83,19 C82,-3 118,-3 117,19Z" fill="#2563eb"/><rect x="82" y="13" width="36" height="7" rx="2.5" fill="#1d4ed8"/><path d="M88,14 v5 M93,14 v5 M98,14 v5 M103,14 v5 M108,14 v5 M113,14 v5" stroke="#3b82f6" stroke-width=".8"/><circle cx="100" cy="2" r="3.6" fill="#f4f4f8"/>`;
+  if (sk.head === 'bandana') s += `<path d="M83.5,16 C83.5,1 116.5,1 116.5,16 Q100,13 83.5,16Z" fill="#b91c1c"/><circle cx="92" cy="8" r="1.1" fill="#fff"/><circle cx="104" cy="6" r="1.1" fill="#fff"/><circle cx="110" cy="11" r="1.1" fill="#fff"/>` + (front ? '' : `<path d="M100,14 l-6,12 l5,-1 z M100,14 l6,12 l-5,-1 z" fill="#b91c1c"/>`);
+  if (sk.head === 'headphones') s += `<path d="M84,24 C82,2 118,2 116,24" fill="none" stroke="#1a1a22" stroke-width="3.2"/><rect x="79" y="17" width="7" height="13" rx="3" fill="#e23b54"/><rect x="114" y="17" width="7" height="13" rx="3" fill="#e23b54"/>`;
+  if (sk.head === 'halo') s += `<ellipse cx="100" cy="-5" rx="14" ry="3.6" fill="none" stroke="#fde68a" stroke-width="2.4" filter="url(#gdSoft)"/><ellipse cx="100" cy="-5" rx="14" ry="3.6" fill="none" stroke="#fff7d6" stroke-width="1.2"/>`;
+  if (sk.head === 'horns') s += `<path d="M89,8 C86,2 84,-4 86,-11 C89,-5 92,0 94,5Z M111,8 C114,2 116,-4 114,-11 C111,-5 108,0 106,5Z" fill="#dc2626" stroke="#7f1d1d" stroke-width=".8"/>`;
   return s;
+}
+// Scenes behind the muscle map (full map width)
+function mapBG(id, W, top, H){
+  const R = `x="0" y="${top}" width="${W}" height="${H}"`, F = top + H;
+  const sc = {
+    bg_gym: `<rect ${R} fill="#1d1c26"/><rect x="0" y="${F - 70}" width="${W}" height="70" fill="#2a2433"/><path d="M0,${F - 70} H${W}" stroke="#3a3348" stroke-width="2"/>
+      ${[60, 150, 290, 380].map(x => `<rect x="${x}" y="${top + 40}" width="3" height="${H - 110}" fill="#2c2a3a"/>`).join('')}<rect x="30" y="${top + 120}" width="120" height="6" fill="#4a4862"/><rect x="290" y="${top + 120}" width="120" height="6" fill="#4a4862"/>
+      ${[40, 70, 100, 330, 360, 390].map(x => `<rect x="${x}" y="${F - 92}" width="10" height="20" rx="2" fill="#3b3950"/>`).join('')}`,
+    bg_beach: `<defs><linearGradient id="bgB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b2a5a"/><stop offset=".55" stop-color="#e46a5c"/><stop offset="1" stop-color="#f6b37a"/></linearGradient></defs>
+      <rect ${R} fill="url(#bgB)"/><circle cx="${W / 2}" cy="${F - 120}" r="46" fill="#ffd27a" opacity=".85"/><rect x="0" y="${F - 110}" width="${W}" height="60" fill="#2f6f8f" opacity=".9"/><rect x="0" y="${F - 50}" width="${W}" height="50" fill="#d8b07a"/>`,
+    bg_arena: `<rect ${R} fill="#0d0c14"/><path d="M60,${top} L10,${F - 40} L150,${F - 40}Z M380,${top} L290,${F - 40} L430,${F - 40}Z" fill="#fff" opacity=".07"/><path d="M${W / 2},${top} L${W / 2 - 80},${F - 40} L${W / 2 + 80},${F - 40}Z" fill="#fff" opacity=".05"/>
+      <rect x="0" y="${F - 40}" width="${W}" height="40" fill="#1c1a28"/>${Array.from({length: 44}, (_, i) => `<circle cx="${6 + i * 10}" cy="${F - 24 + (i % 3) * 5}" r="3.5" fill="#2e2b40"/>`).join('')}`,
+    bg_space: `<defs><radialGradient id="bgS" cx="80%" cy="20%" r="90%"><stop offset="0" stop-color="#26205a"/><stop offset="1" stop-color="#05040d"/></radialGradient></defs><rect ${R} fill="url(#bgS)"/>
+      ${Array.from({length: 46}, (_, i) => `<circle cx="${(i * 97) % W}" cy="${top + (i * 53) % H}" r="${i % 5 ? .8 : 1.5}" fill="#fff" opacity="${.3 + (i % 4) * .15}"/>`).join('')}
+      <circle cx="${W - 60}" cy="${top + 60}" r="26" fill="#7c5cff"/><ellipse cx="${W - 60}" cy="${top + 60}" rx="44" ry="9" fill="none" stroke="#c4b5fd" stroke-width="3" transform="rotate(-18 ${W - 60} ${top + 60})"/>`,
+    bg_mountains: `<defs><linearGradient id="bgM" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1e2a4a"/><stop offset="1" stop-color="#5b4a7a"/></linearGradient></defs><rect ${R} fill="url(#bgM)"/>
+      <path d="M0,${F - 120} L80,${F - 220} L150,${F - 150} L230,${F - 260} L320,${F - 160} L380,${F - 210} L${W},${F - 140} V${F} H0Z" fill="#2c2a48"/><path d="M230,${F - 260} L210,${F - 232} L250,${F - 232}Z M80,${F - 220} L66,${F - 200} L94,${F - 200}Z" fill="#e8e6f2" opacity=".8"/>
+      <path d="M0,${F - 70} L110,${F - 130} L200,${F - 80} L300,${F - 140} L${W},${F - 80} V${F} H0Z" fill="#1d1b30"/>`,
+    bg_city: `<rect ${R} fill="#0b0d1c"/><circle cx="70" cy="${top + 50}" r="16" fill="#f4f1d6" opacity=".8"/>
+      ${[[0,150,40],[45,210,30],[80,120,50],[135,250,36],[176,170,44],[225,230,30],[260,140,56],[320,260,34],[358,180,42],[404,220,36]].map(([x, h, w]) => `<rect x="${x}" y="${F - h}" width="${w}" height="${h}" fill="#171a33"/>` + Array.from({length: Math.floor(h / 22)}, (_, r) => Array.from({length: Math.floor(w / 12)}, (_, c) => (r * 7 + c * 3 + x) % 4 ? '' : `<rect x="${x + 4 + c * 12}" y="${F - h + 8 + r * 22}" width="5" height="7" fill="#f2c94c" opacity=".7"/>`).join('')).join('')).join('')}`,
+    bg_dojo: `<rect ${R} fill="#3a2a1e"/>${Array.from({length: 11}, (_, i) => `<rect x="${i * 44}" y="${top}" width="2" height="${H - 60}" fill="#2a1e14"/>`).join('')}<rect x="0" y="${top + 60}" width="${W}" height="3" fill="#2a1e14"/>
+      <circle cx="${W / 2}" cy="${top + 120}" r="54" fill="#b91c1c" opacity=".55"/><rect x="0" y="${F - 60}" width="${W}" height="60" fill="#c9b37a"/>${Array.from({length: 6}, (_, i) => `<rect x="${i * 80}" y="${F - 60}" width="2" height="60" fill="#a8935c"/>`).join('')}`,
+    bg_volcano: `<defs><linearGradient id="bgV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a0606"/><stop offset="1" stop-color="#5c1a0a"/></linearGradient></defs><rect ${R} fill="url(#bgV)"/>
+      <path d="M60,${F} L180,${F - 210} L260,${F - 210} L380,${F}Z" fill="#1f0d0a"/><path d="M180,${F - 210} Q220,${F - 230} 260,${F - 210} L240,${F - 150} L222,${F - 190} L205,${F - 140} Z" fill="#f97316" opacity=".85"/>
+      <circle cx="220" cy="${F - 230}" r="40" fill="#f97316" opacity=".18"/>${Array.from({length: 14}, (_, i) => `<circle cx="${30 + i * 29}" cy="${top + 20 + (i * 37) % 120}" r="1.6" fill="#fb923c" opacity=".6"/>`).join('')}`
+  };
+  return sc[id] ? `<g class="map-bg" opacity=".8">${sc[id]}</g>` : '';
 }
 
 /* ---- Unlocks between two levels (for the level-up screen) ---- */
@@ -1612,6 +1780,90 @@ function openArmory(){
       <div class="icons-grid">${APP_ICONS.map(([id, n]) => `<button class="icon-tile${iconId() === id ? ' on' : ''}" data-act="eqIcon" data-v="${id}"><img src="icons/${id}-180.png" alt="" loading="lazy"><small>${n}</small></button>`).join('')}</div>
       <button class="btn ghost sm block" style="margin-top:8px" data-act="iconHelp">Update Home Screen icon</button></details>`);
 }
+/* ---- Habits (self-care tasks → cosmetic rewards) ---- */
+const HABIT_EMOJI = ['⭐','💪','🏃','🧠','📚','🎧','🧘','🥤','🍎','🛌','🧼','✍️','🎯','💼','🐶','🎸','🌱','❤️'];
+const habitList = () => state.habits.tasks;
+const habitDay = (k = dkey(Date.now())) => state.habits.log[k] || [];
+function habitTotal(){ let t = 0; for (const k in state.habits.log) t += state.habits.log[k].length; return t; }
+function habitStreak(){
+  let n = 0, d = new Date(); d.setHours(12, 0, 0, 0);
+  if (!habitDay(dkey(d)).length) d.setDate(d.getDate() - 1);
+  while (habitDay(dkey(d)).length){ n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+const trackItem = i => { const id = HABIT_TRACK[i], s = SKINS.find(x => x[0] === id); return s && {i, id, name:s[1], slot:s[2], goal:s[3].habit}; };
+const habitNext = () => { for (let i = 0; i < HABIT_TRACK.length; i++){ const it = trackItem(i); if (it && !state.cosmetics.owned.includes(it.id)) return it; } return null; };
+const SLOT_NAME = Object.fromEntries(SLOTS);
+const previewSkin = it => ({...equippedSkin(), [it.slot]: it.id});
+const figMini = (it, t = muscleTotals(), alone = false) => `<div class="fz${['head','face','neck','paint'].includes(it.slot) ? ' zoom' : ''}">${bodySVG(m => rankOf(lvl(t[m]))[2], {labels:false, skin:alone ? {[it.slot]: it.id} : previewSkin(it)})}</div>`;
+// Any milestone the total has reached gets written to owned, so it stays unlocked even if tasks are later unchecked
+function claimHabitRewards(){
+  const tot = habitTotal(), got = [];
+  HABIT_TRACK.forEach((id, i) => { const it = trackItem(i); if (it && tot >= it.goal && !state.cosmetics.owned.includes(id)){ state.cosmetics.owned.push(id); got.push(it); } });
+  return got;
+}
+function showHabitReward(items){
+  if (!items.length) return;
+  const it = items[items.length - 1], d = document.createElement('div');
+  d.id = 'lvlUp'; d.className = 'lvlup-overlay';
+  d.innerHTML = `<div class="lvlup-rays"></div><div class="lvlup-inner">
+    <div class="lvlup-kicker">REWARD UNLOCKED</div>
+    <div class="reward-fig">${figMini(it)}</div>
+    <div class="lvlup-title" style="margin:4px 0 2px">${esc(it.name)}</div><small class="mute">${SLOT_NAME[it.slot]} · ${it.goal} tasks done</small>
+    ${items.length > 1 ? `<div class="mute" style="margin-top:6px;font-size:12px">+ ${items.slice(0, -1).map(x => esc(x.name)).join(', ')}</div>` : ''}
+    <div class="row gap" style="margin-top:16px"><button class="btn ghost" style="flex:1" data-act="closeLvlUp">Later</button><button class="btn gold" style="flex:2" data-act="hEquip" data-id="${it.id}" data-s="${it.slot}">Equip it</button></div></div>`;
+  document.body.appendChild(d);
+  if (navigator.vibrate) navigator.vibrate([40, 60, 40, 60, 120]);
+}
+function renderHabits(){
+  const today = habitDay(), tasks = habitList(), done = tasks.filter(t => today.includes(t.id)).length;
+  const tot = habitTotal(), nx = habitNext(), streak = habitStreak();
+  const prevGoal = nx && nx.i ? trackItem(nx.i - 1).goal : 0;
+  let h = `<div class="row between"><h2 style="margin:0">Habits</h2><button class="btn ghost xs" data-act="hEdit">Edit tasks</button></div>
+    <div class="stats" style="margin-top:12px"><div class="stat"><b>${done}/${tasks.length}</b><small>Today</small></div><div class="stat"><b>${streak}🔥</b><small>Day streak</small></div><div class="stat"><b>${fmt(tot)}</b><small>Tasks done</small></div></div>`;
+  // Next reward
+  if (nx){
+    const pct = Math.min(100, (tot - prevGoal) / (nx.goal - prevGoal) * 100);
+    h += `<div class="card reward-card" data-act="hTrack"><div class="reward-prev">${figMini(nx)}</div>
+      <div style="flex:1;min-width:0"><small class="kick">NEXT REWARD</small><h3 style="margin:2px 0 0">${esc(nx.name)}</h3><small class="mute">${SLOT_NAME[nx.slot]}</small>
+      <div class="bar" style="margin:10px 0 6px"><i style="width:${pct}%"></i></div><small class="mute">${nx.goal - tot} more task${nx.goal - tot === 1 ? '' : 's'} · ${tot}/${nx.goal}</small></div></div>`;
+  } else h += `<div class="card reward-card"><div style="flex:1"><small class="kick">REWARD TRACK</small><h3 style="margin:2px 0">All ${HABIT_TRACK.length} rewards unlocked 👑</h3><small class="mute">Keep the streak alive.</small></div></div>`;
+  // Today's tasks
+  h += `<div class="card"><div class="row between"><h3 style="margin:0">Today</h3><small class="mute">${new Date().toLocaleDateString(undefined, {weekday:'long', month:'short', day:'numeric'})}</small></div><div style="margin-top:10px">`;
+  h += tasks.length ? tasks.map(t => { const on = today.includes(t.id);
+    return `<button class="h-task${on ? ' done' : ''}" data-act="hToggle" data-id="${esc(t.id)}"><span class="em">${esc(t.e)}</span><b>${esc(t.n)}</b><span class="ck">${on ? '✓' : ''}</span></button>`; }).join('')
+    : `<p class="mute" style="margin:4px 0 0">No tasks yet — tap Edit tasks to pick some.</p>`;
+  h += `</div>${tasks.length && done === tasks.length ? `<div class="h-alldone">🌱 All done for today!</div>` : ''}</div>`;
+  // Week
+  const days = []; for (let i = 6; i >= 0; i--){ const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - i); days.push(d); }
+  const most = Math.max(1, tasks.length);
+  h += `<div class="card"><h3>This week</h3><div class="h-week">${days.map((d, i) => { const n = habitDay(dkey(d)).length;
+    return `<div class="${i === 6 ? 'today' : ''}"><span class="dot" style="--p:${Math.min(100, n / most * 100)}%"><b>${n || ''}</b></span><small>${d.toLocaleDateString(undefined, {weekday:'narrow'})}</small></div>`; }).join('')}</div></div>`;
+  // Upcoming rewards
+  const t = muscleTotals(), up = []; if (nx) for (let i = nx.i + 1; i < HABIT_TRACK.length && up.length < 4; i++) up.push(trackItem(i));
+  const owned = HABIT_TRACK.filter(id => state.cosmetics.owned.includes(id)).length;
+  h += `<div class="card"><div class="row between"><h3 style="margin:0">Reward track</h3><small class="mute">${owned}/${HABIT_TRACK.length} unlocked</small></div>
+    ${up.length ? `<div class="h-up">${up.map(it => `<div><div class="mini">${figMini(it, t, true)}</div><b>${esc(it.name)}</b><small>${it.goal} tasks</small></div>`).join('')}</div>` : ''}
+    <button class="btn ghost sm block" style="margin-top:12px" data-act="hTrack">See all ${HABIT_TRACK.length} rewards</button></div>`;
+  return h;
+}
+function openHabitTrack(){
+  const nxId = (habitNext() || {}).id, t = muscleTotals();
+  openSheet(`<div class="row between"><h2 style="margin:0">Reward track</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    <small class="mute">Every task you check off counts. Rewards are yours to keep.</small>
+    <div class="h-track">${HABIT_TRACK.map((id, i) => { const it = trackItem(i); if (!it) return ''; const got = state.cosmetics.owned.includes(id);
+      return `<div class="${got ? 'got' : nxId === id ? 'next' : ''}"><div class="mini">${figMini(it, t, true)}</div><span><b>${esc(it.name)}</b><small>${SLOT_NAME[it.slot]}</small></span>
+        ${got ? `<button class="btn ghost xs" data-act="hEquip" data-id="${id}" data-s="${it.slot}">${equippedSkin()[it.slot] === id ? 'Equipped' : 'Equip'}</button>` : `<small class="goal">🔒 ${it.goal}</small>`}</div>`; }).join('')}</div>`);
+}
+function openHabitEdit(){
+  const on = new Set(habitList().map(t => t.id)), custom = habitList().filter(t => t.id.startsWith('c:'));
+  openSheet(`<div class="row between"><h2 style="margin:0">Edit tasks</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    <label class="lbl">Self-care</label><div class="chips wrap">${HABIT_PRESETS.map(([id, e, n]) => `<button class="chip${on.has(id) ? ' on' : ''}" data-act="hPreset" data-id="${id}">${e} ${esc(n)}</button>`).join('')}</div>
+    <label class="lbl">Your own tasks</label>
+    ${custom.length ? custom.map(t => `<div class="h-cust"><span>${esc(t.e)}</span><b>${esc(t.n)}</b><button class="icon-btn sm" data-act="hDel" data-id="${esc(t.id)}">✕</button></div>`).join('') : `<small class="mute">None yet</small>`}
+    <div class="h-add"><input id="hEm" value="${ui.hEm || '⭐'}" maxlength="4" aria-label="Emoji"><input id="hName" placeholder="e.g. Meditate 10 min" maxlength="40"><button class="btn gold sm" data-act="hAdd">Add</button></div>
+    <div class="chips wrap" style="margin-top:8px">${HABIT_EMOJI.map(e => `<button class="chip em-chip" data-act="hEmoji" data-v="${e}">${e}</button>`).join('')}</div>`);
+}
 /* ============ UI HELPERS ============ */
 function openSheet(html){ $('#sheet').innerHTML = html; $('#sheetWrap').classList.add('open'); $('#sheet').scrollTop = 0; }
 function closeSheet(){ $('#sheetWrap').classList.remove('open'); ui.pick = null; stopScan(); }
@@ -1637,16 +1889,16 @@ const TABS = [
   ['train','Train','<path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11"/>'],
   ['food','Food','<path d="M7 3v7a2 2 0 0 0 4 0V3M9 10v11M17 21V3c-2.5 1.5-3.5 4.5-3.5 8h3.5"/>'],
   ['library','Library','<rect x="5" y="4" width="14" height="17" rx="2"/><rect x="9" y="2.5" width="6" height="3.5" rx="1"/><path d="M8 11.5l1.4 1.4 2.3-2.5M14 11.5h2M8 16.5l1.4 1.4 2.3-2.5M14 16.5h2"/>'],
-  ['coach','Coach','<path d="M3 14a6 6 0 0 0 12 0v-2h6V8H9a6 6 0 0 0-6 6Z"/><circle cx="9" cy="14" r="2"/><path d="M5.5 9.5 3.5 6.5"/><circle cx="3" cy="5.5" r="1.2"/>']
+  ['habits','Habits','<path d="M12 21v-8"/><path d="M12 13C12 8 9 5 4 5c0 5 3 8 8 8Z"/><path d="M12 15c0-4 3-7 8-7 0 4-3 7-8 7Z"/>']
 ];
 function renderTabs(){
-  $('#tabs').innerHTML = TABS.map(([k,n,ic]) => `<button class="${ui.tab===k?'on':''}" data-act="tab" data-tab="${k}"><svg viewBox="0 0 24 24">${ic}</svg>${n}</button>`).join('');
+  $('#tabs').innerHTML = TABS.map(([k,n,ic]) => `<button class="${ui.tab===k || (k==='train' && ui.tab==='coach') ?'on':''}" data-act="tab" data-tab="${k}"><svg viewBox="0 0 24 24">${ic}</svg>${n}</button>`).join('');
 }
 function render(){
   applyTheme();
   renderTabs();
   const v = $('#view');
-  v.innerHTML = ({body:renderBody, progress:renderProgress, food:renderFood, train:renderTrain, splits:renderSplits, library:renderLibrary, coach:renderCoach})[ui.tab]();
+  v.innerHTML = ({body:renderBody, progress:renderProgress, food:renderFood, train:renderTrain, splits:renderSplits, library:renderLibrary, coach:renderCoach, habits:renderHabits})[ui.tab]();
   if (ui.tab === 'library') renderLibList();
 }
 
@@ -1712,7 +1964,8 @@ function muscleInfo(m){
 function renderTrain(){
   const a = state.active;
   if (ui.edit) return renderSplits();
-  if (!a) return `<h2>Train</h2><button class="btn gold block" data-act="startEmpty" style="margin-bottom:16px">+ Start empty workout</button>` + renderSplits();
+  if (!a) return `<h2>Train</h2><button class="btn gold block" data-act="startEmpty" style="margin-bottom:12px">+ Start empty workout</button>
+    <button class="card coach-card" data-act="tab" data-tab="coach"><svg viewBox="0 0 24 24"><path d="M3 14a6 6 0 0 0 12 0v-2h6V8H9a6 6 0 0 0-6 6Z"/><circle cx="9" cy="14" r="2"/><path d="M5.5 9.5 3.5 6.5"/><circle cx="3" cy="5.5" r="1.2"/></svg><span><b>Coach</b><small>Build a split from your goal, schedule and equipment</small></span><i>›</i></button>` + renderSplits();
   let h = `<div class="card live"><div class="row between" style="margin-bottom:10px"><span class="pulse">● LIVE</span><span id="elapsed">0:00</span></div><input id="wname" value="${esc(a.name)}" placeholder="Workout name"></div>`;
   const ssl = ssLabels(a.entries);
   a.entries.forEach((e, i) => {
@@ -1930,7 +2183,7 @@ function genPlan(){
 function renderCoach(){
   const c = ui.coach;
   const grp = (k, opts) => `<div class="chips wrap">${opts.map(([v,l]) => `<button class="chip${c[k]==v?' on':''}" data-act="coachOpt" data-k="${k}" data-v="${v}">${l}</button>`).join('')}</div>`;
-  let h = `<h2>Coach</h2><div class="card"><p class="mute" style="margin:0">Tell me your goal and setup — I'll build a split you can save and start logging.</p>
+  let h = `<div class="row gap" style="align-items:center;margin-bottom:6px"><button class="icon-btn" data-act="tab" data-tab="train" aria-label="Back">‹</button><h2 style="margin:0">Coach</h2></div><div class="card"><p class="mute" style="margin:0">Tell me your goal and setup — I'll build a split you can save and start logging.</p>
     <label class="lbl">Goal</label>${grp('goal', Object.entries(SCHEME).map(([k,v]) => [k, v.name]))}
     <label class="lbl">Days per week</label>${grp('days', [2,3,4,5,6].map(d => [d, d]))}
     <label class="lbl">Session length</label>${grp('len', [[30,'30 min'],[45,'45 min'],[60,'60 min'],[75,'75+ min']])}
@@ -2126,6 +2379,22 @@ const ACT = {
     state.friendsRemoved = [...new Set([...(state.friendsRemoved || []), d.id])];
     state.friends = state.friends.filter(f => f !== d.id); ui.lb = (ui.lb || []).filter(p => p.id !== d.id); save(); openFriends(); render(); },
   armory: openArmory,
+  hToggle: d => { const k = dkey(Date.now()), day = (state.habits.log[k] = state.habits.log[k] || []), i = day.indexOf(d.id);
+    if (i >= 0) day.splice(i, 1); else { day.push(d.id); if (navigator.vibrate) navigator.vibrate(15); }
+    if (!day.length) delete state.habits.log[k];
+    const got = claimHabitRewards(); save(); render();
+    if (got.length) showHabitReward(got);
+    else if (i < 0 && habitList().every(t => habitDay().includes(t.id))) toast(`All done for today 🌱 ${habitStreak()}-day streak`); },
+  hEdit: openHabitEdit,
+  hTrack: () => openHabitTrack(),
+  hPreset: d => { const L = habitList(), i = L.findIndex(t => t.id === d.id);
+    if (i >= 0) L.splice(i, 1); else { const p = HABIT_PRESETS.find(x => x[0] === d.id); L.push({id:p[0], e:p[1], n:p[2]}); }
+    save(); render(); const y = $('#sheet').scrollTop; openHabitEdit(); $('#sheet').scrollTop = y; },
+  hEmoji: d => { ui.hEm = d.v; $('#hEm').value = d.v; },
+  hAdd: () => { const n = $('#hName').value.trim(), e = $('#hEm').value.trim() || '⭐'; if (!n) return toast('Name your task');
+    ui.hEm = e; habitList().push({id:'c:' + uid(), e, n}); save(); render(); openHabitEdit(); toast('Task added'); },
+  hDel: d => { state.habits.tasks = habitList().filter(t => t.id !== d.id); save(); render(); openHabitEdit(); },
+  hEquip: d => { state.cosmetics[d.s] = d.id; save(); ACT.closeLvlUp(); render(); if ($('#sheetWrap').classList.contains('open') && $('.h-track')){ const y = $('#sheet').scrollTop; openHabitTrack(); $('#sheet').scrollTop = y; } toast('Equipped — check out your map'); },
   eqTitle: d => { state.cosmetics.title = d.v === autoTitle(curLevel()) ? '' : d.v; save(); render(); openArmory(); publishStats(true); },
   eqIcon: d => { ui.iconOpen = true; state.cosmetics.icon = d.v; save(); applyIcon(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; toast('Icon picked: tap "Update Home Screen icon" to apply it'); },
   iconHelp: openIconHelp,
