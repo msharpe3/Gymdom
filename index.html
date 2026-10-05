@@ -227,6 +227,13 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 .h-task .ck{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:14px}
 .h-task.done{border-color:color-mix(in srgb,var(--teal) 50%,transparent);background:color-mix(in srgb,var(--teal) 10%,var(--panel2))}
 .h-task.done b{opacity:.55;text-decoration:line-through}.h-task.done .ck{background:var(--teal);border-color:var(--teal);color:#06231f;animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
+.h-sec{margin-bottom:6px}
+.h-sec-hd{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;color:var(--text);font:inherit;padding:8px 2px;cursor:pointer;text-align:left}
+.h-sec-hd b{font:700 13px 'Chakra Petch';letter-spacing:.12em;text-transform:uppercase}
+.h-sec-hd .now{font:700 9px Inter;letter-spacing:.1em;color:#06231f;background:var(--teal);border-radius:99px;padding:2px 7px}
+.h-sec-hd small{margin-left:auto;color:var(--mute);font-size:12px;font-weight:600}.h-sec.all .h-sec-hd small{color:var(--teal)}
+.h-sec-hd i{font-style:normal;color:var(--mute);font-size:18px;transform:rotate(90deg);transition:transform .2s;width:14px;text-align:center}.h-sec.shut .h-sec-hd i{transform:none}
+.h-sub{display:flex;align-items:center;gap:7px;font:600 11px Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin:12px 0 6px}
 .h-alldone{text-align:center;color:var(--teal);font-weight:600;margin-top:6px}
 .h-week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
 .h-week .dot{display:grid;place-items:center;width:34px;height:34px;margin:0 auto 4px;border-radius:50%;background:conic-gradient(var(--teal) var(--p),var(--panel2) 0)}
@@ -308,12 +315,12 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.05.3"></script>
+<script src="exercises.js?v=2026.10.05.4"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.05.3';
+const APP_VERSION = '2026.10.05.4';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -846,6 +853,12 @@ const HABIT_PRESETS = [
   ['p:wake','sunrise','Wake up on time'], ['p:sleep','moon','In bed by 11'], ['p:outside','tree','Spend time outside']
 ];
 const HABIT_DEFAULT = ['p:water','p:bed','p:stretch','p:sun','p:vitamins'];
+const HABIT_SECTIONS = [['morning','Morning','sunrise'], ['afternoon','Afternoon','sun'], ['evening','Evening','moon'], ['anytime','Anytime','sparkle']];
+const PRESET_SECTION = {water:'morning', bed:'morning', stretch:'morning', sun:'morning', vitamins:'morning', meditate:'morning', wake:'morning', nophone:'morning', cold:'morning', shower:'morning',
+  walk:'afternoon', steps:'afternoon', veg:'afternoon', protein:'afternoon', outside:'afternoon', screen:'afternoon',
+  meal:'evening', read:'evening', journal:'evening', grateful:'evening', floss:'evening', skin:'evening', sleep:'evening', tidy:'evening'};
+const presetSec = id => PRESET_SECTION[id.slice(2)] || 'anytime';
+const nowSection = (h = new Date().getHours()) => h >= 4 && h < 12 ? 'morning' : h >= 12 && h < 17 ? 'afternoon' : h >= 17 || h < 4 ? 'evening' : 'anytime';
 function migrate(s){
   s = s || {};
   s.profile = Object.assign({name:'', bw:180, syncCode:''}, s.profile || {});
@@ -855,8 +868,8 @@ function migrate(s){
   s.bonusXP = s.bonusXP || 0; s.prCount = s.prCount || 0;
   s.cosmetics = Object.assign({theme:'classic', head:'', face:'', back:'', aura:'', title:'', owned:[]}, s.cosmetics || {});
   s.habits = Object.assign({tasks:null, log:{}}, s.habits || {});
-  if (!s.habits.tasks) s.habits.tasks = HABIT_DEFAULT.map(id => { const p = HABIT_PRESETS.find(x => x[0] === id); return {id, i:p[1], n:p[2]}; });
-  s.habits.tasks.forEach(t => { if (!t.i){ const p = HABIT_PRESETS.find(x => x[0] === t.id); t.i = p ? p[1] : EMOJI_ICON[t.e] || 'star'; } delete t.e; });
+  if (!s.habits.tasks) s.habits.tasks = HABIT_DEFAULT.map(id => { const p = HABIT_PRESETS.find(x => x[0] === id); return {id, i:p[1], n:p[2], g:presetSec(id)}; });
+  s.habits.tasks.forEach(t => { if (!t.i){ const p = HABIT_PRESETS.find(x => x[0] === t.id); t.i = p ? p[1] : EMOJI_ICON[t.e] || 'star'; } delete t.e; if (!t.g) t.g = t.id.startsWith('p:') ? presetSec(t.id) : 'anytime'; });
   s.savedMeals = s.savedMeals || []; s.waterGoal = s.waterGoal || 64; s.friends = s.friends || [];
   if (!s.profile.playerId) s.profile.playerId = newPlayerId();
   s.food = s.food || {}; s.foodRecent = s.foodRecent || []; s.foodTargets = s.foodTargets || null;
@@ -2106,8 +2119,13 @@ function renderHabits(){
   } else h += `<div class="card reward-card"><div style="flex:1"><small class="kick">REWARD TRACK</small><h3 style="margin:2px 0">All ${HABIT_TRACK.length} rewards unlocked 👑</h3><small class="mute">Keep the streak alive.</small></div></div>`;
   // Today's tasks
   h += `<div class="card"><div class="row between"><h3 style="margin:0">Today</h3><small class="mute">${new Date().toLocaleDateString(undefined, {weekday:'long', month:'short', day:'numeric'})}</small></div><div style="margin-top:10px">`;
-  h += tasks.length ? tasks.map(t => { const on = today.includes(t.id);
-    return `<button class="h-task${on ? ' done' : ''}" data-act="hToggle" data-id="${esc(t.id)}">${hIcon(t)}<b>${esc(t.n)}</b><span class="ck">${on ? '✓' : ''}</span></button>`; }).join('')
+  const now = nowSection(), shut = ui.hShut || (ui.hShut = {});
+  h += tasks.length ? HABIT_SECTIONS.map(([g, gn, gi]) => { const L = tasks.filter(t => (t.g || 'anytime') === g); if (!L.length) return '';
+    const dn = L.filter(t => today.includes(t.id)).length, closed = shut[g] != null ? shut[g] : dn === L.length && g !== now;
+    const sorted = [...L.filter(t => !today.includes(t.id)), ...L.filter(t => today.includes(t.id))];
+    return `<div class="h-sec${closed ? ' shut' : ''}${dn === L.length ? ' all' : ''}"><button class="h-sec-hd" data-act="hSec" data-g="${g}" data-closed="${closed ? 1 : ''}">${hIcon({i:gi}, ' sm')}<b>${gn}</b>${g === now ? '<span class="now">NOW</span>' : ''}<small>${dn === L.length ? '✓ ' : ''}${dn}/${L.length}</small><i>›</i></button>
+      ${closed ? '' : `<div class="h-sec-body">${sorted.map(t => { const on = today.includes(t.id);
+        return `<button class="h-task${on ? ' done' : ''}" data-act="hToggle" data-id="${esc(t.id)}">${hIcon(t)}<b>${esc(t.n)}</b><span class="ck">${on ? '✓' : ''}</span></button>`; }).join('')}</div>`}</div>`; }).join('')
     : `<p class="mute" style="margin:4px 0 0">No tasks yet — tap Edit tasks to pick some.</p>`;
   h += `</div>${tasks.length && done === tasks.length ? `<div class="h-alldone">🌱 All done for today!</div>` : ''}</div>`;
   // Week
@@ -2133,15 +2151,17 @@ function openHabitTrack(){
 }
 function openHabitEdit(keep){
   const y = keep ? $('#sheet').scrollTop : 0, nm = keep && $('#hName') ? $('#hName').value : (ui.hName || '');
-  const on = new Set(habitList().map(t => t.id)), custom = habitList().filter(t => t.id.startsWith('c:'));
-  const f = ui.hForm = ui.hForm || {i:'star', c:''}, ed = ui.hEditId && custom.find(t => t.id === ui.hEditId);
+  const on = new Set(habitList().map(t => t.id)), mine = habitList();
+  const f = ui.hForm = ui.hForm || {i:'star', c:'', g:nowSection()}, ed = ui.hEditId && mine.find(t => t.id === ui.hEditId);
+  if (!f.g) f.g = 'anytime';
   openSheet(`<div class="row between"><h2 style="margin:0">Edit tasks</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
-    <label class="lbl">Self-care</label><div class="chips wrap">${HABIT_PRESETS.map(([id, i, n]) => `<button class="chip h-chip${on.has(id) ? ' on' : ''}" data-act="hPreset" data-id="${id}">${hIcon({i}, ' sm')}${esc(n)}</button>`).join('')}</div>
-    <label class="lbl">Your own tasks</label>
-    ${custom.length ? custom.map(t => `<div class="h-cust${ed && ed.id === t.id ? ' on' : ''}" data-act="hEditC" data-id="${esc(t.id)}">${hIcon(t)}<b>${esc(t.n)}</b><button class="icon-btn sm" data-act="hDel" data-id="${esc(t.id)}">✕</button></div>`).join('') : `<small class="mute">None yet — make one below</small>`}
+    <label class="lbl">Your tasks</label><small class="mute">Tap a task to change its name, icon or time of day</small>
+    ${mine.length ? HABIT_SECTIONS.map(([g, gn, gi]) => { const L = mine.filter(t => (t.g || 'anytime') === g); return L.length ? `<div class="h-sub">${hIcon({i:gi}, ' sm')}${gn}</div>` + L.map(t => `<div class="h-cust${ed && ed.id === t.id ? ' on' : ''}" data-act="hEditC" data-id="${esc(t.id)}">${hIcon(t)}<b>${esc(t.n)}</b><button class="icon-btn sm" data-act="hDel" data-id="${esc(t.id)}">✕</button></div>`).join('') : ''; }).join('') : `<p class="mute">None yet — add some below</p>`}
+    <label class="lbl">Self-care ideas</label>${HABIT_SECTIONS.map(([g, gn, gi]) => `<div class="h-sub">${hIcon({i:gi}, ' sm')}${gn}</div><div class="chips wrap">${HABIT_PRESETS.filter(([id]) => presetSec(id) === g).map(([id, i, n]) => `<button class="chip h-chip${on.has(id) ? ' on' : ''}" data-act="hPreset" data-id="${id}">${hIcon({i}, ' sm')}${esc(n)}</button>`).join('')}</div>`).join('')}
     <div class="h-form"><small class="kick">${ed ? 'EDIT TASK' : 'NEW TASK'}</small>
       <div class="h-add">${hIcon(f, ' lg')}<input id="hName" placeholder="e.g. Practice guitar" maxlength="40" value="${esc(nm)}"><button class="btn gold sm" data-act="hAdd">${ed ? 'Save' : 'Add'}</button></div>
       ${ed ? `<button class="btn ghost xs" style="margin-top:8px" data-act="hEditCancel">Cancel edit</button>` : ''}
+      <label class="lbl">Time of day</label><div class="chips wrap">${HABIT_SECTIONS.map(([g, gn, gi]) => `<button class="chip h-chip${f.g === g ? ' on' : ''}" data-act="hGroup" data-v="${g}">${hIcon({i:gi}, ' sm')}${gn}</button>`).join('')}</div>
       <label class="lbl">Tile color</label><div class="h-colors"><button class="h-sw auto${!f.c ? ' on' : ''}" data-act="hColor" data-v="" aria-label="Default color"></button>${Object.values(HC).map(c => `<button class="h-sw${f.c === c ? ' on' : ''}" style="--c:${c}" data-act="hColor" data-v="${c}"></button>`).join('')}</div>
       <label class="lbl">Icon</label><div class="chips h-jump">${HICON_GROUPS.map(([gn], k) => `<button class="chip" data-act="hJump" data-v="${k}">${gn}</button>`).join('')}</div>${HICON_GROUPS.map(([gn, ids], k) => `<label class="lbl" id="hg${k}">${gn}</label><div class="h-icons">${ids.filter(i => HICONS[i]).map(i => `<button class="${f.i === i ? 'on' : ''}" data-act="hIconPick" data-v="${i}">${hIcon({i, c:f.c})}</button>`).join('')}</div>`).join('')}</div>`);
   if (keep) $('#sheet').scrollTop = y;
@@ -2670,18 +2690,20 @@ const ACT = {
   hEdit: openHabitEdit,
   hTrack: () => openHabitTrack(),
   hPreset: d => { const L = habitList(), i = L.findIndex(t => t.id === d.id);
-    if (i >= 0) L.splice(i, 1); else { const p = HABIT_PRESETS.find(x => x[0] === d.id); L.push({id:p[0], i:p[1], n:p[2]}); }
+    if (i >= 0) L.splice(i, 1); else { const p = HABIT_PRESETS.find(x => x[0] === d.id); L.push({id:p[0], i:p[1], n:p[2], g:presetSec(p[0])}); }
     save(); render(); openHabitEdit(true); },
+  hSec: d => { (ui.hShut = ui.hShut || {})[d.g] = !d.closed; render(); },
+  hGroup: d => { ui.hForm.g = d.v; openHabitEdit(true); },
   hJump: d => { const el = $('#hg' + d.v); if (el && el.scrollIntoView) el.scrollIntoView({block:'start', behavior:'smooth'}); },
   hIconPick: d => { ui.hForm.i = d.v; openHabitEdit(true); },
   hColor: d => { ui.hForm.c = d.v; openHabitEdit(true); },
   hEditC: (d, b, e) => { if (e && e.target.closest && e.target.closest('[data-act="hDel"]')) return; const t = habitList().find(x => x.id === d.id); if (!t) return;
-    ui.hEditId = t.id; ui.hForm = {i:t.i || 'star', c:t.c || ''}; ui.hName = t.n; openHabitEdit(); const fm = $('.h-form'); if (fm && fm.scrollIntoView) fm.scrollIntoView({block:'start', behavior:'smooth'}); },
-  hEditCancel: () => { ui.hEditId = null; ui.hForm = {i:'star', c:''}; ui.hName = ''; openHabitEdit(); },
+    ui.hEditId = t.id; ui.hForm = {i:t.i || 'star', c:t.c || '', g:t.g || 'anytime'}; ui.hName = t.n; openHabitEdit(); const fm = $('.h-form'); if (fm && fm.scrollIntoView) fm.scrollIntoView({block:'start', behavior:'smooth'}); },
+  hEditCancel: () => { ui.hEditId = null; ui.hForm = null; ui.hName = ''; openHabitEdit(); },
   hAdd: () => { const n = $('#hName').value.trim(); if (!n) return toast('Name your task');
-    const f = ui.hForm || {i:'star', c:''}, t = ui.hEditId && habitList().find(x => x.id === ui.hEditId);
-    if (t){ t.n = n; t.i = f.i; if (f.c) t.c = f.c; else delete t.c; } else habitList().push({id:'c:' + uid(), i:f.i, ...(f.c ? {c:f.c} : {}), n});
-    ui.hEditId = null; ui.hName = ''; ui.hForm = {i:'star', c:''}; save(); render(); openHabitEdit(); toast(t ? 'Task updated' : 'Task added'); },
+    const f = ui.hForm || {i:'star', c:'', g:'anytime'}, t = ui.hEditId && habitList().find(x => x.id === ui.hEditId);
+    if (t){ t.n = n; t.i = f.i; t.g = f.g || 'anytime'; if (f.c) t.c = f.c; else delete t.c; } else habitList().push({id:'c:' + uid(), i:f.i, ...(f.c ? {c:f.c} : {}), n, g:f.g || 'anytime'});
+    ui.hEditId = null; ui.hName = ''; ui.hForm = null; save(); render(); openHabitEdit(); toast(t ? 'Task updated' : 'Task added'); },
   hDel: d => { state.habits.tasks = habitList().filter(t => t.id !== d.id); if (ui.hEditId === d.id) ui.hEditId = null; save(); render(); openHabitEdit(true); },
   hEquip: d => { state.cosmetics[d.s] = d.id; save(); ACT.closeLvlUp(); render(); if ($('#sheetWrap').classList.contains('open') && $('.h-track')){ const y = $('#sheet').scrollTop; openHabitTrack(); $('#sheet').scrollTop = y; } toast('Equipped — check out your map'); },
   eqTitle: d => { state.cosmetics.title = d.v === autoTitle(curLevel()) ? '' : d.v; save(); render(); openArmory(); publishStats(true); },
