@@ -214,9 +214,9 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 .coach-card span{flex:1;display:flex;flex-direction:column;gap:2px}.coach-card small{color:var(--mute);font-size:12px}.coach-card i{font-style:normal;font-size:22px;color:var(--mute)}
 .kick{font:700 10px 'Chakra Petch';letter-spacing:.2em;color:var(--teal)}
 .reward-card{display:flex;gap:14px;align-items:center;cursor:pointer;background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 10%,var(--panel)),var(--panel) 65%)}
-.reward-prev,.mini{flex:none;overflow:hidden;border-radius:10px}.reward-prev{width:84px}.mini{width:44px}
-.reward-prev svg,.mini svg{width:200%;display:block}
-.reward-prev .fz.zoom,.mini .fz.zoom{aspect-ratio:.68;overflow:hidden}.reward-prev .fz.zoom svg,.mini .fz.zoom svg{width:300%;margin-left:-25%}
+.reward-prev,.hmini{flex:none;overflow:hidden;border-radius:10px}.reward-prev{width:84px}.hmini{width:44px}
+.reward-prev svg,.hmini svg{width:200%;display:block}
+.reward-prev .fz.zoom,.hmini .fz.zoom{aspect-ratio:.68;overflow:hidden}.reward-prev .fz.zoom svg,.hmini .fz.zoom svg{width:300%;margin-left:-25%}
 .reward-fig{max-width:260px;margin:10px auto 0;animation:pop .7s .15s cubic-bezier(.2,1.6,.4,1) both}
 .h-task{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);margin-bottom:8px;cursor:pointer;text-align:left;color:var(--text);font:inherit;transition:background .2s,border-color .2s}
 .h-task .em{font-size:22px;width:30px;text-align:center;flex:none}.h-task b{flex:1;font-weight:500;font-size:15px}
@@ -231,12 +231,12 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 .h-up{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;text-align:center}
 .h-up>div{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
 .h-up b{font-size:11px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}.h-up small{font-size:10px;color:var(--mute)}
-.h-up .mini{opacity:.75}
+.h-up .hmini{opacity:.75}
 .h-track{display:grid;gap:6px;margin-top:12px}
-.h-track .mini{width:38px}
+.h-track .hmini{width:38px}
 .h-track>div{display:flex;align-items:center;gap:12px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:6px 10px}
 .h-track>div span{flex:1;display:flex;flex-direction:column}.h-track small{color:var(--mute);font-size:11px}.h-track .goal{font-weight:600}
-.h-track>div:not(.got) .mini{opacity:.45;filter:grayscale(.6)}.h-track .next{border-color:var(--gold)}.h-track .next .goal{color:var(--gold)}
+.h-track>div:not(.got) .hmini{opacity:.45;filter:grayscale(.6)}.h-track .next{border-color:var(--gold)}.h-track .next .goal{color:var(--gold)}
 .h-cust{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:6px 6px 6px 12px;margin-bottom:6px}
 .h-cust span{font-size:20px}.h-cust b{flex:1;font-weight:500}
 .h-add{display:flex;gap:8px;margin-top:10px}.h-add #hEm{width:52px;text-align:center;font-size:20px;flex:none}.h-add #hName{flex:1;min-width:0}
@@ -296,12 +296,12 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.04.1"></script>
+<script src="exercises.js?v=2026.10.04.2"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.04.1';
+const APP_VERSION = '2026.10.04.2';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1843,7 +1843,7 @@ function renderHabits(){
   const t = muscleTotals(), up = []; if (nx) for (let i = nx.i + 1; i < HABIT_TRACK.length && up.length < 4; i++) up.push(trackItem(i));
   const owned = HABIT_TRACK.filter(id => state.cosmetics.owned.includes(id)).length;
   h += `<div class="card"><div class="row between"><h3 style="margin:0">Reward track</h3><small class="mute">${owned}/${HABIT_TRACK.length} unlocked</small></div>
-    ${up.length ? `<div class="h-up">${up.map(it => `<div><div class="mini">${figMini(it, t, true)}</div><b>${esc(it.name)}</b><small>${it.goal} tasks</small></div>`).join('')}</div>` : ''}
+    ${up.length ? `<div class="h-up">${up.map(it => `<div><div class="hmini">${figMini(it, t, true)}</div><b>${esc(it.name)}</b><small>${it.goal} tasks</small></div>`).join('')}</div>` : ''}
     <button class="btn ghost sm block" style="margin-top:12px" data-act="hTrack">See all ${HABIT_TRACK.length} rewards</button></div>`;
   return h;
 }
@@ -1852,7 +1852,7 @@ function openHabitTrack(){
   openSheet(`<div class="row between"><h2 style="margin:0">Reward track</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
     <small class="mute">Every task you check off counts. Rewards are yours to keep.</small>
     <div class="h-track">${HABIT_TRACK.map((id, i) => { const it = trackItem(i); if (!it) return ''; const got = state.cosmetics.owned.includes(id);
-      return `<div class="${got ? 'got' : nxId === id ? 'next' : ''}"><div class="mini">${figMini(it, t, true)}</div><span><b>${esc(it.name)}</b><small>${SLOT_NAME[it.slot]}</small></span>
+      return `<div class="${got ? 'got' : nxId === id ? 'next' : ''}"><div class="hmini">${figMini(it, t, true)}</div><span><b>${esc(it.name)}</b><small>${SLOT_NAME[it.slot]}</small></span>
         ${got ? `<button class="btn ghost xs" data-act="hEquip" data-id="${id}" data-s="${it.slot}">${equippedSkin()[it.slot] === id ? 'Equipped' : 'Equip'}</button>` : `<small class="goal">🔒 ${it.goal}</small>`}</div>`; }).join('')}</div>`);
 }
 function openHabitEdit(){
