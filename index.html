@@ -232,6 +232,19 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 .h-task{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
 .h-sec-body .h-task{transition:transform .2s cubic-bezier(.2,.8,.3,1),background .2s,border-color .2s}
 .h-task.lift{position:relative;z-index:20;transition:none;box-shadow:0 14px 34px #000a;border-color:var(--teal);background:var(--panel2)}
+.h-days{display:flex;align-items:center;gap:2px;margin:12px -4px 0}
+.h-wk{background:none;border:0;color:var(--mute);font-size:22px;padding:0 6px;cursor:pointer}
+.h-dd{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;border-radius:12px;padding:6px 0 5px;color:var(--text);cursor:pointer;font:inherit}
+.h-dd small{font-size:10px;color:var(--mute);font-weight:600}.h-dd b{font-size:15px}
+.h-dd i{width:6px;height:6px;border-radius:50%}.h-dd i.due{box-shadow:0 0 0 1.5px var(--line) inset}.h-dd i.some{background:color-mix(in srgb,var(--teal) 45%,transparent)}.h-dd i.full{background:var(--teal)}
+.h-dd.tk b{color:var(--teal)}.h-dd.on{background:var(--teal)}.h-dd.on small,.h-dd.on b{color:#06231f}.h-dd.on i.full,.h-dd.on i.some{background:#06231f}.h-dd.on i.due{box-shadow:0 0 0 1.5px #06231f88 inset}
+.h-task b small,.h-cust b small{display:block;font-size:11px;font-weight:500;color:var(--mute);margin-top:1px;text-decoration:none}
+.h-task.future{opacity:.75}.h-task.future .ck{border-style:dashed}
+.h-dows{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:10px}
+.h-dows button{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:7px 0;font:700 14px Inter;cursor:pointer;display:flex;flex-direction:column;align-items:center}
+.h-dows button small{font-size:9px;font-weight:500;color:var(--mute)}.h-dows button.on{background:var(--teal);border-color:var(--teal);color:#06231f}.h-dows button.on small{color:#06231fb0}
+.h-rep-row{display:flex;align-items:center;gap:10px;margin-top:10px}.h-rep-row span{color:var(--mute);font-size:14px;min-width:42px}.h-rep-row input{flex:1;min-width:0}.h-rep-row #hRepN{max-width:80px;text-align:center}
+.h-rep-sum{display:block;margin-top:8px;color:var(--teal)}
 .h-hint{display:block;text-align:center;font-size:11px;margin-top:4px}
 .h-sec-hd{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;color:var(--text);font:inherit;padding:8px 2px;cursor:pointer;text-align:left}
 .h-sec-hd b{font:700 13px 'Chakra Petch';letter-spacing:.12em;text-transform:uppercase}
@@ -320,12 +333,12 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.05.4"></script>
+<script src="exercises.js?v=2026.10.05.5"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.05.4';
+const APP_VERSION = '2026.10.05.5';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -2078,6 +2091,36 @@ function openArmory(){
 /* ---- Habits (self-care tasks → cosmetic rewards) ---- */
 const habitList = () => state.habits.tasks;
 const habitDay = (k = dkey(Date.now())) => state.habits.log[k] || [];
+/* ---- Habit schedules: r = {mode:'daily'|'weekdays'|'interval'|'once', days:[0-6], n, start:'YYYY-MM-DD', date:'YYYY-MM-DD'} ---- */
+const todayKey = () => dkey(Date.now());
+const dnum = k => { const [y, m, d] = k.split('-').map(Number); return Math.round(Date.UTC(y, m - 1, d) / 864e5); };
+const dkOf = n => { const d = new Date(n * 864e5); return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0'); };
+const dowOf = k => new Date(dnum(k) * 864e5).getUTCDay();
+const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const kDate = (k, o) => new Date(dnum(k) * 864e5).toLocaleDateString(undefined, {timeZone:'UTC', ...o});
+const shortDate = k => kDate(k, {month:'short', day:'numeric'});
+function isDue(t, k){
+  const r = t.r; if (!r) return true;
+  if (r.mode === 'once') return k === r.date;
+  if (r.start && k < r.start) return false;
+  if (r.mode === 'weekdays'){
+    if (!(r.days || []).includes(dowOf(k))) return false;
+    const n = r.n || 1; if (n < 2 || !r.start) return true;
+    return Math.floor(((dnum(k) - dowOf(k)) - (dnum(r.start) - dowOf(r.start))) / 7) % n === 0;
+  }
+  if (r.mode === 'interval') return (dnum(k) - dnum(r.start || k)) % (r.n || 2) === 0;
+  return true;
+}
+function schedLabel(r){
+  if (!r) return '';
+  const tk = todayKey(), from = r.start && r.start > tk ? `from ${shortDate(r.start)}` : '';
+  if (r.mode === 'once') return (r.date === tk ? 'Today only' : r.date < tk ? 'Was ' : 'One time · ') + (r.date === tk ? '' : shortDate(r.date));
+  if (r.mode === 'interval') return [`Every ${r.n || 2} days`, from].filter(Boolean).join(' · ');
+  if (r.mode === 'weekdays'){ const ds = [...(r.days || [])].sort().join();
+    const lbl = ds === '0,1,2,3,4,5,6' ? 'Every day' : ds === '1,2,3,4,5' ? 'Weekdays' : ds === '0,6' ? 'Weekends' : [...(r.days || [])].sort().map(d => DOW[d]).join(', ');
+    return [lbl + ((r.n || 1) > 1 ? ` · every ${r.n} weeks` : ''), from].filter(Boolean).join(' · '); }
+  return from ? `Daily ${from}` : '';
+}
 function habitTotal(){ let t = 0; for (const k in state.habits.log) t += state.habits.log[k].length; return t; }
 function habitStreak(){
   let n = 0, d = new Date(); d.setHours(12, 0, 0, 0);
@@ -2110,11 +2153,12 @@ function showHabitReward(items){
   if (navigator.vibrate) navigator.vibrate([40, 60, 40, 60, 120]);
 }
 function renderHabits(){
-  const today = habitDay(), tasks = habitList(), done = tasks.filter(t => today.includes(t.id)).length;
+  const tk = todayKey(), sel = ui.hDay || tk, isToday = sel === tk, future = sel > tk;
+  const today = habitDay(sel), all = habitList(), tasks = all.filter(t => isDue(t, sel)), done = tasks.filter(t => today.includes(t.id)).length;
   const tot = habitTotal(), nx = habitNext(), streak = habitStreak();
   const prevGoal = nx && nx.i ? trackItem(nx.i - 1).goal : 0;
   let h = `<div class="row between"><h2 style="margin:0">Habits</h2><button class="btn ghost xs" data-act="hEdit">Edit tasks</button></div>
-    <div class="stats" style="margin-top:12px"><div class="stat"><b>${done}/${tasks.length}</b><small>Today</small></div><div class="stat"><b>${streak}🔥</b><small>Day streak</small></div><div class="stat"><b>${fmt(tot)}</b><small>Tasks done</small></div></div>`;
+    <div class="stats" style="margin-top:12px"><div class="stat"><b>${done}/${tasks.length}</b><small>${isToday ? 'Today' : shortDate(sel)}</small></div><div class="stat"><b>${streak}🔥</b><small>Day streak</small></div><div class="stat"><b>${fmt(tot)}</b><small>Tasks done</small></div></div>`;
   // Next reward
   if (nx){
     const pct = Math.min(100, (tot - prevGoal) / (nx.goal - prevGoal) * 100);
@@ -2123,20 +2167,23 @@ function renderHabits(){
       <div class="bar" style="margin:10px 0 6px"><i style="width:${pct}%"></i></div><small class="mute">${nx.goal - tot} more task${nx.goal - tot === 1 ? '' : 's'} · ${tot}/${nx.goal}</small></div></div>`;
   } else h += `<div class="card reward-card"><div style="flex:1"><small class="kick">REWARD TRACK</small><h3 style="margin:2px 0">All ${HABIT_TRACK.length} rewards unlocked 👑</h3><small class="mute">Keep the streak alive.</small></div></div>`;
   // Today's tasks
-  h += `<div class="card"><div class="row between"><h3 style="margin:0">Today</h3><small class="mute">${new Date().toLocaleDateString(undefined, {weekday:'long', month:'short', day:'numeric'})}</small></div><div style="margin-top:10px">`;
-  const now = nowSection(), shut = ui.hShut || (ui.hShut = {});
+  const dn0 = dnum(sel) - dowOf(sel), title = isToday ? 'Today' : sel === dkOf(dnum(tk) + 1) ? 'Tomorrow' : sel === dkOf(dnum(tk) - 1) ? 'Yesterday' : kDate(sel, {weekday:'long'});
+  h += `<div class="card"><div class="row between"><h3 style="margin:0">${title}</h3>${isToday ? `<small class="mute">${kDate(sel, {weekday:'long', month:'short', day:'numeric'})}</small>` : `<span class="row gap" style="align-items:center"><small class="mute">${kDate(sel, {month:'short', day:'numeric'})}</small><button class="chip" style="padding:4px 10px;font-size:12px" data-act="hDay" data-v="${tk}">Back to today</button></span>`}</div>
+    <div class="h-days"><button class="h-wk" data-act="hDay" data-v="${dkOf(dnum(sel) - 7)}" aria-label="Previous week">‹</button>${[0, 1, 2, 3, 4, 5, 6].map(i => { const k = dkOf(dn0 + i), due = all.filter(t => isDue(t, k)), got = habitDay(k).filter(id => due.some(t => t.id === id)).length;
+      return `<button class="h-dd${k === sel ? ' on' : ''}${k === tk ? ' tk' : ''}" data-act="hDay" data-v="${k}"><small>${DOW[dowOf(k)][0]}</small><b>${+k.slice(8)}</b><i class="${!due.length ? '' : got >= due.length ? 'full' : got ? 'some' : 'due'}"></i></button>`; }).join('')}<button class="h-wk" data-act="hDay" data-v="${dkOf(dnum(sel) + 7)}" aria-label="Next week">›</button></div><div style="margin-top:6px">`;
+  const now = nowSection(), shut = (ui.hShut = ui.hShut || {}), shutK = isToday ? shut : {};
   h += tasks.length ? HABIT_SECTIONS.map(([g, gn, gi]) => { const L = tasks.filter(t => (t.g || 'anytime') === g); if (!L.length) return '';
-    const dn = L.filter(t => today.includes(t.id)).length, closed = shut[g] != null ? shut[g] : dn === L.length && g !== now;
+    const dn = L.filter(t => today.includes(t.id)).length, closed = shutK[g] != null ? shutK[g] : isToday && dn === L.length && g !== now;
     const sorted = L;
-    return `<div class="h-sec${closed ? ' shut' : ''}${dn === L.length ? ' all' : ''}" data-g="${g}"><button class="h-sec-hd" data-act="hSec" data-g="${g}" data-closed="${closed ? 1 : ''}">${hIcon({i:gi}, ' sm')}<b>${gn}</b>${g === now ? '<span class="now">NOW</span>' : ''}<small>${dn === L.length ? '✓ ' : ''}${dn}/${L.length}</small><i>›</i></button>
+    return `<div class="h-sec${closed ? ' shut' : ''}${dn === L.length ? ' all' : ''}" data-g="${g}"><button class="h-sec-hd" data-act="hSec" data-g="${g}" data-closed="${closed ? 1 : ''}">${hIcon({i:gi}, ' sm')}<b>${gn}</b>${isToday && g === now ? '<span class="now">NOW</span>' : ''}<small>${dn === L.length ? '✓ ' : ''}${dn}/${L.length}</small><i>›</i></button>
       ${closed ? '' : `<div class="h-sec-body">${sorted.map(t => { const on = today.includes(t.id);
-        return `<button class="h-task${on ? ' done' : ''}" data-act="hToggle" data-id="${esc(t.id)}">${hIcon(t)}<b>${esc(t.n)}</b><span class="ck">${on ? '✓' : ''}</span></button>`; }).join('')}</div>`}</div>`; }).join('') + `<small class="mute h-hint">Hold a task to drag it up or down</small>`
-    : `<p class="mute" style="margin:4px 0 0">No tasks yet — tap Edit tasks to pick some.</p>`;
-  h += `</div>${tasks.length && done === tasks.length ? `<div class="h-alldone">🌱 All done for today!</div>` : ''}</div>`;
+        const lbl = schedLabel(t.r);
+        return `<button class="h-task${on ? ' done' : ''}${future ? ' future' : ''}" data-act="hToggle" data-id="${esc(t.id)}">${hIcon(t)}<b>${esc(t.n)}${lbl ? `<small>${esc(lbl)}</small>` : ''}</b><span class="ck">${on ? '✓' : ''}</span></button>`; }).join('')}</div>`}</div>`; }).join('') + `<small class="mute h-hint">${future ? 'Coming up — you can check these off on the day' : 'Hold a task to drag it up or down'}</small>`
+    : `<p class="mute" style="margin:10px 0 4px;text-align:center">${all.length ? 'Nothing scheduled for this day 🌤️' : 'No tasks yet — tap Edit tasks to pick some.'}</p>`;
+  h += `</div>${tasks.length && done === tasks.length && !future ? `<div class="h-alldone">🌱 All done for ${isToday ? 'today' : 'the day'}!</div>` : ''}</div>`;
   // Week
   const days = []; for (let i = 6; i >= 0; i--){ const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - i); days.push(d); }
-  const most = Math.max(1, tasks.length);
-  h += `<div class="card"><h3>This week</h3><div class="h-week">${days.map((d, i) => { const n = habitDay(dkey(d)).length;
+  h += `<div class="card"><h3>This week</h3><div class="h-week">${days.map((d, i) => { const k = dkey(d), n = habitDay(k).length, most = Math.max(1, all.filter(t => isDue(t, k)).length);
     return `<div class="${i === 6 ? 'today' : ''}"><span class="dot" style="--p:${Math.min(100, n / most * 100)}%"><b>${n || ''}</b></span><small>${d.toLocaleDateString(undefined, {weekday:'narrow'})}</small></div>`; }).join('')}</div></div>`;
   // Upcoming rewards
   const t = muscleTotals(), up = []; if (nx) for (let i = nx.i + 1; i < HABIT_TRACK.length && up.length < 4; i++) up.push(trackItem(i));
@@ -2154,18 +2201,29 @@ function openHabitTrack(){
       return `<div class="${got ? 'got' : nxId === id ? 'next' : ''}"><div class="hmini">${figMini(it, t, true)}</div><span><b>${esc(it.name)}</b><small>${SLOT_NAME[it.slot]}</small></span>
         ${got ? `<button class="btn ghost xs" data-act="hEquip" data-id="${id}" data-s="${it.slot}">${equippedSkin()[it.slot] === id ? 'Equipped' : 'Equip'}</button>` : `<small class="goal">🔒 ${it.goal}</small>`}</div>`; }).join('')}</div>`);
 }
+function readRep(){ const f = ui.hForm; if (!f || !f.r) return; const v = id => $(id) && $(id).value;
+  if (v('#hRepN')) f.r.n = Math.max(2, Math.min(90, Math.round(+v('#hRepN')) || 2));
+  if (v('#hRepDate')) f.r.date = v('#hRepDate'); if (v('#hRepStart')) f.r.start = v('#hRepStart'); }
 function openHabitEdit(keep){
+  if (keep) readRep();
   const y = keep ? $('#sheet').scrollTop : 0, nm = keep && $('#hName') ? $('#hName').value : (ui.hName || '');
   const on = new Set(habitList().map(t => t.id)), mine = habitList();
   const f = ui.hForm = ui.hForm || {i:'star', c:'', g:nowSection()}, ed = ui.hEditId && mine.find(t => t.id === ui.hEditId);
   if (!f.g) f.g = 'anytime';
+  const r = f.r = f.r || {mode:'daily'}, tk = todayKey();
   openSheet(`<div class="row between"><h2 style="margin:0">Edit tasks</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
     <label class="lbl">Your tasks</label><small class="mute">Tap a task to change its name, icon or time of day</small>
-    ${mine.length ? HABIT_SECTIONS.map(([g, gn, gi]) => { const L = mine.filter(t => (t.g || 'anytime') === g); return L.length ? `<div class="h-sub">${hIcon({i:gi}, ' sm')}${gn}</div>` + L.map(t => `<div class="h-cust${ed && ed.id === t.id ? ' on' : ''}" data-act="hEditC" data-id="${esc(t.id)}">${hIcon(t)}<b>${esc(t.n)}</b><button class="icon-btn sm" data-act="hDel" data-id="${esc(t.id)}">✕</button></div>`).join('') : ''; }).join('') : `<p class="mute">None yet — add some below</p>`}
+    ${mine.length ? HABIT_SECTIONS.map(([g, gn, gi]) => { const L = mine.filter(t => (t.g || 'anytime') === g); return L.length ? `<div class="h-sub">${hIcon({i:gi}, ' sm')}${gn}</div>` + L.map(t => `<div class="h-cust${ed && ed.id === t.id ? ' on' : ''}" data-act="hEditC" data-id="${esc(t.id)}">${hIcon(t)}<b>${esc(t.n)}${schedLabel(t.r) ? `<small>${esc(schedLabel(t.r))}</small>` : ''}</b><button class="icon-btn sm" data-act="hDel" data-id="${esc(t.id)}">✕</button></div>`).join('') : ''; }).join('') : `<p class="mute">None yet — add some below</p>`}
     <label class="lbl">Self-care ideas</label>${HABIT_SECTIONS.map(([g, gn, gi]) => `<div class="h-sub">${hIcon({i:gi}, ' sm')}${gn}</div><div class="chips wrap">${HABIT_PRESETS.filter(([id]) => presetSec(id) === g).map(([id, i, n]) => `<button class="chip h-chip${on.has(id) ? ' on' : ''}" data-act="hPreset" data-id="${id}">${hIcon({i}, ' sm')}${esc(n)}</button>`).join('')}</div>`).join('')}
     <div class="h-form"><small class="kick">${ed ? 'EDIT TASK' : 'NEW TASK'}</small>
       <div class="h-add">${hIcon(f, ' lg')}<input id="hName" placeholder="e.g. Practice guitar" maxlength="40" value="${esc(nm)}"><button class="btn gold sm" data-act="hAdd">${ed ? 'Save' : 'Add'}</button></div>
       ${ed ? `<button class="btn ghost xs" style="margin-top:8px" data-act="hEditCancel">Cancel edit</button>` : ''}
+      <label class="lbl">Repeat</label><div class="chips wrap">${[['daily','Every day'],['weekdays','Certain days'],['interval','Every few days'],['once','One time']].map(([m, ml]) => `<button class="chip${r.mode === m ? ' on' : ''}" data-act="hRep" data-v="${m}">${ml}</button>`).join('')}</div>
+      ${r.mode === 'weekdays' ? `<div class="h-dows">${DOW.map((dw, i) => `<button class="${(r.days || []).includes(i) ? 'on' : ''}" data-act="hDow" data-v="${i}">${dw[0]}<small>${dw}</small></button>`).join('')}</div>
+        <div class="chips wrap" style="margin-top:8px">${[1, 2, 3, 4].map(n => `<button class="chip${(r.n || 1) === n ? ' on' : ''}" data-act="hEveryW" data-v="${n}">${n === 1 ? 'Every week' : `Every ${n} weeks`}</button>`).join('')}</div>` : ''}
+      ${r.mode === 'interval' ? `<div class="h-rep-row"><span>Every</span><input id="hRepN" type="number" inputmode="numeric" min="2" max="90" value="${r.n || 2}"><span>days</span></div>` : ''}
+      ${r.mode === 'once' ? `<div class="h-rep-row"><span>On</span><input id="hRepDate" type="date" value="${r.date || dkOf(dnum(tk) + 1)}"></div>` : `<div class="h-rep-row"><span>Starts</span><input id="hRepStart" type="date" value="${r.start || tk}"></div>`}
+      <small class="mute h-rep-sum">${esc(schedLabel(r.mode === 'daily' && (!r.start || r.start <= tk) ? null : r) || 'Shows up every day')}</small>
       <label class="lbl">Time of day</label><div class="chips wrap">${HABIT_SECTIONS.map(([g, gn, gi]) => `<button class="chip h-chip${f.g === g ? ' on' : ''}" data-act="hGroup" data-v="${g}">${hIcon({i:gi}, ' sm')}${gn}</button>`).join('')}</div>
       <label class="lbl">Tile color</label><div class="h-colors"><button class="h-sw auto${!f.c ? ' on' : ''}" data-act="hColor" data-v="" aria-label="Default color"></button>${Object.values(HC).map(c => `<button class="h-sw${f.c === c ? ' on' : ''}" style="--c:${c}" data-act="hColor" data-v="${c}"></button>`).join('')}</div>
       <label class="lbl">Icon</label><div class="chips h-jump">${HICON_GROUPS.map(([gn], k) => `<button class="chip" data-act="hJump" data-v="${k}">${gn}</button>`).join('')}</div>${HICON_GROUPS.map(([gn, ids], k) => `<label class="lbl" id="hg${k}">${gn}</label><div class="h-icons">${ids.filter(i => HICONS[i]).map(i => `<button class="${f.i === i ? 'on' : ''}" data-act="hIconPick" data-v="${i}">${hIcon({i, c:f.c})}</button>`).join('')}</div>`).join('')}</div>`);
@@ -2240,6 +2298,8 @@ document.addEventListener('touchend', hdUp); document.addEventListener('touchcan
 document.addEventListener('mousedown', e => { const el = e.button === 0 && e.target.closest('.h-sec-body .h-task'); if (el) hdDown(el, e.clientX, e.clientY); });
 document.addEventListener('mousemove', e => { if (hd) hdMove(e.clientX, e.clientY, e); });
 document.addEventListener('mouseup', hdUp);
+document.addEventListener('change', e => { if (!['hRepN','hRepDate','hRepStart'].includes(e.target.id)) return; readRep();
+  const r = ui.hForm && ui.hForm.r, el = $('.h-rep-sum'); if (r && el) el.textContent = schedLabel(r.mode === 'daily' && (!r.start || r.start <= todayKey()) ? null : r) || 'Shows up every day'; });
 document.addEventListener('contextmenu', e => { if (e.target.closest('.h-task')) e.preventDefault(); });
 /* ============ UI HELPERS ============ */
 function openSheet(html){ $('#sheet').innerHTML = html; $('#sheetWrap').classList.add('open'); $('#sheet').scrollTop = 0; }
@@ -2756,28 +2816,41 @@ const ACT = {
     state.friendsRemoved = [...new Set([...(state.friendsRemoved || []), d.id])];
     state.friends = state.friends.filter(f => f !== d.id); ui.lb = (ui.lb || []).filter(p => p.id !== d.id); save(); openFriends(); render(); },
   armory: openArmory,
-  hToggle: d => { if (Date.now() - (ui.dragEnd || 0) < 450) return; const k = dkey(Date.now()), day = (state.habits.log[k] = state.habits.log[k] || []), i = day.indexOf(d.id);
+  hToggle: d => { if (Date.now() - (ui.dragEnd || 0) < 450) return; const k = ui.hDay || todayKey(); if (k > todayKey()) return toast(`That's for ${shortDate(k)} — check it off on the day`); const day = (state.habits.log[k] = state.habits.log[k] || []), i = day.indexOf(d.id);
     if (i >= 0) day.splice(i, 1); else { day.push(d.id); if (navigator.vibrate) navigator.vibrate(15); }
     if (!day.length) delete state.habits.log[k];
     const got = claimHabitRewards(); save(); render();
     if (got.length) showHabitReward(got);
-    else if (i < 0 && habitList().every(t => habitDay().includes(t.id))) toast(`All done for today 🌱 ${habitStreak()}-day streak`); },
+    else if (i < 0 && habitList().filter(t => isDue(t, k)).every(t => habitDay(k).includes(t.id))) toast(k === todayKey() ? `All done for today 🌱 ${habitStreak()}-day streak` : `All done for ${shortDate(k)} 🌱`); },
+  hDay: d => { ui.hDay = d.v === todayKey() ? null : d.v; render(); },
   hEdit: openHabitEdit,
   hTrack: () => openHabitTrack(),
   hPreset: d => { const L = habitList(), i = L.findIndex(t => t.id === d.id);
     if (i >= 0) L.splice(i, 1); else { const p = HABIT_PRESETS.find(x => x[0] === d.id); L.push({id:p[0], i:p[1], n:p[2], g:presetSec(p[0])}); }
     save(); render(); openHabitEdit(true); },
   hSec: d => { (ui.hShut = ui.hShut || {})[d.g] = !d.closed; render(); },
+  hRep: d => { readRep(); const r = ui.hForm.r = ui.hForm.r || {}; r.mode = d.v;
+    if (d.v === 'weekdays' && !(r.days || []).length) r.days = [dowOf(ui.hDay && ui.hDay > todayKey() ? ui.hDay : todayKey())];
+    if (d.v === 'interval' && !r.n) r.n = 2; if (d.v === 'once' && !r.date) r.date = ui.hDay && ui.hDay > todayKey() ? ui.hDay : dkOf(dnum(todayKey()) + 1);
+    openHabitEdit(true); },
+  hDow: d => { readRep(); const r = ui.hForm.r, i = +d.v, ds = r.days = r.days || []; ds.includes(i) ? ds.splice(ds.indexOf(i), 1) : ds.push(i); openHabitEdit(true); },
+  hEveryW: d => { readRep(); ui.hForm.r.n = +d.v; openHabitEdit(true); },
   hGroup: d => { ui.hForm.g = d.v; openHabitEdit(true); },
   hJump: d => { const el = $('#hg' + d.v); if (el && el.scrollIntoView) el.scrollIntoView({block:'start', behavior:'smooth'}); },
   hIconPick: d => { ui.hForm.i = d.v; openHabitEdit(true); },
   hColor: d => { ui.hForm.c = d.v; openHabitEdit(true); },
   hEditC: (d, b, e) => { if (e && e.target.closest && e.target.closest('[data-act="hDel"]')) return; const t = habitList().find(x => x.id === d.id); if (!t) return;
-    ui.hEditId = t.id; ui.hForm = {i:t.i || 'star', c:t.c || '', g:t.g || 'anytime'}; ui.hName = t.n; openHabitEdit(); const fm = $('.h-form'); if (fm && fm.scrollIntoView) fm.scrollIntoView({block:'start', behavior:'smooth'}); },
+    ui.hEditId = t.id; ui.hForm = {i:t.i || 'star', c:t.c || '', g:t.g || 'anytime', r:t.r ? JSON.parse(JSON.stringify(t.r)) : {mode:'daily'}}; ui.hName = t.n; openHabitEdit(); const fm = $('.h-form'); if (fm && fm.scrollIntoView) fm.scrollIntoView({block:'start', behavior:'smooth'}); },
   hEditCancel: () => { ui.hEditId = null; ui.hForm = null; ui.hName = ''; openHabitEdit(); },
   hAdd: () => { const n = $('#hName').value.trim(); if (!n) return toast('Name your task');
-    const f = ui.hForm || {i:'star', c:'', g:'anytime'}, t = ui.hEditId && habitList().find(x => x.id === ui.hEditId);
-    if (t){ t.n = n; t.i = f.i; t.g = f.g || 'anytime'; if (f.c) t.c = f.c; else delete t.c; } else habitList().push({id:'c:' + uid(), i:f.i, ...(f.c ? {c:f.c} : {}), n, g:f.g || 'anytime'});
+    readRep(); const f = ui.hForm || {i:'star', c:'', g:'anytime'}, t = ui.hEditId && habitList().find(x => x.id === ui.hEditId), tk = todayKey();
+    let r = f.r && f.r.mode ? {...f.r} : null;
+    if (r){ if (r.mode === 'weekdays' && !(r.days || []).length) return toast('Pick at least one day');
+      if (r.mode === 'once'){ if (!r.date) return toast('Pick a date'); r = {mode:'once', date:r.date}; }
+      else { r.start = r.start || tk; if (r.mode === 'daily'){ r = r.start > tk ? {mode:'daily', start:r.start} : null; }
+        else if (r.mode === 'interval') r = {mode:'interval', n:r.n || 2, start:r.start}; else r = {mode:'weekdays', days:[...r.days].sort(), n:r.n || 1, start:r.start}; } }
+    if (t){ t.n = n; t.i = f.i; t.g = f.g || 'anytime'; if (f.c) t.c = f.c; else delete t.c; if (r) t.r = r; else delete t.r; }
+    else habitList().push({id:'c:' + uid(), i:f.i, ...(f.c ? {c:f.c} : {}), n, g:f.g || 'anytime', ...(r ? {r} : {})});
     ui.hEditId = null; ui.hName = ''; ui.hForm = null; save(); render(); openHabitEdit(); toast(t ? 'Task updated' : 'Task added'); },
   hDel: d => { state.habits.tasks = habitList().filter(t => t.id !== d.id); if (ui.hEditId === d.id) ui.hEditId = null; save(); render(); openHabitEdit(true); },
   hEquip: d => { state.cosmetics[d.s] = d.id; save(); ACT.closeLvlUp(); render(); if ($('#sheetWrap').classList.contains('open') && $('.h-track')){ const y = $('#sheet').scrollTop; openHabitTrack(); $('#sheet').scrollTop = y; } toast('Equipped — check out your map'); },
