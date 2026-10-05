@@ -227,6 +227,9 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 .h-task .ck{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:14px}
 .h-task.done{border-color:color-mix(in srgb,var(--teal) 50%,transparent);background:color-mix(in srgb,var(--teal) 10%,var(--panel2))}
 .h-task.done b{opacity:.55;text-decoration:line-through}.h-task.done .ck{background:var(--teal);border-color:var(--teal);color:#06231f;animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
+.rep-from{display:flex;gap:12px;align-items:center;margin-top:12px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px}
+.rep-from>div:last-child{display:flex;flex-direction:column;gap:1px;min-width:0}.rep-from b{font-size:15px}
+.rep-tag{display:inline-block;white-space:nowrap;margin-right:4px;font:700 9px Inter;letter-spacing:.06em;text-transform:uppercase;color:#06231f;background:var(--teal);border-radius:99px;padding:2px 6px;vertical-align:2px}
 .lbrow{cursor:pointer;grid-template-columns:32px 1fr auto 12px!important}.lbgo{font-style:normal;color:var(--mute);font-size:18px}
 .pp-head{display:flex;gap:14px;align-items:center;margin:12px 0 4px;padding:12px;border-radius:14px;background:linear-gradient(135deg,color-mix(in srgb,var(--acc) 16%,var(--panel2)),var(--panel2) 70%);border:1px solid color-mix(in srgb,var(--acc) 35%,var(--line))}
 .pp-head .lvl-badge{border-color:var(--acc)}.pp-head .title-tag{color:var(--acc)}
@@ -341,12 +344,12 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.05.6"></script>
+<script src="exercises.js?v=2026.10.05.7"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.05.6';
+const APP_VERSION = '2026.10.05.7';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -2448,7 +2451,7 @@ function renderTrain(){
         <input type="number" inputmode="decimal" data-e="${i}" data-s="${j}" data-f="w" value="${esc(s.w)}" placeholder="${p ? p.w : ex.bw ? '0' : ''}">
         <input type="number" inputmode="numeric" data-e="${i}" data-s="${j}" data-f="r" value="${esc(s.r)}" placeholder="${p ? p.r : ''}">
         <button class="icon-btn sm" data-act="rmSet" data-i="${i}" data-s="${j}">−</button></div>`; }).join('')}
-      <div class="ex-actions"><button class="btn ghost sm" data-act="addSet" data-i="${i}">+ Add set</button>
+      <div class="ex-actions"><button class="btn ghost sm" data-act="addSet" data-i="${i}">+ Add set</button><button class="btn ghost sm" data-act="replaceEx" data-i="${i}">⇄ Replace</button>
       ${ex.eq === 'bb' || ex.eq === 'ez' ? `<button class="btn ghost sm" data-act="plates" data-w="${esc(lastW)}">Plates</button>` : ''}
       ${i < a.entries.length - 1 ? `<button class="btn ghost sm" data-act="ssToggle" data-i="${i}">${e.ss ? 'Unlink superset' : '⛓ Superset with next'}</button>` : ''}</div></div>`;
   });
@@ -2581,6 +2584,53 @@ function renderPickList(){
   const list = filterEx(p.q, p.m);
   $('#pickList').innerHTML = list.slice(0, p.n).map(e => `<div class="prow-pick" data-act="pick" data-id="${e.id}">${thumb(e)}<div><b>${e.name}</b><br><small class="mute">${EQN[e.eq]} · ${e.p.map(m => MUSCLES[m]).join(', ')}</small></div></div>`).join('')
     + (list.length > p.n ? `<button class="btn ghost block" style="margin-top:10px" data-act="pickMore">Show more (${list.length - p.n} left)</button>` : '');
+}
+
+
+/* ---- Replace an exercise mid-workout with a similar one ---- */
+const MOVE_KW = [['legext',/leg extension|quad extension/],['legcurl',/leg curl|hamstring curl|nordic/],['adduct',/adduct/],['abduct',/abduct/],['press',/\bpress\b/],['bench',/bench/],['curl',/curl/],['row',/\brow/],['fly',/\bfly|flye/],['squat',/squat/],['lunge',/lunge|split squat|step.?up/],['deadlift',/deadlift|rdl|romanian/],
+  ['raise',/raise/],['extension',/extension|skull ?crusher|kickback|pushdown/],['pulldown',/pull.?down|pull.?up|chin.?up|lat pull/],['dip',/\bdip/],['pushup',/push.?up/],['shrug',/shrug/],['calf',/calf/],
+  ['crunch',/crunch|sit.?up|leg raise|knee raise/],['plank',/plank|hollow|dead bug/],['thrust',/hip thrust|glute bridge|bridge/],['legpress',/leg press|hack squat/],['facepull',/face pull|reverse fly|rear delt/],['pullover',/pullover/]];
+const moveKw = name => { const n = name.toLowerCase(); const k = MOVE_KW.find(([, re]) => re.test(n)); return k ? k[0] : ''; };
+function similarEx(id){
+  const ex0 = EX[id]; if (!ex0) return [];
+  const p0 = ex0.p || [], s0 = ex0.s || [], kw0 = moveKw(ex0.name), used = new Set((state.active?.entries || []).map(e => e.ex));
+  return Object.values(EX).filter(e => e.id !== id && !used.has(e.id)).map(e => {
+    const po = (e.p || []).filter(m => p0.includes(m)).length; if (!po) return null;
+    const so = (e.s || []).filter(m => s0.includes(m) || p0.includes(m)).length, kw = moveKw(e.name);
+    let sc = 4 * po / Math.max(p0.length, (e.p || []).length) + so / Math.max(1, s0.length) + (kw0 && kw === kw0 ? 2.5 : 0)
+      - (kw0 && kw && kw !== kw0 ? 1.5 : 0)
+      + (ex0.pat && ex0.pat !== 'x' && e.pat === ex0.pat ? 2 : 0) - ((e.cat || 'str') !== (ex0.cat || 'str') ? 4 : 0) - (e.nx && !ex0.nx ? 3 : 0) + (e.img ? .3 : 0);
+    return {e, sc, same: kw0 && kw === kw0};
+  }).filter(Boolean).sort((a, b) => b.sc - a.sc).slice(0, 80);
+}
+function openReplace(i){
+  const en = state.active.entries[i], ex0 = EX[en.ex];
+  ui.rep = {i, eq:'', q:'', n:25, list:similarEx(en.ex)};
+  const eqs = [...new Set(ui.rep.list.map(x => x.e.eq))];
+  openSheet(`<div class="row between"><h3 style="margin:0">Replace exercise</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    <div class="rep-from">${thumb(ex0)}<div><small class="mute">Swapping out</small><b>${ex0.name}</b><small class="mute">${EQN[ex0.eq]} · ${ex0.p.map(m => MUSCLES[m]).join(', ')}</small></div></div>
+    <input id="repq" placeholder="Search all exercises" style="margin-top:12px">
+    <div class="chips" style="margin:10px 0"><button class="chip on" data-act="repEq" data-v="">All</button>${eqs.map(q => `<button class="chip" data-act="repEq" data-v="${q}">${EQN[q]}</button>`).join('')}</div>
+    <small class="mute" id="repLbl">Similar exercises · same muscles${en.sets.some(st => +st.r > 0) ? ' · your logged sets stay with ' + esc(ex0.name) : ''}</small><div id="repList" style="margin-top:6px"></div>`);
+  renderRepList();
+}
+function renderRepList(){
+  const r = ui.rep; if (!r || !$('#repList')) return;
+  const items = r.q ? filterEx(r.q, '').filter(e => e.id !== state.active.entries[r.i].ex).map(e => ({e})) : r.list.filter(x => !r.eq || x.e.eq === r.eq);
+  $('#repLbl').style.display = r.q ? 'none' : '';
+  $('#repList').innerHTML = items.length ? items.slice(0, r.n).map(({e, same}) => `<div class="prow-pick" data-act="repPick" data-id="${e.id}">${thumb(e)}<div><b>${e.name}</b><br>${same ? '<span class="rep-tag">Same movement</span> ' : ''}<small class="mute">${EQN[e.eq]} · ${e.p.map(m => MUSCLES[m]).join(', ')}</small></div></div>`).join('')
+    + (items.length > r.n ? `<button class="btn ghost block" style="margin-top:10px" data-act="repMore">Show more (${items.length - r.n} left)</button>` : '')
+    : `<p class="mute">No matches${r.eq ? ' with that equipment' : ''}.</p>`;
+}
+function doReplace(i, id){
+  const a = state.active, en = a.entries[i], logged = en.sets.filter(st => +st.r > 0), old = EX[en.ex].name;
+  if (logged.length){ // keep what was already done; the swap gets the remaining sets
+    const left = Math.max(1, en.sets.length - logged.length);
+    en.sets = logged; const ne = newEntry(id, left, en.target); ne.ss = en.ss; a.entries.splice(i + 1, 0, ne);
+    toast(`Kept ${logged.length} logged set${logged.length === 1 ? '' : 's'} of ${old}`);
+  } else { a.entries[i] = {...newEntry(id, en.sets.length || 3, en.target), ss:en.ss}; toast(`Swapped in ${EX[id].name}`); }
+  ui.rep = null; save(); closeSheet(); render();
 }
 
 /* ============ COACH ============ */
@@ -2722,6 +2772,10 @@ const ACT = {
     const s = state.splits.find(x => x.id === d.s), day = s && s.days.find(x => x.id === d.d); if (!day) return;
     startWorkout(day.name, day.items.map(it => ({...newEntry(it.ex, Math.max(1, +it.sets || 3), `${it.sets}×${it.reps}`), ss:!!it.ss})));
   },
+  replaceEx: d => openReplace(+d.i),
+  repEq: (d, b) => { ui.rep.eq = d.v; ui.rep.n = 25; b.parentNode.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b)); renderRepList(); },
+  repMore: () => { ui.rep.n += 25; renderRepList(); },
+  repPick: d => doReplace(ui.rep.i, d.id),
   addEx: () => openPicker(id => { state.active.entries.push(newEntry(id)); save(); render(); }),
   addToWorkout: d => { state.active.entries.push(newEntry(d.id)); save(); closeSheet(); ui.tab = 'train'; render(); toast('Added to workout'); },
   rmEntry: d => { state.active.entries.splice(+d.i, 1); save(); render(); },
@@ -2919,6 +2973,7 @@ document.addEventListener('input', e => {
   else if (t.id === 'amtU' && ui.amt){ ui.amt.unit = t.value; amtPreview(); }
   else if (t.id === 'libq'){ ui.libQ = t.value; ui.libN = PAGE; renderLibList(); }
   else if (t.id === 'pickq' && ui.pick){ ui.pick.q = t.value; ui.pick.n = PAGE; renderPickList(); }
+  else if (t.id === 'repq' && ui.rep){ ui.rep.q = t.value.trim(); ui.rep.n = 25; renderRepList(); }
 });
 document.addEventListener('change', e => { const t = e.target; if (t.id === 'scanFile' && t.files[0]) scanPhoto(t.files[0]); else if (t.id === 'amtU' && ui.amt){ ui.amt.unit = t.value; amtPreview(); } });
 $('#importFile').addEventListener('change', async e => {
