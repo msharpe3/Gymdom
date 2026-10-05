@@ -75,6 +75,8 @@ svg.body text{fill:var(--mute);font:600 11px 'Chakra Petch';letter-spacing:.25em
 .set-row .prev{font-size:12px;color:var(--mute);text-align:center}
 .set-row input{padding:9px;text-align:center}
 .live{border-color:rgba(79,209,197,.4)}
+.live.paused{border-color:color-mix(in srgb,var(--gold) 55%,transparent);background:color-mix(in srgb,var(--gold) 6%,var(--panel))}.live.paused #elapsed{color:var(--mute)}
+.pz-tag{color:var(--gold);font:700 12px 'Chakra Petch';letter-spacing:.15em}
 .pulse{color:var(--teal);font:700 12px 'Chakra Petch';letter-spacing:.15em;animation:pl 1.6s infinite}@keyframes pl{50%{opacity:.4}}
 #elapsed{font:700 18px 'Chakra Petch'}
 .day-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
@@ -356,12 +358,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.05.8"></script>
+<script src="exercises.js?v=2026.10.05.9"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.05.8';
+const APP_VERSION = '2026.10.05.9';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -2451,7 +2453,8 @@ function renderTrain(){
   if (ui.edit) return renderSplits();
   if (!a) return `<h2>Train</h2><button class="btn gold block" data-act="startEmpty" style="margin-bottom:12px">+ Start empty workout</button>
     <button class="card coach-card" data-act="tab" data-tab="coach"><svg viewBox="0 0 24 24"><path d="M3 14a6 6 0 0 0 12 0v-2h6V8H9a6 6 0 0 0-6 6Z"/><circle cx="9" cy="14" r="2"/><path d="M5.5 9.5 3.5 6.5"/><circle cx="3" cy="5.5" r="1.2"/></svg><span><b>Coach</b><small>Build a split from your goal, schedule and equipment</small></span><i>›</i></button>` + renderSplits();
-  let h = `<div class="card live"><div class="row between" style="margin-bottom:10px"><span class="pulse">● LIVE</span><span class="row gap" style="align-items:center"><button class="btn ghost xs" data-act="restStart">⏱ Rest</button><span id="elapsed">0:00</span></span></div><input id="wname" value="${esc(a.name)}" placeholder="Workout name"></div>`;
+  const pz = !!a.paused;
+  let h = `<div class="card live${pz ? ' paused' : ''}"><div class="row between" style="margin-bottom:10px">${pz ? '<span class="pz-tag">❚❚ PAUSED</span>' : '<span class="pulse">● LIVE</span>'}<span class="row gap" style="align-items:center">${pz ? '' : '<button class="btn ghost xs" data-act="restStart">⏱ Rest</button>'}<button class="btn ${pz ? 'gold' : 'ghost'} xs" data-act="pauseW">${pz ? '▶ Resume' : '❚❚ Pause'}</button><span id="elapsed">${mmss(workoutSecs(a))}</span></span></div><input id="wname" value="${esc(a.name)}" placeholder="Workout name"></div>`;
   const ssl = ssLabels(a.entries);
   a.entries.forEach((e, i) => {
     const ex = EX[e.ex], prev = lastSets(e.ex) || [], pb = bestBefore(e.ex);
@@ -2479,7 +2482,7 @@ async function finishWorkout(){
   const entries = a.entries.map(e => ({ex:e.ex, ss:!!e.ss, sets:e.sets.filter(s => +s.r > 0).map(s => ({w:+s.w||0, r:+s.r}))})).filter(e => e.sets.length);
   if (!entries.length) return toast('Log reps on at least one set first');
   const now = Date.now(), before = muscleTotals(), hitB = lastHit(), plB = playerLvl(sumObj(before) + state.bonusXP);
-  const w = {id:uid(), name:a.name || 'Workout', date:now, dur:now - a.start, entries};
+  const w = {id:uid(), name:a.name || 'Workout', date:now, dur:workoutSecs(a) * 1000, entries};
   w.xp = workoutXP(w);
   // Comeback bonus: +50% XP for muscles that had gone rusty (14+ days)
   const comeback = Object.keys(w.xp).filter(m => w.xp[m] > 0 && hitB[m] && now - hitB[m] > 14*DAY);
@@ -2795,6 +2798,10 @@ const ACT = {
   addSet: d => { const e = state.active.entries[+d.i], l = e.sets[e.sets.length-1]; e.sets.push({w:l ? l.w : '', r:''}); save(); render(); },
   rmSet: d => { state.active.entries[+d.i].sets.splice(+d.s, 1); save(); render(); },
   restStart: () => startRest(),
+  pauseW: () => { const a = state.active; if (!a) return; const now = Date.now();
+    if (a.paused){ a.pausedMs = (a.pausedMs || 0) + (now - a.paused); if (a.rest && a.rest.left != null){ a.rest.end = now + a.rest.left; delete a.rest.left; } delete a.paused; toast('Workout resumed'); }
+    else { a.paused = now; if (a.rest && a.rest.end > now) a.rest.left = a.rest.end - now; toast('Workout paused — tap Resume when you\'re back'); }
+    save(); render(); restTick(true); },
   restSkip: stopRest,
   restAdj: d => { const r = state.active && state.active.rest; if (!r) return; const now = Date.now();
     if (r.end <= now){ startRest(+d.v); return; } r.end = Math.max(now + 5000, r.end + (+d.v) * 1000); r.total = Math.max(r.total, Math.ceil((r.end - now) / 1000)); save(); restTick(true); },
@@ -3014,12 +3021,12 @@ function restAlarm(){
       g.gain.setValueAtTime(.0001, t0 + d); g.gain.exponentialRampToValueAtTime(.35, t0 + d + .02); g.gain.exponentialRampToValueAtTime(.0001, t0 + d + .18);
       o.connect(g).connect(audioCtx.destination); o.start(t0 + d); o.stop(t0 + d + .2); }); } catch(e){}
 }
-function startRest(sec){ const a = state.active; if (!a) return; sec = sec || state.restSec || 90; a.rest = {end:Date.now() + sec * 1000, total:sec}; save(); unlockAudio(); restTick(true); }
+function startRest(sec){ const a = state.active; if (!a || a.paused) return; sec = sec || state.restSec || 90; a.rest = {end:Date.now() + sec * 1000, total:sec}; save(); unlockAudio(); restTick(true); }
 function stopRest(){ if (state.active && state.active.rest){ delete state.active.rest; save(); } restTick(true); }
 function restTick(force){
   const bar = $('#restBar'); if (!bar) return;
-  const r = state.active && state.active.rest;
-  if (!r || Date.now() - r.end > 5 * 60e3){ if (r) stopRest(); bar.hidden = true; bar.dataset.mode = ''; document.body.classList.remove('resting'); return; }
+  const r = state.active && !state.active.paused && state.active.rest;
+  if (!r || Date.now() - r.end > 5 * 60e3){ if (r && r.left == null) stopRest(); bar.hidden = true; bar.dataset.mode = ''; document.body.classList.remove('resting'); return; }
   const left = Math.ceil((r.end - Date.now()) / 1000), mode = left > 0 ? 'run' : 'over';
   bar.hidden = false; document.body.classList.add('resting');
   if (mode === 'over' && !r.done){ r.done = true; save(); restAlarm(); }
@@ -3037,7 +3044,9 @@ setInterval(restTick, 250);
 document.addEventListener('pointerdown', unlockAudio, {once:true});
 document.addEventListener('change', e => { const t = e.target, d = t.dataset;  // logging reps on a set starts the rest timer
   if (d.f === 'r' && state.active && +t.value > 0){ const en = state.active.entries[+d.e]; if (en && !en.ss) startRest(); } });
-setInterval(() => { const el = $('#elapsed'); if (el && state.active){ const s = Math.floor((Date.now() - state.active.start)/1000); el.textContent = `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; } }, 1000);
+// Workout clock leaves out paused time
+function workoutSecs(a){ const now = Date.now(); return Math.max(0, Math.floor((now - a.start - (a.pausedMs || 0) - (a.paused ? now - a.paused : 0)) / 1000)); }
+setInterval(() => { const el = $('#elapsed'); if (el && state.active) el.textContent = mmss(workoutSecs(state.active)); }, 1000);
 
 if (state.active) ui.tab = 'train';
 render();
