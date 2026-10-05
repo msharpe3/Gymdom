@@ -248,7 +248,8 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 .h-sw{width:28px;height:28px;border-radius:50%;background:var(--c);border:2px solid transparent;cursor:pointer;padding:0;box-shadow:0 0 0 2px var(--panel2) inset}
 .h-sw.on{border-color:var(--text)}
 .h-sw.auto{background:conic-gradient(#ff6b6b,#f2c94c,#5ad17a,#46d3f0,#8b8cff,#ff7eb6,#ff6b6b)}
-.h-icons{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:6px}
+.h-icons{display:grid;grid-template-columns:repeat(auto-fill,minmax(42px,1fr));gap:5px}
+.h-jump{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;margin-bottom:2px}.h-jump::-webkit-scrollbar{display:none}.h-jump .chip{padding:6px 11px;font-size:12px}
 .h-icons button{background:none;border:2px solid transparent;border-radius:13px;padding:2px;display:grid;place-items:center;cursor:pointer}
 .h-icons button.on{border-color:var(--text)}
 .h-add{display:flex;gap:8px;margin-top:8px;align-items:center}.h-add #hName{flex:1;min-width:0}
@@ -307,12 +308,12 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.05.2"></script>
+<script src="exercises.js?v=2026.10.05.3"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.05.2';
+const APP_VERSION = '2026.10.05.3';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -697,9 +698,141 @@ const HICONS = {
   film:['gray', _r(3, 2.5, 18, 19, 2, 'D') + [5.4, 9.2, 13, 16.8].map(y => _r(4.3, y, 2, 2, .4, 'W') + _r(17.7, y, 2, 2, .4, 'W')).join('') + _r(7.8, 4, 8.4, 7, 1, 'B') + _r(7.8, 13, 8.4, 7, 1, 'P')],
   mic:['purple', _s('M5 11a7 7 0 0 0 14 0M12 18v3.5M8.5 21.5h7', 'GR', 1.8) + _r(8.5, 2.5, 7, 12, 3.5, 'GRD') + _s('M8.6 6.5h6.8M8.6 9h6.8', 'GR', 1)],
   wallet:['amber', _r(3, 4.5, 15, 5, 1, 'G') + _r(2.5, 7, 19, 13.5, 2.4, 'BR') + _f('M14 11.5h7.5v5H14a2.5 2.5 0 0 1 0-5Z', 'BRD') + _c(14.6, 14, 1.1, 'Y')],
-  piggy:['pink', _r(10.5, 2.5, 4, 3, 1, 'Y') + _f('M19 11.5c0-3.5-3.5-6-8-6s-8 2.5-8 6c0 2 1 3.7 2.5 4.7V19.5h3v-2h5v2h3v-2.8c.9-.6 1.6-1.5 2-2.7H21v-3h-1.6Z', 'PK') + _f('M7 6.6 6 3.5l3.5 2.3Z', 'PKD') + _c(14.6, 9.5, 1, 'D') + _s('M2.5 10.5c-1 0-1-1.5 0-1.5', 'PKD', 1.2)]
+  piggy:['pink', _r(10.5, 2.5, 4, 3, 1, 'Y') + _f('M19 11.5c0-3.5-3.5-6-8-6s-8 2.5-8 6c0 2 1 3.7 2.5 4.7V19.5h3v-2h5v2h3v-2.8c.9-.6 1.6-1.5 2-2.7H21v-3h-1.6Z', 'PK') + _f('M7 6.6 6 3.5l3.5 2.3Z', 'PKD') + _c(14.6, 9.5, 1, 'D') + _s('M2.5 10.5c-1 0-1-1.5 0-1.5', 'PKD', 1.2)],
+  // ---- self-care extras
+  toothbrush:['cyan', `<g transform="rotate(-40 12 12)">${_r(2, 10.8, 13.5, 2.6, 1.3, 'B') + _r(15, 10.2, 6.5, 3.4, 1, 'W') + _r(15.4, 7, 5.6, 3.4, .6, 'LB') + _s('M15.6 6.6c.9-.9 1.8-.9 2.6 0s1.7.9 2.6 0', 'W', 1.4)}</g>`],
+  soap:['pink', _sc(8, 5.5, 2, 'LB', 1.4) + _sc(13.5, 4.5, 1.4, 'LB', 1.2) + _sc(17.5, 6.8, 2.3, 'LB', 1.4) + _r(3.5, 10, 17, 9.5, 3.2, 'PK') + _r(6, 12.2, 6, 1.6, .8, 'W', .6)],
+  sleepmask:['indigo', _s('M3 10.5H1.5M21 10.5h1.5', 'PD', 1.8) + _f('M3 10c0-2 2-3 4.5-3h9c2.5 0 4.5 1 4.5 3s-1 5-4 5c-2.5 0-3.5-2-5-2s-2.5 2-5 2c-3 0-4-3-4-5Z', 'P') + _s('M6 11.2c1 .9 2.6.9 3.6 0M14.4 11.2c1 .9 2.6.9 3.6 0', 'PD', 1.3) + _s('M17 2.5h2.5L17 5h2.5', 'LB', 1.2)],
+  zzz:['indigo', _s('M3.5 13h6.5l-6.5 7.5h6.5', 'LB', 2.2) + _s('M12 6h5l-5 6h5', 'B', 2) + _s('M17.6 2h3.4l-3.4 4h3.4', 'LB', 1.6)],
+  alarm:['red', _c(5.5, 5.5, 3, 'R') + _c(18.5, 5.5, 3, 'R') + _s('M6.5 20.5 5 22M17.5 20.5 19 22', 'GRD', 2) + _c(12, 13, 8.3, 'R') + _c(12, 13, 6.5, 'W') + _s('M12 9.3V13h3', 'D', 1.8)],
+  glasses:['blue', _c(6.8, 13, 4, 'LB', .4) + _c(17.2, 13, 4, 'LB', .4) + _sc(6.8, 13, 4, 'BD', 2) + _sc(17.2, 13, 4, 'BD', 2) + _s('M10.8 12.5c.8-.7 1.6-.7 2.4 0M2.8 12 1.5 9.5M21.2 12l1.3-2.5', 'BD', 1.8) + _s('M5 11.5a2 2 0 0 1 1.5-1', 'W', 1.2, .8)],
+  scissors:['gray', _s('M8.5 9.5 20 18M8.5 14.5 20 6', 'GR', 2.2) + _sc(6, 8, 2.8, 'R', 2.4) + _sc(6, 16, 2.8, 'R', 2.4) + _c(12, 12, 1, 'GRD')],
+  razor:['blue', _s('M12 11v10.5', 'B', 2.8) + _r(5, 5, 14, 6, 1.6, 'B') + _r(6, 3, 12, 2.6, .8, 'GR') + _r(7, 7, 10, 1.2, .6, 'LB')],
+  comb:['orange', _r(3, 7, 18, 4.5, 1.4, 'O') + _s('M5 11.5v6M7.5 11.5v6M10 11.5v6M12.5 11.5v6M15 11.5v6M17.5 11.5v6M20 11.5v4', 'O', 1.5)],
+  nailpolish:['pink', _r(10, 2.5, 4, 7, 1.2, 'GRD') + _r(9.5, 8.8, 5, 2.6, .6, 'PKD') + _r(6, 11, 12, 10.5, 3, 'PK') + _r(8, 13, 1.8, 6, .9, 'W', .5)],
+  thermometer:['red', _r(10, 2.5, 4, 14.5, 2, 'W') + _c(12, 18.5, 3.6, 'R') + _r(11.1, 7.5, 1.8, 10.5, .9, 'R') + _s('M14.2 6h1.5M14.2 9h1.5M14.2 12h1.5', 'GR', 1)],
+  stethoscope:['teal', _s('M6 3v5a4.5 4.5 0 0 0 9 0V3', 'GR', 2) + _s('M10.5 12.5v3a4 4 0 0 0 8 0v-1.8', 'GRD', 2) + _c(18.5, 11, 2.7, 'B') + _c(18.5, 11, 1.2, 'W') + _c(6, 3, 1.3, 'GRD') + _c(15, 3, 1.3, 'GRD')],
+  lotus:['pink', _f('M3 10c3 0 6 2 7.5 4.5S12 19 12 19c-3 .5-6-.5-7.5-3S3 12 3 10Z', 'PKD') + _f('M21 10c-3 0-6 2-7.5 4.5S12 19 12 19c3 .5 6-.5 7.5-3S21 12 21 10Z', 'PKD') + _f('M12 4c2 2.5 3 5 3 8s-1 5-3 7c-2-2-3-4-3-7s1-5.5 3-8Z', 'PK') + _s('M3 21.5h18', 'B', 1.8)],
+  brain:['pink', _f('M12 4.5c-1-1.5-3.5-1.8-4.8-.3-1.8-.3-3.4 1.3-3.2 3.2-1.5.8-2 2.7-1 4.1-1 1.5-.4 3.5 1.2 4.2.2 1.8 2 3 3.8 2.5 1.2 1.3 3 1.3 4 .3Z', 'PK') + _f('M12 4.5c1-1.5 3.5-1.8 4.8-.3 1.8-.3 3.4 1.3 3.2 3.2 1.5.8 2 2.7 1 4.1 1 1.5.4 3.5-1.2 4.2-.2 1.8-2 3-3.8 2.5-1.2 1.3-3 1.3-4 .3Z', 'PKD') + _s('M12 4.5v14M8 8.5c1 0 2 .8 2 2M7 13c1-.5 2.5 0 3 1M16 8.5c-1 0-2 .8-2 2M17 13c-1-.5-2.5 0-3 1', '#b83a72', 1.2)],
+  // ---- fitness extras
+  plate:['gray', _c(12, 12, 9.8, 'GRD') + _c(12, 12, 6.8, 'GR') + _c(12, 12, 2.3, 'D') + _s('M5.2 8.5a7.6 7.6 0 0 1 3.3-3.3', 'W', 1.4, .6)],
+  muscle:['gold', _f('M3.5 20.5c0-5 1-9 3-12l2-4.5c.5-1 1.8-1.2 2.6-.5l1.2 1c.7.6.8 1.6.2 2.3L11 9c1.2-.8 2.6-1 4-.6 3 .8 5.5 3.6 5.5 6.6 0 3-2.5 5.5-5.5 5.5Z', 'SK') + _s('M11 9c-1 1-1.6 2.4-1.6 4.2M14 14.5c1.5.3 3 0 4-1', '#d99a5e', 1.4)],
+  pulse:['red', _f(HEART, 'R') + _s('M3.5 12.2h4l1.6-3 2.6 6 2-4h6.8', 'W', 1.6)],
+  sneaker:['blue', _f('M2 17.5c0-2 .5-4 1-6.5l1-3c2 .5 3.5 1.5 4.5 3l7 2.5c3 1 6.5 2 6.5 4.5v1H2Z', 'B') + _r(2, 17.2, 20, 3.3, 1.4, 'W') + _s('M8 10.5l1.6 1.6M10.2 9.6l1.6 1.6', 'W', 1.3) + _s('M7 15c3 0 7-1 9.5-2.2', 'LB', 1.4)],
+  yogamat:['purple', _r(2.5, 10, 14.5, 8, 1.5, 'P') + _c(17, 14, 4.2, 'PD') + _c(17, 14, 2.7, 'P') + _c(17, 14, 1.1, 'PD') + _s('M4.5 12.5h9', 'W', 1.2, .5)],
+  boxing:['red', _f('M6 9.5a5.5 5.5 0 0 1 5.5-5.5h2.5a5.5 5.5 0 0 1 5.5 5.5V14a4 4 0 0 1-4 4H9.5A3.5 3.5 0 0 1 6 14.5Z', 'R') + _f('M6.5 11H5a2 2 0 0 0-2 2v.6a2 2 0 0 0 2 2h1.5Z', 'RD') + _r(7.5, 17.6, 10.5, 3.9, 1, 'W') + _s('M10 7.5a3 3 0 0 1 2.5-1.5', 'W', 1.4, .6)],
+  soccer:['green', _c(12, 12, 9.6, 'W') + _f('M12 8.2l3.4 2.4-1.3 4h-4.2l-1.3-4Z', 'D') + _s('M12 8.2V3M15.4 10.6l4.6-1.6M14.1 14.6l2.9 4.1M9.9 14.6 7 18.7M8.6 10.6 4 9', 'D', 1.2)],
+  football:['amber', `<ellipse cx="12" cy="12" rx="10" ry="6.2" transform="rotate(-35 12 12)" fill="${_K.BR}"/>` + _s('M8.6 15.4l6.8-6.8', 'W', 1.3) + _s('M9.6 12.6l1.8 1.8M11.2 11l1.8 1.8M12.8 9.4l1.8 1.8', 'W', 1.1) + _s('M5.2 14.6l2.3 2.2M16.5 7.3l2.3 2.2', 'W', 1.2)],
+  baseball:['red', _c(12, 12, 9.6, 'W') + _s('M7 4.4c2.2 2.4 2.2 12.8 0 15.2M17 4.4c-2.2 2.4-2.2 12.8 0 15.2', 'R', 1.4) + _s('M8.2 7.5h1.4M8.6 10.5h1.4M8.6 13.5h1.4M8.2 16.5h1.4M14.4 7.5h1.4M14 10.5h1.4M14 13.5h1.4M14.4 16.5h1.4', 'R', 1)],
+  tennis:['green', _s('M13.3 13.3l6 6', 'BR', 2.8) + _c(9, 9, 6, 'LB', .25) + _s('M4.5 9h9M9 4.5v9M5.5 6.5h7M5.5 11.5h7M6.5 5.5v7M11.5 5.5v7', 'LB', .8) + _sc(9, 9, 6, 'B', 2.2) + _c(18.5, 5.5, 2.8, '#d4f04a') + _s('M16.2 4.6c1.4.4 2.4 1.6 2.6 3.2', 'W', .9)],
+  volleyball:['gold', _c(12, 12, 9.6, 'W') + _s('M12 2.4c-2.2 4-2.2 7.6 0 9.6 3 .4 6.4-.4 9-2.8M12 12c-1.8 3.2-4.6 5.6-8.4 6.4', 'B', 1.5) + _s('M6.8 4c.6 3.4 2.6 6 5.2 8M21.2 14c-3 1.6-6.4 1.4-9.2-2M10 21.4c-.2-3.6.6-6.8 2-9.4', 'Y', 1.5)],
+  golf:['green', `<ellipse cx="12" cy="19.5" rx="9.5" ry="2.8" fill="${_K.G}"/>` + `<ellipse cx="12" cy="19" rx="1.8" ry=".7" fill="${_K.D}"/>` + _s('M12 3v15.8', 'GR', 1.8) + _f('M12 3.5l7.5 3.2-7.5 3.2Z', 'R') + _c(17, 17.6, 1.5, 'W')],
+  skate:['orange', _f('M2.5 13h19a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2Z', 'O') + _r(5.5, 15, 2, 1.4, .3, 'GR') + _r(16.5, 15, 2, 1.4, .3, 'GR') + _c(6.5, 17.7, 2, 'Y') + _c(17.5, 17.7, 2, 'Y') + _s('M6 11.5c2-1 4-1 6 0', 'W', 1.2, .4)],
+  // ---- food extras
+  banana:['gold', _s('M5.6 5.6 5 3.4', 'BRD', 1.9) + _f('M4 6c1 7 6 12 13 12 2 0 3.5-.5 4-1.5-1-.5-2.5-.3-4-.5C11 15.5 7 11 6 5.5Z', 'Y') + _s('M7 8.2c1.5 4 5 7.4 10 8', 'YD', 1.2) + _c(21, 16.6, .8, 'BRD')],
+  avocado:['green', _f('M12 2.5c3 0 4.5 3.5 5.5 7S21 14 21 16a9 9 0 0 1-18 0c0-2 2.5-3 3.5-6.5S9 2.5 12 2.5Z', 'GD') + _f('M12 5c2 0 3 2.8 4 5.8s3 3.6 3 5.4a7 7 0 0 1-14 0c0-1.8 2-2.4 3-5.4S10 5 12 5Z', '#d6ec8f') + _c(12, 16, 3.5, 'BR') + _c(11, 15, 1, 'W', .4)],
+  broccoli:['green', _f('M10 13h4l1.2 8.5H8.8Z', 'G') + _c(7, 10, 3.6, 'GD') + _c(17, 10, 3.6, 'GD') + _c(12, 7, 4.2, 'GD') + _c(12, 11.5, 3.6, 'GD') + _c(10.5, 6.2, 1.1, 'G') + _c(6, 9, 1, 'G') + _c(16.4, 8.6, 1, 'G') + _c(12.6, 11, .9, 'G')],
+  strawberry:['red', _f('M12 21.5c-4 0-8-5-8-10 0-2.5 2-4 4-4 1.5 0 2.5.5 4 .5s2.5-.5 4-.5c2 0 4 1.5 4 4 0 5-4 10-8 10Z', 'R') + [[8.5, 11], [12, 12], [15.5, 11], [10, 15], [14, 15], [12, 18]].map(([x, y]) => _c(x, y, .6, 'Y')).join('') + _f('M6.5 7.5c1.5-1.2 3.5-1.2 5.5 0 2-1.2 4-1.2 5.5 0-1 1.6-3.4 2-5.5 1-2.1 1-4.5.6-5.5-1Z', 'G') + _s('M12 7.5V3.8', 'GD', 1.6)],
+  cherries:['red', _s('M8 15c1-5 3-8 7-11M16 15c0-4-.5-7.5-1-11', 'GD', 1.5) + _f('M15 4c2-1.5 4.5-1 6 .5-2 1.2-4 1.2-6-.5Z', 'G') + _c(7.5, 16.5, 4.2, 'R') + _c(16, 16.5, 4.2, 'RD') + _c(6.2, 15, 1, 'W', .7) + _c(14.7, 15, 1, 'W', .7)],
+  orange:['orange', _c(12, 13, 8.6, 'O') + _f('M12 4.6c1-2 3-2.8 5-2.5-.5 2-2.5 3-5 2.5Z', 'G') + _s('M12 4.6V3', 'BRD', 1.3) + _c(9, 10.4, .8, 'OD') + _c(14, 15, .8, 'OD') + _c(10.5, 16.5, .7, 'OD') + _s('M7 11a5 5 0 0 1 2.5-3', 'W', 1.4, .6)],
+  grapes:['purple', _s('M12 6.5V3', 'GD', 1.6) + _f('M12 4c1.5-1.6 3.6-1.6 5.2 0-1.6 1.1-3.6 1.1-5.2 0Z', 'G') + [[7, 9, 'P'], [12, 9, 'PD'], [17, 9, 'P'], [9.5, 13.3, 'PD'], [14.5, 13.3, 'P'], [12, 17.6, 'PD']].map(([x, y, c]) => _c(x, y, 2.7, c) + _c(x - .8, y - .8, .6, 'W', .6)).join('')],
+  watermelon:['green', _f('M2 9h20a10 10 0 0 1-20 0Z', 'G') + _f('M3.6 9h16.8a8.4 8.4 0 0 1-16.8 0Z', 'W') + _f('M4.5 9h15a7.5 7.5 0 0 1-15 0Z', 'R') + [[8.2, 11.4], [12, 13.4], [15.8, 11.4], [12, 10.4], [10, 15.2], [14, 15.2]].map(([x, y]) => _c(x, y, .7, 'D')).join('')],
+  lemon:['gold', `<ellipse cx="12" cy="12.5" rx="8.5" ry="6.5" transform="rotate(-30 12 12.5)" fill="${_K.Y}"/>` + _c(19, 8, 1.5, 'Y') + _c(5, 17, 1.5, 'Y') + _f('M17.5 6.2c.4-2 2-3.3 4-3.3-.3 2-2 3.3-4 3.3Z', 'G') + _s('M7.6 11.5a4.5 4.5 0 0 1 3-3', 'W', 1.4, .6)],
+  steak:['red', _f('M4 9c1-3.5 5-5 9-4.5S20 7 20.5 11s-2.5 8-7.5 8.5S5 18 4 14.5Z', 'R') + _s('M4 9c1-3.5 5-5 9-4.5S20 7 20.5 11s-2.5 8-7.5 8.5S5 18 4 14.5Z', '#ffd6d0', 1.4) + _s('M7.5 9c2-1.5 4.5-2 7-1M8 14.5c2 1.2 5 1.5 8 .5', 'RD', 1.1) + _c(13.5, 11.8, 2.4, 'W') + _c(13.5, 11.8, 1, 'GR')],
+  bread:['amber', _f('M3 10a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4c0 1.2-.5 2-1.5 2.5V19a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-6.5C3.5 12 3 11.2 3 10Z', '#d9973f') + _f('M5.8 10.5a2.8 2.8 0 0 1 2.8-2.6h6.8a2.8 2.8 0 0 1 2.8 2.6c0 .9-.4 1.5-1 1.9V18H6.8v-5.6c-.6-.4-1-1-1-1.9Z', 'TAN') + _s('M9 13.5h1M13 15h1M10.5 16.2h1', '#d9a066', 1.2)],
+  rice:['blue', _s('M14 2.5l7 8.5M16.5 2l6 7.5', 'BR', 1.4) + _f('M4.5 12c0-3.6 3.4-6.2 7.5-6.2s7.5 2.6 7.5 6.2Z', 'W') + _f('M3 12h18a9 9 0 0 1-18 0Z', 'B') + _r(3, 12, 18, 1.8, .9, 'BD') + _s('M7 16.5c1.6 1.5 3 1.8 5 1.8', 'LB', 1.2)],
+  cheese:['gold', _f('M3 10l15-6.5 3 6.5Z', '#ffe08a') + _f('M3 10h18v9.5H3Z', 'Y') + _c(7, 14, 1.5, 'YD') + _c(12.5, 16.5, 1.1, 'YD') + _c(17, 13, 1.7, 'YD') + _c(10.5, 12, .8, 'YD')],
+  burger:['amber', _f('M3.5 10.5a8.5 6.5 0 0 1 17 0Z', '#e0a95f') + [[8, 6.5], [11.5, 5.2], [15, 6.6], [12.5, 8]].map(([x, y]) => _c(x, y, .5, 'W')).join('') + _s('M3 12c1.5 1 2.5-1 4 0s2.5-1 4 0 2.5-1 4 0 2.5-1 4 0', 'G', 2.2) + _f('M3.5 13h17l-2 2.2h-13Z', 'Y') + _r(3.5, 14, 17, 3, 1.5, 'BRD') + _r(3.5, 17.3, 17, 3.7, 1.7, '#e0a95f')],
+  donut:['pink', `<path fill-rule="evenodd" d="M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18Zm0 6a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" fill="#e0a95f"/><path fill-rule="evenodd" d="M12 4.2c4.2 0 7.8 3 7.8 7.2 0 1.6-1 1.8-1.8 1.2s-1.4.6-2.4.4c-.8-.2-.6-1.4-1.6-1.2a3 3 0 0 0 0-.3 2.6 2.6 0 1 0-4 2c-.6.6-1.6 0-2.4.4s-1.6 1-2.4 0-1.4-.6-1.8-1.4c0-4.2 4.2-8.3 8.6-8.3Z" fill="${_K.PK}"/>` + _s('M8 7.5l1 .5M15 6.6l.6 1M17.4 10.2l-1 .4M6.6 10.6l1-.6M11.5 5.8l1 .2', 'W', 1.1) + _s('M9.6 6.2l.6-.8M16.6 8.6l1 .2', 'Y', 1.1)],
+  icecream:['pink', _f('M7.5 11h9L12 22Z', '#e0a95f') + _s('M9 13.5l5 4M15 13.5l-5 4', 'BR', .9) + _c(9.4, 9.4, 3.5, 'PK') + _c(14.6, 9.4, 3.5, '#fff3d6') + _c(12, 5.8, 3.4, '#a0663c') + _c(12, 2.8, 1.1, 'R')],
+  cookie:['amber', _c(12, 12, 9.4, '#d9a066') + [[8, 8.5], [14.5, 7.5], [16.5, 13], [10, 14.5], [12.5, 17.5], [7, 12.5], [12, 11]].map(([x, y]) => _c(x, y, 1.2, 'BRD')).join('') + _s('M5.5 8a7.5 7.5 0 0 1 3-3', 'W', 1.3, .4)],
+  cake:['pink', _r(4, 11, 16, 10.5, 2, 'TAN') + _f('M4 13a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1.5c-1 1-2 1-3 0s-2-1-3 0-2 1-3 0-2-1-3 0-2 1-3 0Z', 'PK') + _r(4, 17, 16, 1.4, 0, 'PK', .6) + _r(7.6, 5.8, 1.6, 5.2, .6, 'B') + _r(11.2, 5.8, 1.6, 5.2, .6, 'Y') + _r(14.8, 5.8, 1.6, 5.2, .6, 'G') + [8.4, 12, 15.6].map(x => _f(`M${x} 2.5c.9.9.9 2 0 2.8-.9-.8-.9-1.9 0-2.8Z`, 'O')).join('')],
+  tea:['green', _s('M17 11h1.4a2.4 2.4 0 0 1 0 4.8H17', 'G', 1.9) + _f('M4 10h13v4a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6Z', 'G') + _r(4, 10, 13, 2.2, 1.1, '#2a9d58') + _s('M11 10.5V5.5', 'W', 1) + _r(9.6, 3, 2.8, 3, .5, 'Y') + _r(2.5, 20, 16, 2, 1, 'W')],
+  smoothie:['pink', _s('M13 6l2.4-4H18', 'G', 1.8) + _f('M6.5 7.5h11l-1.6 13.6a1 1 0 0 1-1 .9h-6.8a1 1 0 0 1-1-.9Z', 'PK') + _f('M7 11.5h10l-.4 3.5H7.4Z', 'PKD', .5) + _r(5.5, 5.6, 13, 2.4, 1, 'W') + _c(16.8, 9.5, 2, 'G')],
+  milk:['blue', _f('M7 7.5 9 3h6l2 4.5V21.5H7Z', 'W') + _f('M7 7.5h10l-2-4.5H9Z', 'LB') + _r(7, 11.5, 10, 6, 0, 'B') + _f('M10 14.5c1-1 3-1 4 0', 'none') + _s('M10 15c.7-1 2.3-1 3 0', 'W', 1.2)],
+  shaker:['teal', _r(10, 2, 4, 3, 1, 'GRD') + _r(5.5, 4.6, 13, 3.6, 1.2, 'GRD') + _r(6, 8, 12, 14, 2.5, 'LB', .35) + _f('M6 12.5h12V19.5a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 6 19.5Z', '#c9a27a') + _s('M8 10.5h2.4M8 13.5h1.8M8 16.5h2.4', 'W', 1.1, .8) + _r(6, 8, 12, 14, 2.5, 'none')],
+  // ---- mind extras
+  calculator:['gray', _r(5, 2.5, 14, 19, 2.5, 'GRD') + _r(7, 4.5, 10, 4, 1, 'G') + [[7.2, 10.5], [10.7, 10.5], [14.2, 10.5], [7.2, 13.8], [10.7, 13.8], [14.2, 13.8], [7.2, 17.1], [10.7, 17.1]].map(([x, y]) => _r(x, y, 2.6, 2.4, .6, 'W')).join('') + _r(14.2, 17.1, 2.6, 2.4, .6, 'O')],
+  puzzle:['green', _f('M4 7.5h4a2.2 2.2 0 1 1 4.4 0h4.1v4.1a2.2 2.2 0 1 1 0 4.4v4.5H12.4a2.2 2.2 0 1 0-4.4 0H4v-4.5a2.2 2.2 0 1 0 0-4.4Z', 'G') + _s('M6.2 10a2 2 0 0 1 1.3-1', 'W', 1.2, .6)],
+  chess:['gray', _c(12, 5.8, 3, 'W') + _r(8.5, 9, 7, 2, .8, 'GR') + _f('M9.5 11h5l1.2 6.2H8.3Z', 'W') + _r(6, 17, 12, 4, 1.4, 'W') + _r(6, 19.5, 12, 1.5, .7, 'GR')],
+  rocket:['blue', _f('M7.5 12 4 16v3.5l3.5-2.2Z', 'R') + _f('M16.5 12 20 16v3.5l-3.5-2.2Z', 'R') + _f('M9.5 16h5L12 22Z', 'O') + _f('M10.8 16h2.4L12 19.6Z', 'Y') + _f('M12 2c3 2.5 4.5 6 4.5 10v4h-9v-4C7.5 8 9 4.5 12 2Z', 'W') + _f('M12 2c1.4 1.2 2.5 2.6 3.2 4.2H8.8C9.5 4.6 10.6 3.2 12 2Z', 'R') + _c(12, 10, 2, 'B') + _c(11.4, 9.4, .6, 'W')],
+  telescope:['indigo', _s('M11.5 13 7 21.5M11.5 13l4.5 8.5M11.5 13v8.5', 'GR', 1.6) + `<g transform="rotate(-25 12 10)">${_r(3, 7.5, 16, 5, 1.5, 'B') + _r(17, 6.5, 3.4, 7, 1, 'BD') + _r(2, 8.5, 2, 3, .6, 'LB')}</g>` + _f('M19 2l.5 1.2L21 3.7l-1.2.5-.5 1.2-.5-1.2-1.2-.5 1.2-.5Z', 'Y')],
+  // ---- people extras
+  party:['gold', _f('M3 21.5l4.5-13 8.5 8.5Z', 'Y') + _s('M5 16l4 3M6.3 12.3l5.8 4.8', 'R', 1.4) + _s('M14 9c1-2 3-2 3.5-4M17 13.5c2-1 3 0 4.5-1', 'P', 1.5) + _c(16, 4.5, 1, 'PK') + _c(20.5, 9, 1, 'B') + _c(10.5, 4, 1, 'G') + _c(20, 17, .9, 'Y') + _r(12.5, 2, 1.6, 1.6, .3, 'B')],
+  balloon:['red', _s('M12 17.5c-1 1.5 1 2.6 0 4.5', 'GR', 1.2) + `<ellipse cx="12" cy="9" rx="6.2" ry="7.2" fill="${_K.R}"/>` + _f('M11 16h2l-1 1.6Z', 'RD') + _s('M9 6a3.4 3.4 0 0 1 2-2', 'W', 1.4, .7)],
+  crown:['gold', _f('M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5Z', 'Y') + _r(5, 16.8, 14, 2.2, 0, 'YD') + _c(12, 13.5, 1.5, 'R') + _c(8, 14, 1.1, 'B') + _c(16, 14, 1.1, 'B') + _c(3, 8, 1.2, 'Y') + _c(12, 5, 1.2, 'Y') + _c(21, 8, 1.2, 'Y')],
+  cat:['orange', _f('M4 9 5 3l4.5 3.5h5L19 3l1 6c1 1.5 1.5 3 1.5 4.5 0 4.5-4.2 7.5-9.5 7.5S2.5 18 2.5 13.5C2.5 12 3 10.5 4 9Z', 'O') + _f('M5.8 5.2l.5 3 2-1.6Z', 'PK') + _f('M18.2 5.2l-.5 3-2-1.6Z', 'PK') + _c(9, 12.5, 1.2, 'D') + _c(15, 12.5, 1.2, 'D') + _f('M11 15h2l-1 1.1Z', 'PK') + _s('M2.5 14.5l4.5-.3M2.8 17l4.2-1M21.5 14.5l-4.5-.3M21.2 17 17 16', 'W', .9)],
+  dog:['amber', _f('M6 8c0-3 2.7-5 6-5s6 2 6 5v5c0 4-2.7 7.5-6 7.5S6 17 6 13Z', 'TAN') + _f('M6.5 4.5C4 4.5 2.5 8 3 12.5c1.6 0 3-1.2 3.5-3.4Z', 'BR') + _f('M17.5 4.5c2.5 0 4 3.5 3.5 8-1.6 0-3-1.2-3.5-3.4Z', 'BR') + _c(9.5, 10.5, 1.1, 'D') + _c(14.5, 10.5, 1.1, 'D') + _c(12, 14.3, 1.7, 'D') + _f('M11 16.6h2v1.6a1 1 0 0 1-2 0Z', 'PK')],
+  // ---- home extras
+  laundry:['blue', _f('M6 9c0-2.5 2-4 4-4 1 1.2 2 1.2 3 0 2.5 0 5 1.5 5 4Z', 'B') + _f('M13.5 9c0-1.5 1-3 3-3.4.5 1 1.5 2 2.5 2V9Z', 'PK') + _f('M4 9h16l-1.5 11a1.5 1.5 0 0 1-1.5 1.3H7A1.5 1.5 0 0 1 5.5 20Z', 'BR') + _s('M7 12h10M7.4 15h9.2M7.8 18h8.4', 'BRD', 1)],
+  washer:['cyan', _r(4, 2.5, 16, 19, 2.5, 'W') + _r(4, 2.5, 16, 4.5, 2.2, 'GR') + _c(16.5, 4.8, 1, 'B') + _r(6.5, 4.2, 5, 1.2, .6, 'GRD') + _c(12, 14, 5.2, 'GR') + _c(12, 14, 4, 'B') + _s('M8.4 14.6c1.2-1 2.4-1 3.6 0s2.4 1 3.6 0', 'LB', 1.2)],
+  dishes:['cyan', _c(12, 12, 9.4, 'W') + _c(12, 12, 6.2, 'GR', .6) + _sc(12, 12, 6.2, 'GR', 1) + _f('M18.5 2.5l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6Z', 'Y') + _f('M5 17l.4 1 1 .4-1 .4-.4 1-.4-1-1-.4 1-.4Z', 'Y')],
+  sponge:['gold', _sc(17.5, 5, 2, 'LB', 1.3) + _sc(20.5, 8.5, 1.3, 'LB', 1.1) + _r(3.5, 8, 17, 11, 2.5, 'Y') + _r(3.5, 8, 17, 3.8, 1.8, 'G') + _c(7.5, 15, 1, 'YD') + _c(12, 16.5, .9, 'YD') + _c(16, 14.5, 1.1, 'YD')],
+  plant:['green', _f('M12 12c-1-4-4-6-7.5-6 0 3.5 2.5 6 7.5 6Z', 'G') + _f('M12 12c1-4 4-6 7.5-6 0 3.5-2.5 6-7.5 6Z', 'GD') + _f('M12 12c-1.3-3-1-6.5 0-9.2 1 2.7 1.3 6.2 0 9.2Z', 'G') + _f('M6 13h12l-1.5 8.5h-9Z', 'O') + _r(5, 11.8, 14, 2.5, .8, 'OD')],
+  cactus:['green', _s('M9.5 12.5H7a1.5 1.5 0 0 1-1.5-1.5V8M14.5 10.5H17a1.5 1.5 0 0 0 1.5-1.5V6.5', 'G', 2.6) + _r(9.5, 5, 5, 12.5, 2.5, 'G') + _s('M12 7v8', 'GD', 1) + _c(12, 4.6, 1.5, 'PK') + _r(7, 16.5, 10, 5.5, 1, 'O') + _r(6.5, 16, 11, 2, .6, 'OD')],
+  watering:['green', _s('M7.5 9V7a3 3 0 0 1 6 0v2', 'GD', 1.8) + _s('M15.5 13l4.5-4.5', 'GD', 2) + _c(20.6, 7.8, 1.5, 'GD') + _f('M5 9h11v10a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 5 19Z', 'G') + _c(19.6, 11, .8, 'B') + _c(21.8, 11.8, .7, 'B') + _c(20.5, 13.6, .7, 'B')],
+  sunflower:['gold', _s('M12 13v8.5', 'GD', 2) + _f('M12 18c2.4 0 4-1.2 4.5-3.4-2.4-.2-4 1-4.5 3.4Z', 'G') + [0, 45, 90, 135, 180, 225, 270, 315].map(a => `<ellipse cx="12" cy="4.4" rx="1.9" ry="2.8" transform="rotate(${a} 12 9)" fill="${_K.Y}"/>`).join('') + _c(12, 9, 3.2, 'BR') + _c(11.2, 8.2, .6, 'BRD') + _c(12.8, 9.8, .6, 'BRD')],
+  hammer:['gray', _s('M13 11 4.5 19.5', 'BR', 3) + _f('M10.5 7.5l5-5 2.5 2.5-1.5 1.5 3 3-2 2-3-3-1.5 1.5Z', 'GR')],
+  wrench:['gray', _f('M14.5 3.2a5 5 0 0 0-4.6 6.9L3.5 16.5a2.1 2.1 0 0 0 3 3l6.4-6.4a5 5 0 0 0 6.9-4.6c0-.6-.1-1.2-.3-1.8L16.5 9.7l-2.4-.3-.3-2.4 3-3c-.6-.3-1.4-.8-2.3-.8Z', 'GR') + _c(5, 18, .9, 'GRD')],
+  box:['amber', _f('M3 7.5 12 3l9 4.5v9.5L12 21.5 3 17Z', '#d9a066') + _f('M12 12v9.5L3 17V7.5Z', '#c18a52') + _f('M3 7.5 12 3l9 4.5-9 4.5Z', '#e8b97e') + _s('M7.5 5.2l9 4.5V13', 'TAN', 1.6)],
+  sofa:['purple', _r(4, 6, 16, 8, 2.5, 'P') + _r(4, 12, 16, 5, 1.5, 'PD') + _r(2, 9.5, 4, 9, 2, 'P') + _r(18, 9.5, 4, 9, 2, 'P') + _s('M5 19v2M19 19v2', 'BRD', 1.8) + _s('M12 6.5v5', 'PD', 1.2)],
+  // ---- nature
+  rainbow:['indigo', _s('M3 18a9 9 0 0 1 18 0', 'R', 2.2) + _s('M5.4 18a6.6 6.6 0 0 1 13.2 0', 'Y', 2.2) + _s('M7.8 18a4.2 4.2 0 0 1 8.4 0', 'B', 2.2) + _c(3.8, 18.2, 2.4, 'W') + _c(6.2, 19.3, 1.8, 'W') + _c(20.2, 18.2, 2.4, 'W') + _c(17.8, 19.3, 1.8, 'W')],
+  umbrella:['purple', _s('M12 12v7a2 2 0 0 1-4 0', 'GR', 1.8) + _f('M2.5 12a9.5 9.5 0 0 1 19 0c-1-1-2.2-1-3.2 0-1-1-2.2-1-3.2 0-1-1-2.2-1-3.1 0-1-1-2.2-1-3.2 0-1-1-2.2-1-3.3 0Z', 'P') + _f('M12 2.5c2.5 2 3.5 5.5 3.1 9.5-1-1-2.2-1-3.1 0-1-1-2.2-1-3.1 0-.4-4 .6-7.5 3.1-9.5Z', 'PD') + _c(4, 18, .8, 'B') + _c(20, 17, .8, 'B')],
+  tent:['orange', _f('M12 3 2 20.5h20Z', 'O') + _f('M12 3l10 17.5h-10Z', 'OD', .45) + _f('M12 10l-3.6 10.5h7.2Z', 'BRD') + _s('M12 3V1.5', 'GR', 1.4) + _r(1.5, 20, 21, 1.6, .8, 'G')],
+  campfire:['orange', _f('M12 17.5c-3 0-5-1.8-5-4.4 0-3 2.6-4.4 2.6-7.3 1.9 1.1 3 2.6 3.3 4.4.7-.7 1.1-1.5 1.1-2.6 1.5 1.5 2.7 3.3 2.7 5.5 0 2.6-1.9 4.4-4.7 4.4Z', 'O') + _f('M12 17.2c-1.6 0-2.5-1-2.5-2.3 0-1.6 1.4-2.3 1.7-3.8 1 .7 1.6 1.6 1.7 2.6.4-.4.6-.8.6-1.4.8.8 1.4 1.7 1.4 2.8 0 1.3-1 2.1-2.9 2.1Z', 'Y') + _s('M4 21l16-3M4 18l16 3', 'BR', 2.6)],
+  beach:['orange', _f('M2 20.5c3-2 6-2.6 10-2.6s7 .6 10 2.6v1.5H2Z', 'TAN') + _s('M12 9v9.5', 'GR', 1.4) + _f('M3.5 9.5a8.5 5.8 0 0 1 17 0Z', 'R') + _f('M9.4 9.5 12 3.7l2.6 5.8Z', 'W') + _c(19, 3.5, 1.8, 'Y') + _c(6, 18.5, 1.2, 'B')],
+  wave:['blue', _f('M2 15c2-6 6-9 11-9 3 0 5 1.5 5 4-2-1.5-4.5-.5-4.5 2 0 2 2 3.5 4 3.5 2 0 3-1 4-2v8.5H2Z', 'B') + _s('M13 6c3 0 5 1.5 5 4', 'W', 1.6) + _s('M4 18.5c1.5-1 3-1 4.5 0s3 1 4.5 0', 'LB', 1.3)],
+  mushroom:['red', _f('M9 12h6l.8 7.5a2 2 0 0 1-2 2.2h-3.6a2 2 0 0 1-2-2.2Z', 'TAN') + _f('M3 12.5a9 8.5 0 0 1 18 0c0 .6-.4 1-1 1H4c-.6 0-1-.4-1-1Z', 'R') + _c(8, 8.8, 1.4, 'W') + _c(13, 6.6, 1.3, 'W') + _c(16.6, 9.8, 1.4, 'W') + _c(11, 11, .9, 'W')],
+  butterfly:['pink', _f('M12 11C10 6 6.5 3 3.5 4S2 10 6 11.5C3 13 3 17.5 6 18s5-3 6-7Z', 'P') + _f('M12 11c2-5 5.5-8 8.5-7s1.5 6-2.5 7.5c3 1.5 3 6 0 6.5s-5-3-6-7Z', 'PK') + _c(6.5, 8, 1.2, 'W', .6) + _c(17.5, 8, 1.2, 'W', .6) + _s('M12 7.5v11', 'D', 1.8) + _s('M12 7.5 10.5 4M12 7.5 13.5 4', 'GR', 1)],
+  bird:['blue', _f('M16.5 10.5 21.5 11l-4.5 2.2Z', 'O') + _f('M4 13c0-4 3-7 7-7 3 0 5 2 5.5 4.5l.5 2.5c0 4-3 7-7 7-3 0-6-2-6-7Z', 'B') + _f('M6.5 13c2.2 0 4.8 1 5.8 3.2-2.2 1-4.8.6-5.8-3.2Z', 'BD') + _c(13.5, 9.6, 1, 'D') + _s('M8 20l-1 2M11 20l1 2', 'O', 1.3)],
+  maple:['orange', _f('M12 2l1.8 4.2 2.7-1-.6 4.3 3.6-1.5-1 3.3 3 1.2-4 3 1 2-4.3-.6L12 22l-.2-5.1-4.3.6 1-2-4-3 3-1.2-1-3.3 3.6 1.5-.6-4.3 2.7 1Z', 'O') + _s('M12 21.5v-9', 'OD', 1.3) + _s('M12 15l-3-2M12 13.5l3-2', 'OD', 1)],
+  // ---- work extras
+  smartphone:['gray', _r(6, 2, 12, 20, 2.6, 'GRD') + _r(7.3, 4, 9.4, 15, 1.2, 'B') + [[8.6, 5.6, 'Y'], [11.2, 5.6, 'G'], [13.8, 5.6, 'R'], [8.6, 8.4, 'PK'], [11.2, 8.4, 'W'], [13.8, 8.4, 'O']].map(([x, y, c]) => _r(x, y, 1.8, 1.8, .5, c)).join('') + _r(10, 20, 4, .9, .45, 'GR')],
+  coins:['gold', _r(3, 9, 14, 9, 0, 'YD') + `<ellipse cx="10" cy="18" rx="7" ry="2.6" fill="${_K.YD}"/><ellipse cx="10" cy="9" rx="7" ry="2.6" fill="${_K.Y}"/>` + _s('M3 12c0 1.4 3 2.6 7 2.6s7-1.2 7-2.6M3 15c0 1.4 3 2.6 7 2.6s7-1.2 7-2.6', 'Y', 1) + _c(18, 15.5, 4.6, 'Y') + _c(18, 15.5, 3.2, 'YD') + _s('M18 13.5v4', 'Y', 1.4)],
+  card:['blue', _r(2, 5, 20, 14, 2.5, 'B') + _r(2, 8.5, 20, 3, 0, 'BD') + _r(5, 13, 4.2, 3.2, .8, 'Y') + _s('M12 15h6', 'LB', 1.4)],
+  chartup:['green', _r(3, 3, 18, 18, 2.5, 'W') + _r(6, 14, 3, 4.5, .5, 'G') + _r(10.5, 11, 3, 7.5, .5, 'G') + _r(15, 8, 3, 10.5, .5, 'G') + _s('M5.5 10.5l4-3.5 3 2 5-4.2M14.8 4.6h2.9v2.9', 'R', 1.6)],
+  folder:['gold', _f('M2.5 6a1.5 1.5 0 0 1 1.5-1.5h5.5l2 2.5h8.5A1.5 1.5 0 0 1 21.5 8.5V19a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 19Z', '#e0a42a') + _r(5, 7.5, 14, 4, .6, 'W') + _f('M2.5 10.5h19V19a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 19Z', 'Y')],
+  inbox:['blue', _r(8, 4.5, 8, 6.5, .8, 'W') + _s('M9.5 7h5M9.5 9h3.5', 'GR', 1) + _f('M3 13l3-8h1.5v6h9V5H18l3 8v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z', 'GR') + _f('M3 13h5l1.5 2.5h5L16 13h5v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z', 'B')],
+  receipt:['green', _f('M5 2.5h14V21.5l-2-1.3-2.3 1.3-2.7-1.3-2.7 1.3L7 20.2l-2 1.3Z', 'W') + _s('M8 7h8M8 10h8M8 13h5', 'GR', 1.4) + _s('M12.5 16.8H16', 'G', 2)],
+  // ---- fun extras
+  guitar:['orange', _s('M11.5 12.5 19 5', 'BR', 2.4) + _f('M18 3.2l2.8 2.8 1.6-1.6-2.8-2.8Z', 'BRD') + _c(8, 16, 5.6, 'O') + _c(11.6, 12.4, 3.8, 'O') + _c(9.2, 14.8, 1.7, 'BRD') + _s('M5.8 18.2l2-2', 'BRD', 1.4)],
+  piano:['gray', _r(2, 6, 20, 12, 1.5, 'W') + _s('M6 6v12M10 6v12M14 6v12M18 6v12', 'GR', 1) + _r(4.9, 6, 2.2, 6.8, .4, 'D') + _r(8.9, 6, 2.2, 6.8, .4, 'D') + _r(16.9, 6, 2.2, 6.8, .4, 'D')],
+  drum:['red', _s('M15 7l5.5-5M9 7 3.5 2', 'BR', 1.6) + _r(4, 9, 16, 10, 0, 'R') + `<ellipse cx="12" cy="19" rx="8" ry="2.6" fill="${_K.R}"/>` + _s('M4 10.5l3 8.5 3-8.5 3 8.5 3-8.5 3 8.5 1-2.8', 'Y', 1.2) + `<ellipse cx="12" cy="9" rx="8" ry="2.6" fill="${_K.W}"/>`],
+  brush:['blue', _s('M20.5 3.5 12 12', 'BR', 2.6) + _s('M12 12l-1.8 1.8', 'GR', 3.2) + _f('M9.8 14.2c-2.6-1-5.3.5-5.3 3.5 0 1.5-.8 2.6-2 3.1 3.2.5 7.3-.5 7.8-3.6.2-1.2 0-2.2-.5-3Z', 'B')],
+  popcorn:['red', [[7, 8.4], [10, 6.6], [13.6, 6.6], [17, 8.4], [12, 4.6], [8.6, 4.8], [15.4, 4.8]].map(([x, y]) => _c(x, y, 2.3, 'W') + _c(x + .6, y + .6, .7, 'Y')).join('') + _f('M5 9h14l-2 12.5H7Z', 'W') + _f('M7.8 9h2.4l.4 12.5H9.1ZM13.8 9h2.4l-1.6 12.5h-1.2Z', 'R')],
+  ticket:['gold', _f('M3 7.5A1.5 1.5 0 0 1 4.5 6h15A1.5 1.5 0 0 1 21 7.5V10a2 2 0 0 0 0 4v2.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 16.5V14a2 2 0 0 0 0-4Z', 'Y') + [7.2, 9.6, 12, 14.4].map(y => _r(15.3, y, 1, 1.4, .3, 'YD')).join('') + _f('M9.5 9l.9 1.9 2.1.3-1.5 1.5.4 2.1-1.9-1-1.9 1 .4-2.1-1.5-1.5 2.1-.3Z', 'R')],
+  dice:['red', _r(3.5, 3.5, 17, 17, 3.6, 'W') + [[8, 8], [16, 8], [12, 12], [8, 16], [16, 16]].map(([x, y]) => _c(x, y, 1.7, 'R')).join('')],
+  yarn:['pink', _s('M15.5 16.5l6 5', 'GR', 1.4) + _c(11, 11.5, 8.2, 'PK') + _s('M5 8c4 1 8 5 9 11M8 4.2c3 2 6 7 6 13M3.5 13c3 0 7 2.5 9 7M13.5 3.8c2 2 3.2 4.6 3.6 8', 'PKD', 1.2) + _s('M19 12.5c1 2.5 1.5 5.5 3 7', 'PK', 1.3)],
+  brick:['red', _r(5, 6.5, 4, 3.8, 1, 'R') + _r(10, 6.5, 4, 3.8, 1, 'R') + _r(15, 6.5, 4, 3.8, 1, 'R') + _r(5, 6.5, 4, 1.4, .7, '#ff8a8d') + _r(10, 6.5, 4, 1.4, .7, '#ff8a8d') + _r(15, 6.5, 4, 1.4, .7, '#ff8a8d') + _r(3, 9.8, 18, 10.5, 1.6, 'R') + _r(3, 9.8, 18, 2.2, 1, '#ff8a8d')],
+  // ---- travel
+  bus:['gold', _r(4, 3, 16, 16.5, 3, 'Y') + _r(5.5, 5, 13, 6.5, 1, 'LB') + _r(6, 19, 3, 2.6, 1, 'D') + _r(15, 19, 3, 2.6, 1, 'D') + _c(7.5, 15.5, 1.2, 'W') + _c(16.5, 15.5, 1.2, 'W') + _r(10, 14.8, 4, 1.4, .7, 'YD')],
+  train:['blue', _s('M7 17.5 4.5 22M17 17.5l2.5 4.5M5.8 20.2h12.4', 'GR', 1.6) + _r(5, 2.5, 14, 15.5, 4, 'B') + _r(7, 5, 10, 5.5, 1.2, 'LB') + _c(8.5, 14, 1.3, 'Y') + _c(15.5, 14, 1.3, 'Y') + _r(10, 2.5, 4, 1.4, .6, 'BD')],
+  suitcase:['purple', _s('M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2', 'GR', 1.8) + _r(3.5, 7, 17, 13, 2.5, 'P') + _r(7, 7, 2, 13, 0, 'PD') + _r(15, 7, 2, 13, 0, 'PD') + _c(6.5, 21, 1, 'GRD') + _c(17.5, 21, 1, 'GRD')],
+  pin:['red', `<ellipse cx="12" cy="21" rx="4" ry="1.2" fill="${_K.D}" opacity=".5"/>` + _f('M12 21.5s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12Z', 'R') + _c(12, 9.5, 2.7, 'W')],
+  // ---- symbols
+  check:['green', _c(12, 12, 9.6, 'G') + _s('M7.5 12.5l3 3 6-6.5', 'W', 2.4)],
+  gem:['cyan', _f('M6.5 4h11l4 5.5L12 21 2.5 9.5Z', 'LB') + _f('M2.5 9.5h19L12 21Z', 'B') + _f('M8.5 9.5 12 4l3.5 5.5Z', '#d4eeff') + _s('M8.5 9.5 12 21l3.5-11.5', 'BD', .9)],
+  clover:['green', _s('M12 12c1 4 2.5 6.5 4.5 8.5', 'GD', 1.8) + [0, 90, 180, 270].map((a, i) => `<path d="${HEART}" fill="${i % 2 ? _K.GD : _K.G}" transform="rotate(${a} 12 12) translate(6 1.75) scale(.5)"/>`).join('')],
+  infinity:['purple', _s('M12 12c-2-2.5-3.5-4-5.5-4a4 4 0 0 0 0 8c2 0 3.5-1.5 5.5-4s3.5-4 5.5-4a4 4 0 0 1 0 8c-2 0-3.5-1.5-5.5-4Z', 'P', 2.8)],
+  peace:['purple', _c(12, 12, 9.6, 'P') + _sc(12, 12, 6.8, 'W', 2) + _s('M12 5.2v13.6M12 12l-4.8 4.8M12 12l4.8 4.8', 'W', 2)],
+  lock:['gold', _s('M8 10.5V7.5a4 4 0 0 1 8 0v3', 'GR', 2.4) + _r(5, 10, 14, 11.5, 2.5, 'Y') + _c(12, 14.8, 1.7, 'BRD') + _r(11.3, 15.5, 1.4, 3.2, .6, 'BRD')],
+  hundred:['red', `<text x="12" y="15" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="10" font-style="italic" fill="${_K.R}">100</text>` + _s('M3.5 17.8h17M5 20.5h14', 'R', 1.7)]
 };
-const HICON_ORDER = Object.keys(HICONS);
+const HICON_GROUPS = [
+  ['Self-care', 'water glass pill heart tooth toothbrush soap lotion shower bath snow bed sleepmask zzz moon sunrise sun alarm scale eye glasses scissors razor comb nailpolish thermometer stethoscope bandage breathe meditate lotus brain'],
+  ['Fitness', 'dumbbell kettlebell plate muscle pulse battery sneaker run walk steps stretch yogamat bike swim hike rope boxing ball soccer football baseball tennis volleyball golf skate flame zap trophy medal target timer'],
+  ['Food & drink', 'apple banana avocado broccoli carrot strawberry cherries orange grapes watermelon lemon leaf salad egg fish protein steak bread rice cheese burger pizza donut icecream cookie cake coffee tea smoothie milk shaker bottle chef cart nosugar nodrink nosmoke'],
+  ['Mind & learning', 'book journal pencil bulb study globe code calculator puzzle chess rocket telescope sparkle star smile phoneoff hourglass clock'],
+  ['People & pets', 'chat call friends mail gift party balloon crown paw cat dog'],
+  ['Home & chores', 'home broom laundry washer dishes sponge shirt trash sprout plant cactus watering tree flower sunflower hammer wrench box sofa candle key bell'],
+  ['Outdoors', 'rainbow cloud umbrella tent campfire beach wave mushroom butterfly bird maple compass map'],
+  ['Work & money', 'briefcase laptop smartphone money coins card piggy wallet chartup folder inbox receipt calendar checklist'],
+  ['Fun & hobbies', 'music headphones guitar piano drum mic palette brush camera film popcorn ticket tv game dice yarn brick'],
+  ['Travel', 'car bus train plane suitcase pin'],
+  ['Symbols', 'check gem clover infinity peace lock thumbs flag shield hundred']
+].map(([n, ids]) => [n, ids.split(' ')]);
+const HICON_ORDER = [...new Set([...HICON_GROUPS.flatMap(g => g[1]), ...Object.keys(HICONS)])].filter(i => HICONS[i]);
 const hIcon = (t, sz = '') => { const ic = HICONS[t.i]; if (!ic) return `<span class="hic${sz}" style="--c:${HC.gold}">${esc(t.e || '⭐')}</span>`;
   return `<span class="hic${sz}" style="--c:${t.c || HC[ic[0]]}"><svg viewBox="0 0 24 24">${ic[1]}</svg></span>`; };
 const EMOJI_ICON = {'⭐':'star','💪':'dumbbell','🏃':'run','🧠':'bulb','📚':'book','🎧':'headphones','🧘':'meditate','🥤':'glass','🍎':'apple','🛌':'bed','🧼':'shower','✍️':'pencil','🎯':'target','💼':'briefcase','🐶':'paw','🎸':'music','🌱':'sprout','❤️':'heart'};
@@ -2010,7 +2143,7 @@ function openHabitEdit(keep){
       <div class="h-add">${hIcon(f, ' lg')}<input id="hName" placeholder="e.g. Practice guitar" maxlength="40" value="${esc(nm)}"><button class="btn gold sm" data-act="hAdd">${ed ? 'Save' : 'Add'}</button></div>
       ${ed ? `<button class="btn ghost xs" style="margin-top:8px" data-act="hEditCancel">Cancel edit</button>` : ''}
       <label class="lbl">Tile color</label><div class="h-colors"><button class="h-sw auto${!f.c ? ' on' : ''}" data-act="hColor" data-v="" aria-label="Default color"></button>${Object.values(HC).map(c => `<button class="h-sw${f.c === c ? ' on' : ''}" style="--c:${c}" data-act="hColor" data-v="${c}"></button>`).join('')}</div>
-      <label class="lbl">Icon</label><div class="h-icons">${HICON_ORDER.map(i => `<button class="${f.i === i ? 'on' : ''}" data-act="hIconPick" data-v="${i}">${hIcon({i, c:f.c})}</button>`).join('')}</div></div>`);
+      <label class="lbl">Icon</label><div class="chips h-jump">${HICON_GROUPS.map(([gn], k) => `<button class="chip" data-act="hJump" data-v="${k}">${gn}</button>`).join('')}</div>${HICON_GROUPS.map(([gn, ids], k) => `<label class="lbl" id="hg${k}">${gn}</label><div class="h-icons">${ids.filter(i => HICONS[i]).map(i => `<button class="${f.i === i ? 'on' : ''}" data-act="hIconPick" data-v="${i}">${hIcon({i, c:f.c})}</button>`).join('')}</div>`).join('')}</div>`);
   if (keep) $('#sheet').scrollTop = y;
 }
 /* ============ UI HELPERS ============ */
@@ -2539,6 +2672,7 @@ const ACT = {
   hPreset: d => { const L = habitList(), i = L.findIndex(t => t.id === d.id);
     if (i >= 0) L.splice(i, 1); else { const p = HABIT_PRESETS.find(x => x[0] === d.id); L.push({id:p[0], i:p[1], n:p[2]}); }
     save(); render(); openHabitEdit(true); },
+  hJump: d => { const el = $('#hg' + d.v); if (el && el.scrollIntoView) el.scrollIntoView({block:'start', behavior:'smooth'}); },
   hIconPick: d => { ui.hForm.i = d.v; openHabitEdit(true); },
   hColor: d => { ui.hForm.c = d.v; openHabitEdit(true); },
   hEditC: (d, b, e) => { if (e && e.target.closest && e.target.closest('[data-act="hDel"]')) return; const t = habitList().find(x => x.id === d.id); if (!t) return;
