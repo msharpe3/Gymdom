@@ -227,6 +227,17 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 .h-task .ck{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:14px}
 .h-task.done{border-color:color-mix(in srgb,var(--teal) 50%,transparent);background:color-mix(in srgb,var(--teal) 10%,var(--panel2))}
 .h-task.done b{opacity:.55;text-decoration:line-through}.h-task.done .ck{background:var(--teal);border-color:var(--teal);color:#06231f;animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
+.rest-bar{position:fixed;left:10px;right:10px;bottom:calc(74px + env(safe-area-inset-bottom));z-index:7;display:flex;align-items:center;gap:8px;padding:9px 10px 9px 14px;border-radius:16px;background:var(--panel2);border:1px solid color-mix(in srgb,var(--teal) 50%,var(--line));box-shadow:0 10px 30px #0009;overflow:hidden;animation:slideUp .25s}
+.rest-bar[hidden]{display:none}
+.rest-fill{position:absolute;left:0;top:0;bottom:0;background:color-mix(in srgb,var(--teal) 16%,transparent);transition:width .25s linear;pointer-events:none}
+.rest-bar>*:not(.rest-fill){position:relative}.rest-lbl{font:700 10px 'Chakra Petch';letter-spacing:.14em;color:var(--teal)}
+.rest-bar b{font:700 22px 'Chakra Petch';flex:1;font-variant-numeric:tabular-nums}.rest-bar small{color:var(--mute);font-weight:600;flex:1}
+.rest-bar button{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:7px 9px;font:600 12px Inter;cursor:pointer}
+.rest-bar .rest-def{color:var(--mute)}.rest-bar .rest-x{color:var(--mute)}
+.rest-bar.over{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 14%,var(--panel2));animation:restPulse 1s ease-in-out infinite alternate}
+.rest-bar.over .rest-lbl{color:var(--gold)}.rest-bar.over b{font-size:17px}
+@keyframes restPulse{to{box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 45%,transparent),0 10px 30px #0009}}
+body.resting main{padding-bottom:170px}
 .rep-from{display:flex;gap:12px;align-items:center;margin-top:12px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px}
 .rep-from>div:last-child{display:flex;flex-direction:column;gap:1px;min-width:0}.rep-from b{font-size:15px}
 .rep-tag{display:inline-block;white-space:nowrap;margin-right:4px;font:700 9px Inter;letter-spacing:.06em;text-transform:uppercase;color:#06231f;background:var(--teal);border-radius:99px;padding:2px 6px;vertical-align:2px}
@@ -340,16 +351,17 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 </header>
 <main id="view"></main>
 <nav class="tabs" id="tabs"></nav>
+<div id="restBar" class="rest-bar" hidden></div>
 <div id="sheetWrap" class="sheet-wrap"><div class="sheet" id="sheet"></div></div>
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.05.7"></script>
+<script src="exercises.js?v=2026.10.05.8"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.05.7';
+const APP_VERSION = '2026.10.05.8';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -899,6 +911,7 @@ function migrate(s){
   s.habits = Object.assign({tasks:null, log:{}}, s.habits || {});
   if (!s.habits.tasks) s.habits.tasks = HABIT_DEFAULT.map(id => { const p = HABIT_PRESETS.find(x => x[0] === id); return {id, i:p[1], n:p[2], g:presetSec(id)}; });
   s.habits.tasks.forEach(t => { if (!t.i){ const p = HABIT_PRESETS.find(x => x[0] === t.id); t.i = p ? p[1] : EMOJI_ICON[t.e] || 'star'; } delete t.e; if (!t.g) t.g = t.id.startsWith('p:') ? presetSec(t.id) : 'anytime'; });
+  s.restSec = s.restSec || 90;
   s.savedMeals = s.savedMeals || []; s.waterGoal = s.waterGoal || 64; s.friends = s.friends || [];
   if (!s.profile.playerId) s.profile.playerId = newPlayerId();
   s.food = s.food || {}; s.foodRecent = s.foodRecent || []; s.foodTargets = s.foodTargets || null;
@@ -2438,7 +2451,7 @@ function renderTrain(){
   if (ui.edit) return renderSplits();
   if (!a) return `<h2>Train</h2><button class="btn gold block" data-act="startEmpty" style="margin-bottom:12px">+ Start empty workout</button>
     <button class="card coach-card" data-act="tab" data-tab="coach"><svg viewBox="0 0 24 24"><path d="M3 14a6 6 0 0 0 12 0v-2h6V8H9a6 6 0 0 0-6 6Z"/><circle cx="9" cy="14" r="2"/><path d="M5.5 9.5 3.5 6.5"/><circle cx="3" cy="5.5" r="1.2"/></svg><span><b>Coach</b><small>Build a split from your goal, schedule and equipment</small></span><i>›</i></button>` + renderSplits();
-  let h = `<div class="card live"><div class="row between" style="margin-bottom:10px"><span class="pulse">● LIVE</span><span id="elapsed">0:00</span></div><input id="wname" value="${esc(a.name)}" placeholder="Workout name"></div>`;
+  let h = `<div class="card live"><div class="row between" style="margin-bottom:10px"><span class="pulse">● LIVE</span><span class="row gap" style="align-items:center"><button class="btn ghost xs" data-act="restStart">⏱ Rest</button><span id="elapsed">0:00</span></span></div><input id="wname" value="${esc(a.name)}" placeholder="Workout name"></div>`;
   const ssl = ssLabels(a.entries);
   a.entries.forEach((e, i) => {
     const ex = EX[e.ex], prev = lastSets(e.ex) || [], pb = bestBefore(e.ex);
@@ -2781,6 +2794,12 @@ const ACT = {
   rmEntry: d => { state.active.entries.splice(+d.i, 1); save(); render(); },
   addSet: d => { const e = state.active.entries[+d.i], l = e.sets[e.sets.length-1]; e.sets.push({w:l ? l.w : '', r:''}); save(); render(); },
   rmSet: d => { state.active.entries[+d.i].sets.splice(+d.s, 1); save(); render(); },
+  restStart: () => startRest(),
+  restSkip: stopRest,
+  restAdj: d => { const r = state.active && state.active.rest; if (!r) return; const now = Date.now();
+    if (r.end <= now){ startRest(+d.v); return; } r.end = Math.max(now + 5000, r.end + (+d.v) * 1000); r.total = Math.max(r.total, Math.ceil((r.end - now) / 1000)); save(); restTick(true); },
+  restDef: () => { const i = REST_PRESETS.indexOf(state.restSec); state.restSec = REST_PRESETS[(i + 1) % REST_PRESETS.length]; save();
+    const r = state.active && state.active.rest; if (r && r.end > Date.now()){ r.end = r.end - r.total * 1000 + state.restSec * 1000; r.total = state.restSec; } restTick(true); toast(`Default rest: ${mmss(state.restSec)}`); },
   finish: finishWorkout,
   discard: async () => { if (await confirmBox('Discard this workout? Nothing will be saved.', 'Discard')){ state.active = null; save(); render(); } },
   viewWorkout: d => viewWorkout(d.id),
@@ -2982,6 +3001,42 @@ $('#importFile').addEventListener('change', async e => {
   catch(err){ toast('That file isn\'t a Gymdom backup'); }
   e.target.value = '';
 });
+
+/* ---- Rest timer: starts when you log a set's reps; beeps + buzzes when it's time for the next set ---- */
+const REST_PRESETS = [60, 90, 120, 150, 180, 240];
+const mmss = x => `${Math.floor(x / 60)}:${String(x % 60).padStart(2, '0')}`;
+let audioCtx = null;
+function unlockAudio(){ try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); } catch(e){} }
+function restAlarm(){
+  if (navigator.vibrate) navigator.vibrate([250, 120, 250, 120, 400]);
+  try { unlockAudio(); const t0 = audioCtx.currentTime;
+    [0, .22, .44].forEach((d, k) => { const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.type = 'sine'; o.frequency.value = k === 2 ? 1320 : 880;
+      g.gain.setValueAtTime(.0001, t0 + d); g.gain.exponentialRampToValueAtTime(.35, t0 + d + .02); g.gain.exponentialRampToValueAtTime(.0001, t0 + d + .18);
+      o.connect(g).connect(audioCtx.destination); o.start(t0 + d); o.stop(t0 + d + .2); }); } catch(e){}
+}
+function startRest(sec){ const a = state.active; if (!a) return; sec = sec || state.restSec || 90; a.rest = {end:Date.now() + sec * 1000, total:sec}; save(); unlockAudio(); restTick(true); }
+function stopRest(){ if (state.active && state.active.rest){ delete state.active.rest; save(); } restTick(true); }
+function restTick(force){
+  const bar = $('#restBar'); if (!bar) return;
+  const r = state.active && state.active.rest;
+  if (!r || Date.now() - r.end > 5 * 60e3){ if (r) stopRest(); bar.hidden = true; bar.dataset.mode = ''; document.body.classList.remove('resting'); return; }
+  const left = Math.ceil((r.end - Date.now()) / 1000), mode = left > 0 ? 'run' : 'over';
+  bar.hidden = false; document.body.classList.add('resting');
+  if (mode === 'over' && !r.done){ r.done = true; save(); restAlarm(); }
+  if (force || bar.dataset.mode !== mode){
+    bar.dataset.mode = mode; bar.classList.toggle('over', mode === 'over');
+    bar.innerHTML = mode === 'run'
+      ? `<i class="rest-fill" id="restFill"></i><span class="rest-lbl">⏱ REST</span><b id="restTime"></b><button data-act="restAdj" data-v="-15">−15</button><button data-act="restAdj" data-v="15">+15</button><button data-act="restDef" class="rest-def" id="restDef">${mmss(state.restSec)}</button><button data-act="restSkip" class="rest-x" aria-label="Skip rest">Skip</button>`
+      : `<span class="rest-lbl">💪 REST'S UP</span><b>Next set!</b><small id="restTime"></small><button data-act="restAdj" data-v="30">+30s</button><button data-act="restSkip" class="rest-x" aria-label="Dismiss">✕</button>`;
+  }
+  const t = $('#restTime');
+  if (mode === 'run'){ t.textContent = mmss(left); const f = $('#restFill'); if (f) f.style.width = Math.max(0, Math.min(100, left / r.total * 100)) + '%'; }
+  else t.textContent = '+' + mmss(Math.floor((Date.now() - r.end) / 1000));
+}
+setInterval(restTick, 250);
+document.addEventListener('pointerdown', unlockAudio, {once:true});
+document.addEventListener('change', e => { const t = e.target, d = t.dataset;  // logging reps on a set starts the rest timer
+  if (d.f === 'r' && state.active && +t.value > 0){ const en = state.active.entries[+d.e]; if (en && !en.ss) startRest(); } });
 setInterval(() => { const el = $('#elapsed'); if (el && state.active){ const s = Math.floor((Date.now() - state.active.start)/1000); el.textContent = `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; } }, 1000);
 
 if (state.active) ui.tab = 'train';
