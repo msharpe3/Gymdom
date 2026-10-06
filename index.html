@@ -218,6 +218,20 @@ svg.body .aura.flame,svg.body .aura.ghostfire{animation:flick .5s ease-in-out in
 .coach-card span{flex:1;display:flex;flex-direction:column;gap:2px}.coach-card small{color:var(--mute);font-size:12px}.coach-card i{font-style:normal;font-size:22px;color:var(--mute)}
 .kick{font:700 10px 'Chakra Petch';letter-spacing:.2em;color:var(--teal)}
 .reward-card{display:flex;gap:14px;align-items:center;cursor:pointer;background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 10%,var(--panel)),var(--panel) 65%)}
+.arm-hd{display:flex;align-items:baseline;justify-content:space-between}.arm-hd small{font-size:11px}
+.arm-row{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;padding:2px 2px 6px;margin:0 -2px;scrollbar-width:none}.arm-row::-webkit-scrollbar{display:none}
+.arm-tile{flex:none;width:86px;scroll-snap-align:start;background:var(--panel2);border:1.5px solid var(--line);border-radius:14px;padding:7px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--text);font:inherit;cursor:pointer;text-align:center}
+.arm-tile .hmini{width:62px;height:96px;border-radius:9px;background:#0f0e16}.arm-tile .hmini .fz.zoom{aspect-ratio:auto;height:96px}
+.arm-tile b{font-size:11px;line-height:1.2;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.arm-tile small{font-size:9.5px;color:var(--mute);line-height:1.2;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.arm-tile.on{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 12%,var(--panel2))}.arm-tile.on small{color:var(--teal);font-weight:700}
+.arm-tile.locked .hmini{opacity:.4;filter:grayscale(.7)}.arm-tile.locked b{color:var(--mute)}
+.arm-tile .hmini .fz{height:96px;overflow:hidden}.arm-tile .hmini svg{display:block}
+.arm-tile.z-head .hmini svg{width:700%!important;margin-left:-125%!important;margin-top:0}
+.arm-tile.z-neck .hmini svg{width:400%!important;margin-left:-50%!important;margin-top:-19px}
+.arm-tile.z-top .hmini svg{width:240%!important;margin-left:-10%!important;margin-top:-18px}
+.arm-tile.z-low .hmini svg{width:240%!important;margin-left:-10%!important;margin-top:-55px}
+.arm-tile.z-feet .hmini svg{width:320%!important;margin-left:-30%!important;margin-top:-137px}
+.arm-none{width:62px;height:96px;border-radius:9px;background:#0f0e16;display:grid;place-items:center;font-size:26px;color:var(--mute)}
 .reward-prev,.hmini{flex:none;overflow:hidden;border-radius:10px}.reward-prev{width:84px}.hmini{width:44px}
 .reward-prev svg,.hmini svg{width:200%;display:block}
 .reward-prev .fz.zoom,.hmini .fz.zoom{aspect-ratio:.68;overflow:hidden}.reward-prev .fz.zoom svg,.hmini .fz.zoom svg{width:300%;margin-left:-25%}
@@ -375,12 +389,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.06.2"></script>
+<script src="exercises.js?v=2026.10.06.3"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.06.2';
+const APP_VERSION = '2026.10.06.3';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -2252,6 +2266,7 @@ function lootBox(l){
 }
 
 /* ---- Armory (customize) ---- */
+const ARM_ZOOM = {head:'head', face:'head', neck:'neck', top:'top', paint:'neck', wrists:'top', bottom:'low', waist:'low', feet:'feet'};
 function openArmory(){
   const L = curLevel(), t = muscleTotals(), sk = equippedSkin(), cur = myTitle(L);
   const tl = titleList(L), got = tl.filter(x => x[2]);
@@ -2261,8 +2276,11 @@ function openArmory(){
     <small class="mute">${tl.length - got.length} more to unlock through levels, trophies and loot</small>
     <label class="lbl">Theme</label><div class="themes">${THEMES.map(([id, n, u, c]) => { const ok = isUnlocked(id, u, L), on = (state.cosmetics.theme || 'classic') === id;
       return `<button class="theme-tile${on ? ' on' : ''}${ok ? '' : ' locked'}" data-act="eqTheme" data-v="${id}" style="--a:${c[0]};--b:${c[1]};--p:${c[2]}"><span class="sw"><i></i><i></i></span><b>${n}</b><small>${ok ? (on ? 'Equipped' : 'Unlocked') : '🔒 ' + unlockLabel(u)}</small></button>`; }).join('')}</div>
-    ${SLOTS.map(([slot, sn]) => `<label class="lbl">${sn}</label><div class="chips wrap"><button class="chip${!sk[slot] ? ' on' : ''}" data-act="eqSkin" data-s="${slot}" data-v="">None</button>${SKINS.filter(s => s[2] === slot).map(([id, n, , u]) => { const ok = isUnlocked(id, u, L);
-      return `<button class="chip${sk[slot] === id ? ' on' : ''}${ok ? '' : ' locked'}" data-act="eqSkin" data-s="${slot}" data-v="${id}">${ok ? '' : '🔒 '}${n}${ok ? '' : ` <small>${unlockLabel(u)}</small>`}</button>`; }).join('')}</div>`).join('')}
+    ${SLOTS.map(([slot, sn]) => { const items = SKINS.filter(x => x[2] === slot && !(x[3].season && !isUnlocked(x[0], x[3], L) && !seasonLive(seasonById(x[3].season) || {start:'', end:''}))).map(x => [...x, isUnlocked(x[0], x[3], L)]);
+      const owned = items.filter(x => x[4]).length; items.sort((a, b) => b[4] - a[4]);
+      return `<div class="arm-hd"><label class="lbl">${sn}</label><small class="mute">${owned}/${items.length}</small></div><div class="arm-row" data-slot="${slot}">
+        <button class="arm-tile${!sk[slot] ? ' on' : ''}" data-act="eqSkin" data-s="${slot}" data-v=""><div class="arm-none">∅</div><b>None</b><small>${!sk[slot] ? 'Equipped' : '&nbsp;'}</small></button>
+        ${items.map(([id, n, , u, ok]) => `<button class="arm-tile z-${ARM_ZOOM[slot] || 'full'}${sk[slot] === id ? ' on' : ''}${ok ? '' : ' locked'}" data-act="eqSkin" data-s="${slot}" data-v="${id}"><div class="hmini">${figMini({id, slot}, t, true)}</div><b>${esc(n)}</b><small>${sk[slot] === id ? 'Equipped' : ok ? 'Unlocked' : '🔒 ' + unlockLabel(u)}</small></button>`).join('')}</div>`; }).join('')}
     <details class="icon-more"${ui.iconOpen ? ' open' : ''}><summary><img src="icons/${iconId()}-180.png" alt=""><span>App icon</span><small>${APP_ICONS.find(x => x[0] === iconId())[1]}</small></summary>
       <div class="icons-grid">${APP_ICONS.map(([id, n]) => `<button class="icon-tile${iconId() === id ? ' on' : ''}" data-act="eqIcon" data-v="${id}"><img src="icons/${id}-180.png" alt="" loading="lazy"><small>${n}</small></button>`).join('')}</div>
       <button class="btn ghost sm block" style="margin-top:8px" data-act="iconHelp">Update Home Screen icon</button></details>`);
@@ -3104,7 +3122,7 @@ const ACT = {
   eqIcon: d => { ui.iconOpen = true; state.cosmetics.icon = d.v; save(); applyIcon(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; toast('Icon picked: tap "Update Home Screen icon" to apply it'); },
   iconHelp: openIconHelp,
   eqTheme: d => { const th = THEMES.find(t => t[0] === d.v); if (!isUnlocked(d.v, th[2])) return toast(`Unlocks with ${unlockLabel(th[2])}`); state.cosmetics.theme = d.v; save(); applyTheme(); render(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; publishStats(true); },
-  eqSkin: d => { const it = SKINS.find(s => s[0] === d.v); if (it && !isUnlocked(d.v, it[3])) return toast(`Unlocks with ${unlockLabel(it[3])}`); state.cosmetics[d.s] = d.v; save(); render(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; publishStats(true); },
+  eqSkin: d => { const it = SKINS.find(s => s[0] === d.v); if (it && !isUnlocked(d.v, it[3])) return toast(`Unlocks with ${unlockLabel(it[3])}`); state.cosmetics[d.s] = d.v; save(); render(); const y = $('#sheet').scrollTop, xs = Object.fromEntries([...document.querySelectorAll('.arm-row')].map(r => [r.dataset.slot, r.scrollLeft])); openArmory(); $('#sheet').scrollTop = y; document.querySelectorAll('.arm-row').forEach(r => r.scrollLeft = xs[r.dataset.slot] || 0); publishStats(true); },
   closeLvlUp: () => { const d = document.getElementById('lvlUp'); if (d){ d.classList.add('out'); setTimeout(() => d.remove(), 300); } },
   openLoot: (d, b) => { if (b.classList.contains('opening') || b.classList.contains('open')) return; b.classList.add('opening'); if (navigator.vibrate) navigator.vibrate([20, 40, 20, 40, 20]);
     setTimeout(() => { b.classList.remove('opening'); b.classList.add('open'); if (navigator.vibrate) navigator.vibrate(80); }, 900); },
