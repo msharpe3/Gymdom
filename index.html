@@ -2501,7 +2501,7 @@ function renderBody(){
     <div style="flex:1;min-width:0"><div class="row between"><h3 style="margin:0">${esc(state.profile.name || 'Lifter')}</h3><span class="title-tag eq" data-act="armory">${esc(myTitle(pl))}</span></div>
     <div class="bar" style="margin:8px 0 6px"><i style="width:${pct}%"></i></div>
     <div class="row between gap"><small class="mute">${fmt(total)} XP · ${fmt(nxt-total)} to Lv ${pl+1}</small><button class="btn ghost xs armory-btn" data-act="armory">⚔️ Armory</button></div></div></div>
-    <div class="stats"><div class="stat"><b>${state.workouts.length}</b><small>Workouts</small></div><div class="stat"><b>${week}</b><small>Last 7 days</small></div><div class="stat"><b>${weekStreak()}🔥</b><small>Week streak</small></div></div>` + seasonCard();
+    <div class="stats"><div class="stat"><b>${state.workouts.length}</b><small>Workouts</small></div><div class="stat"><b>${week}</b><small>Last 7 days</small></div><div class="stat"><b>${weekStreak()}🔥</b><small>Week streak</small></div></div>`;
   h += `<div class="card"><div class="row between"><h3>Muscle Map</h3><small class="mute">Tap a muscle</small></div>
     ${bodySVG(m => { const c = rankOf(lvl(t[m]))[2]; return t[m] > 0 ? [c, decayOf(hit[m]).op] : c; }, {tap:true, skin:equippedSkin()})}
     <div class="legend">${RANKS.map(r => `<span><i style="background:${r[2]}"></i>${r[1]}</span>`).join('')}</div>
@@ -2511,7 +2511,7 @@ function renderBody(){
 }
 function renderProgress(){
   const t = muscleTotals(), hit = lastHit();
-  let h = `<h2>Progress</h2>` + leaderboardCard();
+  let h = `<h2>Progress</h2>` + leaderboardCard() + seasonCard();
   // Quests
   h += `<div class="card"><div class="row between"><h3 style="margin:0">Quests</h3><small class="mute">Daily · weekly</small></div>${questList().map(q => { const ok = q.done || q.prog >= q.n;
     return `<div class="quest${q.done ? ' done' : ''}"><div class="row between gap"><span><span class="qscope">${q.scope}${q.weak ? ' · Weak point' : ''}</span><br><b style="font-size:14px">${q.title}</b></span><span class="xp">${ok ? '✓' : '+' + q.xp}</span></div>
