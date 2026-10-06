@@ -259,7 +259,7 @@ body.resting main{padding-bottom:170px}
 .season-card{cursor:pointer;background:linear-gradient(135deg,color-mix(in srgb,var(--se) 16%,var(--panel)),var(--panel) 70%);border-color:color-mix(in srgb,var(--se) 40%,var(--line))}
 .doors{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:10px}.doors.big{grid-template-columns:repeat(5,1fr);gap:6px}
 .door{aspect-ratio:1;border-radius:7px;background:color-mix(in srgb,var(--se,#f97316) 8%,var(--panel2));border:1px solid var(--line);display:grid;place-items:center;position:relative}
-.door .q{color:color-mix(in srgb,var(--se,#f97316) 70%,var(--mute));font-weight:700;font-size:12px}.door-ico.mystery{background:color-mix(in srgb,var(--se,#f97316) 18%,var(--panel2))}
+.door .q{color:color-mix(in srgb,var(--se,#f97316) 70%,var(--mute));font-weight:700;font-size:12px}.door-ico .bucket{width:78%;height:78%}.door-ico.mystery{background:color-mix(in srgb,var(--se,#f97316) 18%,var(--panel2))}
 .door small{position:absolute;top:1px;left:3px;font-size:7px;color:var(--mute);font-weight:700}.door span{font-size:12px;line-height:1;margin-top:5px}
 .door.open{background:color-mix(in srgb,var(--se,#f97316) 30%,var(--panel2));border-color:color-mix(in srgb,var(--se,#f97316) 60%,transparent)}.door.open small{color:#fff9}
 .door.next{border-color:var(--se,#f97316);box-shadow:0 0 0 1px var(--se,#f97316),0 0 12px color-mix(in srgb,var(--se,#f97316) 60%,transparent);animation:doorGlow 1.4s ease-in-out infinite alternate}
@@ -390,12 +390,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.06.4"></script>
+<script src="exercises.js?v=2026.10.06.5"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.06.4';
+const APP_VERSION = '2026.10.06.5';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -2227,6 +2227,12 @@ function claimSeason(){
       got.push({se, n:i + 1, d, ...doorInfo(d)}); } });
   return got;
 }
+const CANDY_BUCKET = `<svg viewBox="0 0 100 100" class="bucket" aria-hidden="true"><path d="M20,44 C20,10 80,10 80,44" fill="none" stroke="#1c1a22" stroke-width="5.5" stroke-linecap="round"/>
+  <path d="M50,30 C66,28 84,32 88,52 C92,72 84,90 66,93 C60,94 55,92 50,92 C45,92 40,94 34,93 C16,90 8,72 12,52 C16,32 34,28 50,30Z" fill="#f7931e"/>
+  <path d="M28,33 C22,46 22,72 30,88 M72,33 C78,46 78,72 70,88" stroke="#e07c0c" stroke-width="2.2" fill="none" opacity=".7"/>
+  <ellipse cx="50" cy="37" rx="28" ry="6.5" fill="#d26a00"/>
+  <path d="M27,59 L39,51 L41,63Z M73,59 L61,51 L59,63Z" fill="#1c1a22"/>
+  <path d="M24,70 L34,72 L32,79 L42,75 L50,81 L58,75 L68,79 L66,72 L76,70 L74,77 C66,87 34,87 26,77Z" fill="#1c1a22"/></svg>`;
 function doorGrid(se, big){
   const op = opened(se), nx = se.doors.findIndex((_, i) => !op.includes(i));
   return `<div class="doors${big ? ' big' : ''}">${se.doors.map((_, i) => { const d = doorAt(se, i), o = op.includes(i), inf = doorInfo(d);
@@ -2243,7 +2249,7 @@ function seasonCard(){
     ${doorGrid(se)}
     <div class="season-next">${!d ? `<div style="flex:1"><h3 style="margin:0">All ${se.doors.length} doors opened 🎉</h3><small class="mute">You're the Pumpkin King.</small></div>`
       : d.grand ? `${inf.slot ? `<div class="reward-prev">${figMini({id:inf.id, slot:inf.slot})}</div>` : ''}<div style="flex:1;min-width:0"><small class="mute">Final door · work out ${when} to open</small><h3 style="margin:2px 0 0">${esc(inf.name)}</h3><small class="mute">Grand prize</small></div>`
-      : `<div class="door-ico mystery">🎁</div><div style="flex:1;min-width:0"><small class="mute">Door ${nx + 1} · work out ${when} to open</small><h3 style="margin:2px 0 0">Mystery reward</h3><small class="mute">Still hidden: ${hiddenSummary(se)}</small></div>`}</div></div>`;
+      : `<div class="door-ico mystery">${CANDY_BUCKET}</div><div style="flex:1;min-width:0"><small class="mute">Door ${nx + 1} · work out ${when} to open</small><h3 style="margin:2px 0 0">Mystery reward</h3><small class="mute">Still hidden: ${hiddenSummary(se)}</small></div>`}</div></div>`;
 }
 function openSeasonTrack(){
   const se = activeSeason() || SEASONS[SEASONS.length - 1], op = opened(se), t = muscleTotals(), nx = se.doors.findIndex((_, i) => !op.includes(i));
@@ -2252,7 +2258,7 @@ function openSeasonTrack(){
     <div class="season-count" style="--se:${se.color}"><b>${op.length}/${se.doors.length}</b><span>doors opened</span></div>
     ${hiddenSummary(se) ? `<p class="mute" style="text-align:center;margin:0 0 10px;font-size:13px">Still hidden: ${hiddenSummary(se)}</p>` : ''}
     <div class="h-track">${se.doors.map((_, i) => { const d = doorAt(se, i), inf = doorInfo(d), o = op.includes(i), show = o || d.grand;
-      if (!show) return `<div class="${i === nx ? 'next' : ''}"><div class="door-ico sm mystery">🎁</div><span><b>Mystery reward</b><small>Door ${i + 1}</small></span><small class="goal">🔒 ${i + 1}</small></div>`;
+      if (!show) return `<div class="${i === nx ? 'next' : ''}"><div class="door-ico sm mystery">${CANDY_BUCKET}</div><span><b>Mystery reward</b><small>Door ${i + 1}</small></span><small class="goal">🔒 ${i + 1}</small></div>`;
       return `<div class="${o ? 'got' : i === nx ? 'next' : ''}${d.grand ? ' grand' : ''}">${inf.slot ? `<div class="hmini">${figMini({id:inf.id, slot:inf.slot}, t, true)}</div>` : `<div class="door-ico sm">${inf.icon}</div>`}<span><b>${esc(inf.name)}</b><small>Door ${i + 1} · ${d.grand ? 'Grand prize' : inf.kind}</small></span>
         ${o ? (inf.slot ? `<button class="btn ghost xs" data-act="hEquip" data-id="${inf.id}" data-s="${inf.slot}">${equippedSkin()[inf.slot] === inf.id ? 'Equipped' : 'Equip'}</button>` : '<small class="goal" style="color:var(--teal)">✓</small>') : `<small class="goal">🔒 ${i + 1}</small>`}</div>`; }).join('')}</div>`);
 }
