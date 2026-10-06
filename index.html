@@ -198,7 +198,7 @@ select{font:16px Inter;background:var(--panel2);color:var(--text);border:1px sol
 .theme-tile b{font-size:13px}.theme-tile small{font-size:11px;color:#a9a6c2}
 .chip.locked{opacity:.5}.chip small{font-size:10px;opacity:.8}
 svg.body .aura{opacity:.55;animation:auraP 2.6s ease-in-out infinite}
-svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
+svg.body .aura.flame,svg.body .aura.ghostfire{animation:flick .5s ease-in-out infinite alternate}
 @keyframes auraP{50%{opacity:.9}}@keyframes flick{from{opacity:.45}to{opacity:.95}}
 .lvlup-overlay{position:fixed;inset:0;z-index:60;background:color-mix(in srgb,var(--bg) 92%,transparent);display:flex;align-items:center;justify-content:center;overflow:hidden;animation:fadeIn .3s}
 .lvlup-overlay.out{animation:fadeOut .3s forwards}
@@ -243,6 +243,14 @@ svg.body .aura.flame{animation:flick .5s ease-in-out infinite alternate}
 @keyframes restPulse{to{box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 45%,transparent),0 10px 30px #0009}}
 body.resting main{padding-bottom:170px}
 .season-card{cursor:pointer;background:linear-gradient(135deg,color-mix(in srgb,var(--se) 16%,var(--panel)),var(--panel) 70%);border-color:color-mix(in srgb,var(--se) 40%,var(--line))}
+.doors{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:10px}.doors.big{grid-template-columns:repeat(5,1fr);gap:6px}
+.door{aspect-ratio:1;border-radius:7px;background:color-mix(in srgb,var(--se,#f97316) 8%,var(--panel2));border:1px solid var(--line);display:grid;place-items:center;position:relative}
+.door small{position:absolute;top:1px;left:3px;font-size:7px;color:var(--mute);font-weight:700}.door span{font-size:12px;line-height:1;margin-top:5px}
+.door.open{background:color-mix(in srgb,var(--se,#f97316) 30%,var(--panel2));border-color:color-mix(in srgb,var(--se,#f97316) 60%,transparent)}.door.open small{color:#fff9}
+.door.next{border-color:var(--se,#f97316);box-shadow:0 0 0 1px var(--se,#f97316),0 0 12px color-mix(in srgb,var(--se,#f97316) 60%,transparent);animation:doorGlow 1.4s ease-in-out infinite alternate}
+.door.grand:not(.open){border-color:#f2c94c88}@keyframes doorGlow{to{box-shadow:0 0 0 1px var(--se,#f97316),0 0 4px transparent}}
+.season-next{display:flex;gap:14px;align-items:center;margin-top:12px}.door-ico{width:64px;height:64px;border-radius:14px;display:grid;place-items:center;font-size:30px;background:var(--panel2);flex:none}.door-ico.sm{width:38px;height:38px;font-size:20px;border-radius:10px}
+.h-track .grand{border-color:#f2c94c}
 .season-row{display:flex;gap:14px;align-items:center;margin-top:8px}.season-bar i{background:linear-gradient(90deg,var(--se),#fde047)!important}
 .season-dots{display:flex;gap:6px;justify-content:center;margin-top:10px}.season-dots i{width:8px;height:8px;border-radius:50%;background:var(--line)}.season-dots i.got{background:var(--se)}
 .season-count{display:flex;align-items:baseline;gap:8px;justify-content:center;margin:14px 0 4px}.season-count b{font:700 34px 'Chakra Petch';color:var(--se)}.season-count span{color:var(--mute)}
@@ -1909,7 +1917,9 @@ const SKINS = [
   ['bg_gym','Gym','bg',{}], ['bg_beach','Beach','bg',{}], ['bg_arena','Arena','bg',{}], ['bg_space','Space','bg',{}], ['bg_mountains','Mountains','bg',{}], ['bg_city','City Night','bg',{}], ['bg_dojo','Dojo','bg',{}], ['bg_volcano','Volcano','bg',{}],
   // seasonal event items (limited time — see SEASONS)
   ['cowboy','Cowboy Hat','head',{}], ['pumpkinhead','Pumpkin Head','head',{}], ['skullmask','Skull Mask','face',{}], ['clownpaint','Creepy Clown','paint',{}],
-  ['bg_autumn','Autumn Woods','bg',{}], ['bg_pumpkin','Pumpkin Patch','bg',{}], ['bg_harvest','Harvest Moon','bg',{}]
+  ['bg_autumn','Autumn Woods','bg',{}], ['bg_pumpkin','Pumpkin Patch','bg',{}], ['bg_harvest','Harvest Moon','bg',{}],
+  ['hockeymask','Hockey Mask','face',{}], ['witchhat','Witch Hat','head',{}], ['candycorn','Candy Corn','paint',{}], ['batwings','Bat Wings','back',{}],
+  ['vampcape','Vampire Cape','back',{}], ['ghostfire','Spectral Flame','aura',{}], ['bg_spiderweb','Spider Web','bg',{}], ['bg_haunted','Haunted House','bg',{}]
 ];
 const SLOTS = [['head','Head'],['face','Face'],['paint','Body Paint'],['top','Top'],['bottom','Bottoms'],['neck','Neck'],['wrists','Wrists & Hands'],['waist','Waist'],['feet','Feet'],['back','Back'],['aura','Aura'],['bg','Background']];
 // Habits reward track: the order cosmetics unlock as you complete self-care tasks
@@ -1922,10 +1932,13 @@ HABIT_TRACK.forEach((id, i) => { const it = SKINS.find(s => s[0] === id); if (it
 const LOOT_TITLES = [['Treasure Hunter','epic'],['Chosen One','legendary']];
 /* ---- Seasonal events: workouts logged during the window unlock limited-time gear. Add new seasons here. ---- */
 const SEASONS = [
+  // Door calendar: each day you work out during the event opens the next door (max one per day)
   {id:'spooky26', name:'Spooky Season', icon:'🎃', month:'October', start:'2026-10-01', end:'2026-10-31', color:'#f97316',
-    track:[[2,'cowboy'], [4,'bg_autumn'], [6,'clownpaint'], [9,'bg_pumpkin'], [12,'skullmask'], [16,'pumpkinhead'], [20,'bg_harvest']]}
+    doors:[{xp:150, name:'Treat Bag'}, {skin:'cowboy'}, {skin:'bg_autumn'}, {title:'Trick or Treater'}, {skin:'hockeymask'}, {skin:'candycorn'}, {skin:'bg_pumpkin'},
+      {xp:300, name:'Candy Haul'}, {skin:'witchhat'}, {skin:'clownpaint'}, {title:'Night Lifter'}, {skin:'batwings'}, {skin:'skullmask'}, {skin:'bg_spiderweb'},
+      {xp:400, name:'Candy Haul'}, {skin:'vampcape'}, {skin:'pumpkinhead'}, {skin:'bg_haunted'}, {skin:'bg_harvest'}, {skin:'ghostfire', title:'Pumpkin King', grand:true}]}
 ];
-SEASONS.forEach(se => se.track.forEach(([n, id]) => { const it = SKINS.find(s => s[0] === id); if (it) it[3] = {season:se.id, n}; }));
+SEASONS.forEach(se => se.doors.forEach((d, i) => { if (d.skin){ const it = SKINS.find(s => s[0] === d.skin); if (it) it[3] = {season:se.id, n:i + 1}; } }));
 const curLevel = () => playerLvl(sumObj(muscleTotals()) + state.bonusXP);
 const unlockLabel = u => u.season ? seasonLabel(u) : u.habit != null ? `${u.habit} tasks` : u.lvl != null ? `Lv ${u.lvl}` : u.loot ? `${u.loot[0].toUpperCase() + u.loot.slice(1)} loot` : 'Trophy';
 function isUnlocked(id, u, L = curLevel()){ return (u.lvl != null && L >= u.lvl) || (u.habit != null && typeof habitTotal === 'function' && habitTotal() >= u.habit) || state.cosmetics.owned.includes(id) || (u.trophy && state.achievements[u.trophy]); }
@@ -1933,6 +1946,7 @@ function titleList(L = curLevel()){
   const t = TITLES.map((n, i) => [n, i * 3, L >= i * 3]);
   ACH.forEach(a => t.push([a[2], 'trophy', !!state.achievements[a[0]]]));
   LOOT_TITLES.forEach(([n, r]) => t.push([n, r + ' loot', state.cosmetics.owned.includes('t:' + n)]));
+  SEASONS.forEach(se => se.doors.forEach(d => { if (d.title && (state.cosmetics.owned.includes('t:' + d.title) || seasonLive(se))) t.push([d.title, se.name, state.cosmetics.owned.includes('t:' + d.title)]); }));
   return t;
 }
 const autoTitle = L => TITLES[Math.min(Math.floor(L / 3), TITLES.length - 1)];
@@ -1988,7 +2002,7 @@ const TOPS = {tank_red:['tank','#c0263f'], tank_black:['tank','#0b0a10'], string
 const BOTTOMS = {shorts_black:['shorts','#0b0a10'], shorts_red:['shorts','#b91c1c'], board:['board','#0e7490','stripes'], joggers:['joggers','#5d5b78']};
 const SHOES = {kicks_white:['shoe','#f4f4f8','#e23b54'], kicks_red:['shoe','#d42d45','#f4f4f8'], hightops:['hightop','#4c46c8','#f4f4f8'], kicks_gold:['shoe','#e8b923','#7a5a00']};
 const WRISTS = {bands_red:['band','#e23b54'], bands_blue:['band','#3b82f6'], wraps:['wrap','#f1f0f6']};
-const AURA_C = {glow:'var(--gold)', flame:'#fb923c', lightning:'#60a5fa', ice:'#a5f3fc', shadow:'#7c3aed', rainbow:'url(#gdRainbow)'};
+const AURA_C = {ghostfire:'#4ade80', glow:'var(--gold)', flame:'#fb923c', lightning:'#60a5fa', ice:'#a5f3fc', shadow:'#7c3aed', rainbow:'url(#gdRainbow)'};
 const SKIN_DEFS = `<defs><filter id="gdBlur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5"/></filter>
   <filter id="gdSoft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.6"/></filter>
   <clipPath id="gdBody"><path d="${OUTLINE}"/></clipPath>
@@ -2006,8 +2020,12 @@ const WING_DRAGON = 'M84,72 C66,46 40,24 8,20 L22,46 L4,50 L24,66 L6,76 L30,86 L
 const both = (d, attrs) => `<path d="${d}" ${attrs}/><path d="${d}" ${MIR} ${attrs}/>`;
 function skinBehind(sk, front){
   let s = '';
-  if (sk.aura) s += `<path d="${OUTLINE}" class="aura ${sk.aura}" fill="none" stroke="${AURA_C[sk.aura] || 'var(--gold)'}" stroke-width="${sk.aura === 'flame' || sk.aura === 'shadow' ? 12 : 9}" filter="url(#gdBlur)"/>`;
+  if (sk.aura) s += `<path d="${OUTLINE}" class="aura ${sk.aura}" fill="none" stroke="${AURA_C[sk.aura] || 'var(--gold)'}" stroke-width="${['flame', 'shadow', 'ghostfire'].includes(sk.aura) ? 12 : 9}" filter="url(#gdBlur)"/>`;
+  if (sk.aura === 'ghostfire') s += `<g class="aura ghostfire" filter="url(#gdSoft)">${[[14, 120], [178, 96], [22, 250], [182, 220], [40, 40], [160, 30]].map(([x, y], i) => `<path d="M${x},${y} c-4,0 -6,4 -6,8 l0,7 l2,-2 l2,2 l2,-2 l2,2 l2,-2 l2,2 l0,-7 c0,-4 -2,-8 -6,-8z" fill="#86efac" opacity="${.5 + (i % 3) * .15}"/>`).join('')}</g>`;
   if (sk.back === 'angel') s += both(WING_ANGEL, 'fill="url(#gdAngel)" stroke="#aab4d6" stroke-width=".8"') + both('M80,76 C60,60 40,50 20,48 M78,84 C62,74 46,70 30,72', 'fill="none" stroke="#aab4d6" stroke-width=".8"');
+  if (sk.back === 'batwings') s += both('M84,74 C70,52 44,36 8,36 C17,44 19,52 15,60 C24,57 30,62 29,71 C38,66 45,70 44,79 C53,74 59,79 58,87 C68,82 76,84 84,86 Z', 'fill="#3b2a4f" stroke="#9d86bd" stroke-width="1"') + both('M84,76 L10,37 M84,78 L29,70 M84,82 L44,78 M84,84 L58,86', 'fill="none" stroke="#9d86bd" stroke-width="1"');
+  if (sk.back === 'vampcape'){ s += both('M80,59 C68,47 67,29 77,19 C81,32 86,42 93,51 Z', 'fill="#b91c1c" stroke="#140b18" stroke-width="1.4"');
+    if (front) s += `<path d="${CAPE}" fill="#140b18" stroke="#b91c1c" stroke-width="2.6"/>`; }
   if (sk.back === 'dragon') s += both(WING_DRAGON, 'fill="url(#gdDragon)" stroke="#2a0612" stroke-width="1"') + both('M84,76 L22,46 M84,78 L24,66 M84,82 L30,86', 'fill="none" stroke="#2a0612" stroke-width="1.2"');
   if (front && ['cape','royalcape','shadowcape'].includes(sk.back)) s += `<path d="${CAPE}" fill="url(#${{cape:'gdCape', royalcape:'gdRoyal', shadowcape:'gdShadow'}[sk.back]})"${sk.back === 'royalcape' ? ' stroke="#f2c94c" stroke-width="2"' : ''}/>`;
   return s;
@@ -2032,6 +2050,8 @@ function skinFront(sk, front){
     <path d="M90,14 q3,-2 6,0 M104,14 q3,-2 6,0" stroke="#0b0a12" stroke-width="1.1" fill="none" stroke-linecap="round"/>
     <circle cx="100" cy="30" r="2.6" fill="#e23b54"/><circle cx="99.2" cy="29.2" r=".7" fill="#fff" opacity=".7"/>
     <path d="M90.5,35 Q100,42.5 109.5,35 L108,37.5 Q100,44 92,37.5 Z" fill="#e23b54"/><path d="M93,36.6 v1.8 M96,37.8 v2 M100,38.3 v2.1 M104,37.8 v2 M107,36.6 v1.8" stroke="#f4f1ea" stroke-width=".9"/>`;
+  if (front && sk.paint === 'candycorn') s += [89.5, 110.5].map(x => `<path d="M${x - 4},38 L${x + 4},38 L${x},28Z" fill="#fde047"/><path d="M${x - 2.6},34 L${x + 2.6},34 L${x},28Z" fill="#f97316"/><path d="M${x - 1.2},30.8 L${x + 1.2},30.8 L${x},28Z" fill="#fff"/>`).join('')
+    + `<path d="M96,11 L104,11 L100,4Z" fill="#fde047"/><path d="M97.4,8.4 L102.6,8.4 L100,4Z" fill="#f97316"/>`;
   if (front && sk.paint === 'warpaint') s += `<path d="M88,26 l9,0 M87,30 l9,0 M103,26 l9,0 M104,30 l9,0" stroke="#e23b54" stroke-width="2" stroke-linecap="round"/><path d="M100,9 v12" stroke="#3b82f6" stroke-width="2.4" stroke-linecap="round"/>`;
   // neck
   if (front && (sk.neck === 'chain_gold' || sk.neck === 'chain_silver')){ const c = sk.neck === 'chain_gold' ? '#f2c94c' : '#d6dbe6';
@@ -2047,6 +2067,7 @@ function skinFront(sk, front){
   // feet
   const f = SHOES[sk.feet]; if (f) s += both(GEAR[f[0]], `fill="${f[1]}" stroke="${f[1] === '#0d0c12' ? '#d8d6ea' : '#0b0a12'}" stroke-width="${f[1] === '#0d0c12' ? .9 : .6}"`) + both('M54,386 L83,386', 'stroke="#0b0a12" stroke-width="1.4" opacity=".5"') + both(f[0] === 'hightop' ? 'M60,364 L78,372 M60,372 L79,378' : 'M61,376 L77,381', `stroke="${f[2]}" stroke-width="1.8" stroke-linecap="round"`);
   // capes: clasps / collar
+  if (sk.back === 'vampcape') s += front ? `<circle cx="79" cy="61" r="3.2" fill="#b91c1c" stroke="#f2c94c" stroke-width="1"/><circle cx="121" cy="61" r="3.2" fill="#b91c1c" stroke="#f2c94c" stroke-width="1"/>` : `<path d="M78,57 Q100,66 122,57 L120,64 Q100,72 80,64Z" fill="#140b18"/>`;
   if (['cape','royalcape','shadowcape'].includes(sk.back)){ const col = {cape:'#c0263f', royalcape:'#6d28d9', shadowcape:'#2a1b4a'}[sk.back];
     s += front ? `<circle cx="79" cy="61" r="3" fill="#f2c94c"/><circle cx="121" cy="61" r="3" fill="#f2c94c"/>` : `<path d="M78,57 Q100,66 122,57 L120,64 Q100,72 80,64Z" fill="${col}"/>`; }
   // face
@@ -2056,6 +2077,12 @@ function skinFront(sk, front){
     <path d="M88.5,21.5 C88.5,18 95.5,17.5 97,21 C98,24.5 95,28 92,27.6 C89.5,27.3 88.5,24.5 88.5,21.5Z M111.5,21.5 C111.5,18 104.5,17.5 103,21 C102,24.5 105,28 108,27.6 C110.5,27.3 111.5,24.5 111.5,21.5Z" fill="#141220"/>
     <path d="M100,28.5 L102,32.6 L98,32.6Z" fill="#141220"/><path d="M92,37 H108" stroke="#141220" stroke-width="1.2"/><path d="M94,35.2 v3.8 M97,35.4 v4 M100,35.5 v4.2 M103,35.4 v4 M106,35.2 v3.8" stroke="#141220" stroke-width=".9"/>
     <path d="M90,12 q4,-3 8,-2" stroke="#fff" stroke-width="1" fill="none" opacity=".6" stroke-linecap="round"/>`;
+  if (sk.face === 'hockeymask') s += front ? `<rect x="81.5" y="22" width="4" height="6" rx="1" fill="#3f4a52"/><rect x="114.5" y="22" width="4" height="6" rx="1" fill="#3f4a52"/><rect x="97.8" y="2.5" width="4.4" height="5" rx="1" fill="#3f4a52"/>
+    <path d="M100,5 C111.5,5 116.8,13 116.8,25 C116.8,37 110.5,45.5 100,45.5 C89.5,45.5 83.2,37 83.2,25 C83.2,13 88.5,5 100,5Z" fill="#f1f1ec" stroke="#c9c9bf" stroke-width=".9"/>
+    <ellipse cx="93" cy="23.5" rx="3.8" ry="2.7" fill="#1b2a33"/><ellipse cx="107" cy="23.5" rx="3.8" ry="2.7" fill="#1b2a33"/>
+    ${[[97, 11], [103, 11], [97, 15], [103, 15], [100, 30], [96, 34], [100, 34], [104, 34], [92, 37], [108, 37], [96, 39.5], [100, 40.5], [104, 39.5]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r=".95" fill="#1b2a33"/>`).join('')}
+    <path d="M89,9.5 q4,-3 8,-3" stroke="#fff" stroke-width="1" fill="none" stroke-linecap="round"/>`
+    : `<path d="M84,24 Q100,30 116,24 M86,14 Q100,8 114,14" stroke="#3f4a52" stroke-width="2.6" fill="none"/>`;
   if (front && sk.face === 'visor') s += `<path d="M85,21 Q100,18 115,21 L114,28 Q100,31 86,28 Z" fill="#4fd1c5" stroke="#0b0a12" stroke-width=".8" opacity=".95"/><path d="M89,23 Q100,21 111,23" stroke="#fff" stroke-opacity=".6" stroke-width="1" fill="none"/>`;
   // head
   if (sk.head === 'headband') s += `<rect x="80" y="12.5" width="40" height="5.5" fill="#e23b54" clip-path="url(#gdBody)"/>` + (front ? '' : `<path d="M99,16 C104,22 106,30 103,36 M101,16 C108,20 112,27 111,33" stroke="#e23b54" stroke-width="2.6" fill="none" stroke-linecap="round"/>`);
@@ -2065,6 +2092,9 @@ function skinFront(sk, front){
   if (sk.head === 'beanie') s += `<path d="M83,19 C82,-3 118,-3 117,19Z" fill="#2563eb"/><rect x="82" y="13" width="36" height="7" rx="2.5" fill="#1d4ed8"/><path d="M88,14 v5 M93,14 v5 M98,14 v5 M103,14 v5 M108,14 v5 M113,14 v5" stroke="#3b82f6" stroke-width=".8"/><circle cx="100" cy="2" r="3.6" fill="#f4f4f8"/>`;
   if (sk.head === 'bandana') s += `<path d="M83.5,16 C83.5,1 116.5,1 116.5,16 Q100,13 83.5,16Z" fill="#b91c1c"/><circle cx="92" cy="8" r="1.1" fill="#fff"/><circle cx="104" cy="6" r="1.1" fill="#fff"/><circle cx="110" cy="11" r="1.1" fill="#fff"/>` + (front ? '' : `<path d="M100,14 l-6,12 l5,-1 z M100,14 l6,12 l-5,-1 z" fill="#b91c1c"/>`);
   if (sk.head === 'headphones') s += `<path d="M84,24 C82,2 118,2 116,24" fill="none" stroke="#1a1a22" stroke-width="3.2"/><rect x="79" y="17" width="7" height="13" rx="3" fill="#e23b54"/><rect x="114" y="17" width="7" height="13" rx="3" fill="#e23b54"/>`;
+  if (sk.head === 'witchhat') s += `<path d="M88.5,12 L96.5,-4 C98.5,-10 104,-13.5 110.5,-11 C106,-9.5 103.4,-6 103.6,-1 L111.5,12Z" fill="#2a2540" stroke="#5b4f86" stroke-width=".8"/><path d="M96.5,-4 C98.5,-10 104,-13.5 110.5,-11 C107,-10.6 104.6,-8.4 103.8,-4.6Z" fill="#3a3358"/>
+    <rect x="88.6" y="6.4" width="22.8" height="4.4" fill="#7c3aed"/><rect x="${front ? 96.5 : 98}" y="5.6" width="${front ? 7 : 4}" height="6" rx="1" fill="none" stroke="#f2c94c" stroke-width="1.2"/>
+    <path d="M71,13.5 C78,18.5 90,18.2 100,18.2 C110,18.2 122,18.5 129,13.5 C122,10.8 112,12 100,12 C88,12 78,10.8 71,13.5Z" fill="#2a2540" stroke="#120f1c" stroke-width=".7"/>`;
   if (sk.head === 'cowboy') s += `<path d="M86.5,13 C86,1 89,-5 93.5,-3.5 Q100,-.5 106.5,-3.5 C111,-5 114,1 113.5,13 Z" fill="#8b5a2b"/><path d="M100,-1 C99,3 99,7 100,10" stroke="#6b4220" stroke-width="1.1" fill="none"/>
     <rect x="86.4" y="8.8" width="27.2" height="4.2" fill="#3b2414"/><circle cx="${front ? 92 : 108}" cy="10.9" r="1.3" fill="#f2c94c"/>
     <path d="M72,13.5 C76,19.5 88,18 100,18 C112,18 124,19.5 128,13.5 C123,11.5 118,15 113,13.2 L87,13.2 C82,15 77,11.5 72,13.5Z" fill="#6f4521" stroke="#4a2c14" stroke-width=".7"/>
@@ -2117,6 +2147,20 @@ function mapBG(id, W, top, H){
       <path d="M30,${F} L36,${F - 150} M36,${F - 120} L12,${F - 160} M36,${F - 100} L64,${F - 140} M410,${F} L404,${F - 170} M404,${F - 130} L428,${F - 175} M404,${F - 110} L376,${F - 150}" stroke="#0b0a12" stroke-width="5" stroke-linecap="round"/>
       ${Array.from({length: 40}, (_, i) => `<path d="M${i * 11 + 2},${F} L${i * 11 + 4},${F - 46 - (i % 5) * 6}" stroke="#2a1a14" stroke-width="3"/>`).join('')}
       <rect x="0" y="${F - 18}" width="${W}" height="18" fill="#1d120e"/><rect x="150" y="${F - 34}" width="44" height="22" rx="4" fill="#c89b4a"/><rect x="246" y="${F - 30}" width="38" height="20" rx="4" fill="#b68a3e"/>`,
+    bg_spiderweb: `<defs><radialGradient id="bgSw" cx="50%" cy="40%" r="80%"><stop offset="0" stop-color="#2a1d3d"/><stop offset="1" stop-color="#0c0814"/></radialGradient></defs><rect ${R} fill="url(#bgSw)"/>
+      ${[[0, top, 1], [W, top, -1]].map(([cx, cy, dir]) => { const sp = Array.from({length: 7}, (_, i) => (i / 6) * Math.PI / 2); const pt = (a, r) => [cx + dir * Math.sin(a) * r, cy + Math.cos(a) * r];
+        return sp.map(a => { const [x, y] = pt(a, 170); return `<path d="M${cx},${cy} L${x},${y}" stroke="#d8d4ea" stroke-width=".9" opacity=".55"/>`; }).join('')
+          + [34, 62, 92, 124, 156].map(r => `<path d="M${sp.map(a => pt(a, r).map(v => v.toFixed(1)).join(',')).join(' L')}" fill="none" stroke="#d8d4ea" stroke-width=".8" opacity=".45"/>`).join(''); }).join('')}
+      <path d="M330,${top} V${top + 120}" stroke="#d8d4ea" stroke-width=".8" opacity=".6"/><ellipse cx="330" cy="${top + 126}" rx="6" ry="7" fill="#0b0a12"/><circle cx="330" cy="${top + 117}" r="3.6" fill="#0b0a12"/>
+      ${[-1, 1].map(dx => `<path d="M330,${top + 124} q${dx * 7},-6 ${dx * 11},2 M330,${top + 127} q${dx * 8},-2 ${dx * 12},6 M330,${top + 130} q${dx * 7},2 ${dx * 10},10" stroke="#0b0a12" stroke-width="1.4" fill="none"/>`).join('')}
+      <rect x="0" y="${F - 30}" width="${W}" height="30" fill="#130d1d"/>`,
+    bg_haunted: `<defs><linearGradient id="bgHh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d1326"/><stop offset="1" stop-color="#2a2140"/></linearGradient></defs><rect ${R} fill="url(#bgHh)"/>
+      <circle cx="${W / 2 + 70}" cy="${top + 60}" r="30" fill="#e8e4c9" opacity=".85"/>${Array.from({length: 20}, (_, i) => `<circle cx="${(i * 131) % W}" cy="${top + 8 + (i * 37) % 140}" r=".8" fill="#fff" opacity=".5"/>`).join('')}
+      <g fill="#0a0910"><path d="M168,${F - 40} V${F - 190} L196,${F - 222} L224,${F - 190} V${F - 150} L248,${F - 150} V${F - 238} L262,${F - 280} L276,${F - 238} V${F - 40}Z"/><rect x="158" y="${F - 192}" width="76" height="6"/><path d="M204,${F - 222} l2,-14 l6,10Z"/></g>
+      ${[[180, F - 170], [204, F - 170], [180, F - 130], [254, F - 210], [254, F - 170], [204, F - 130]].map(([x, y], i) => `<rect x="${x}" y="${y}" width="10" height="14" fill="${i % 3 ? '#f2c94c' : '#f97316'}" opacity="${i % 2 ? .75 : .5}"/>`).join('')}<rect x="226" y="${F - 70}" width="14" height="30" fill="#f2c94c" opacity=".35"/>
+      ${[[90, top + 70], [126, top + 96], [300, top + 120]].map(([x, y]) => `<path d="M${x - 8},${y} q4,-5 8,0 q4,-5 8,0 l-4,1 l-4,4 l-4,-4Z" fill="#0b0a12"/>`).join('')}
+      <path d="M20,${F} L26,${F - 140} M26,${F - 110} L4,${F - 150} M26,${F - 90} L50,${F - 128} M418,${F} L412,${F - 160} M412,${F - 120} L436,${F - 160}" stroke="#0a0910" stroke-width="5" stroke-linecap="round"/>
+      <path d="M0,${F - 40} Q220,${F - 58} ${W},${F - 40} V${F} H0Z" fill="#141220"/>${[[70, F - 46], [120, F - 48], [320, F - 48], [372, F - 46]].map(([x, y]) => `<path d="M${x - 9},${y + 20} V${y} a9,9 0 0 1 18,0 V${y + 20}Z" fill="#3a3650"/><path d="M${x},${y + 3} v8 M${x - 3},${y + 6} h6" stroke="#22202f" stroke-width="1.6"/>`).join('')}`,
     bg_volcano: `<defs><linearGradient id="bgV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a0606"/><stop offset="1" stop-color="#5c1a0a"/></linearGradient></defs><rect ${R} fill="url(#bgV)"/>
       <path d="M60,${F} L180,${F - 210} L260,${F - 210} L380,${F}Z" fill="#1f0d0a"/><path d="M180,${F - 210} Q220,${F - 230} 260,${F - 210} L240,${F - 150} L222,${F - 190} L205,${F - 140} Z" fill="#f97316" opacity=".85"/>
       <circle cx="220" cy="${F - 230}" r="40" fill="#f97316" opacity=".18"/>${Array.from({length: 14}, (_, i) => `<circle cx="${30 + i * 29}" cy="${top + 20 + (i * 37) % 120}" r="1.6" fill="#fb923c" opacity=".6"/>`).join('')}`
@@ -2144,53 +2188,53 @@ function showLevelUp(from, to){
 }
 
 
-/* ---- Seasonal events ---- */
+/* ---- Seasonal events: door calendar ---- */
 const seasonById = id => SEASONS.find(x => x.id === id);
 const seasonLive = (se, k = dkey(Date.now())) => k >= se.start && k <= se.end;
-const seasonCount = se => state.workouts.filter(w => { const k = dkey(w.date); return k >= se.start && k <= se.end; }).length;
+const seasonDays = se => new Set(state.workouts.map(w => dkey(w.date)).filter(k => k >= se.start && k <= se.end)).size;   // distinct workout days
 const activeSeason = () => SEASONS.find(se => seasonLive(se));
 const seasonDaysLeft = se => dnum(se.end) - dnum(dkey(Date.now())) + 1;
+const opened = se => ((state.seasons = state.seasons || {})[se.id] = state.seasons[se.id] || []);
+const DOOR_ICON = {head:'🎩', face:'🎭', paint:'🎨', back:'🦇', aura:'✨', bg:'🖼️', top:'👕', bottom:'🩳', feet:'👟', neck:'📿', wrists:'🧤', waist:'🥋'};
+function doorInfo(d){
+  if (d.skin){ const it = SKINS.find(x => x[0] === d.skin); return {name:it[1] + (d.title ? ` + "${d.title}"` : ''), kind:SLOT_NAME[it[2]], icon:DOOR_ICON[it[2]] || '🎁', slot:it[2], id:d.skin}; }
+  if (d.title) return {name:`"${d.title}"`, kind:'Title', icon:'📛'};
+  return {name:`${d.name} +${d.xp} XP`, kind:'XP treat', icon:'🍬'};
+}
 function seasonLabel(u){ const se = seasonById(u.season); if (!se) return 'Event';
-  return seasonLive(se) ? `${se.icon} ${u.n} ${se.month} workouts` : dkey(Date.now()) < se.start ? `${se.icon} ${se.name}` : `${se.icon} ${se.name} ended`; }
+  return seasonLive(se) ? `${se.icon} Door ${u.n}` : dkey(Date.now()) < se.start ? `${se.icon} ${se.name}` : `${se.icon} ${se.name} ended`; }
 function claimSeason(){
   const got = [];
-  SEASONS.filter(se => seasonLive(se)).forEach(se => { const c = seasonCount(se);
-    se.track.forEach(([n, id]) => { if (c >= n && !state.cosmetics.owned.includes(id)){ state.cosmetics.owned.push(id); const it = SKINS.find(x => x[0] === id); got.push({se, n, id, name:it[1], slot:it[2]}); } }); });
+  SEASONS.filter(se => seasonLive(se)).forEach(se => { const c = Math.min(seasonDays(se), se.doors.length), op = opened(se);
+    for (let i = 0; i < c; i++){ if (op.includes(i)) continue; const d = se.doors[i]; op.push(i);
+      if (d.skin && !state.cosmetics.owned.includes(d.skin)) state.cosmetics.owned.push(d.skin);
+      if (d.title && !state.cosmetics.owned.includes('t:' + d.title)) state.cosmetics.owned.push('t:' + d.title);
+      if (d.xp) state.bonusXP += d.xp;
+      got.push({se, n:i + 1, d, ...doorInfo(d)}); } });
   return got;
+}
+function doorGrid(se, big){
+  const op = opened(se), nx = se.doors.findIndex((_, i) => !op.includes(i));
+  return `<div class="doors${big ? ' big' : ''}">${se.doors.map((d, i) => { const o = op.includes(i), inf = doorInfo(d);
+    return `<div class="door${o ? ' open' : ''}${i === nx ? ' next' : ''}${d.grand ? ' grand' : ''}"><small>${i + 1}</small>${o ? `<span>${inf.icon}</span>` : d.grand ? '<span>👑</span>' : ''}</div>`; }).join('')}</div>`;
 }
 function seasonCard(){
   const se = activeSeason(); if (!se) return '';
-  const c = seasonCount(se), nx = se.track.find(([n, id]) => !state.cosmetics.owned.includes(id)), prev = nx ? [...se.track].reverse().find(([n]) => n < nx[0]) : null;
-  const t = muscleTotals(), left = seasonDaysLeft(se);
-  const nIt = nx && SKINS.find(x => x[0] === nx[1]), pct = nx ? Math.min(100, (c - (prev ? prev[0] : 0)) / (nx[0] - (prev ? prev[0] : 0)) * 100) : 100;
+  const op = opened(se), nx = se.doors.findIndex((_, i) => !op.includes(i)), left = seasonDaysLeft(se), d = nx >= 0 ? se.doors[nx] : null, inf = d && doorInfo(d);
   return `<div class="card season-card" style="--se:${se.color}" data-act="seasonTrack"><div class="row between"><small class="kick" style="color:var(--se)">${se.icon} ${se.name.toUpperCase()} · LIMITED TIME</small><small class="mute">${left} day${left === 1 ? '' : 's'} left</small></div>
-    <div class="season-row">${nIt ? `<div class="reward-prev">${figMini({id:nIt[0], slot:nIt[2]}, t)}</div>` : ''}<div style="flex:1;min-width:0">
-      ${nIt ? `<small class="mute">Next reward</small><h3 style="margin:2px 0 0">${esc(nIt[1])}</h3><div class="bar season-bar" style="margin:10px 0 6px"><i style="width:${pct}%"></i></div><small class="mute">${c}/${nx[0]} ${se.month} workouts · ${nx[0] - c} to go</small>`
-        : `<h3 style="margin:0">All ${se.track.length} rewards collected 🎉</h3><small class="mute">${c} workouts this ${se.month}</small>`}</div></div>
-    <div class="season-dots">${se.track.map(([n, id]) => `<i class="${state.cosmetics.owned.includes(id) ? 'got' : ''}" title="${n}"></i>`).join('')}</div></div>`;
+    ${doorGrid(se)}
+    <div class="season-next">${d ? `${inf.slot ? `<div class="reward-prev">${figMini({id:inf.id, slot:inf.slot})}</div>` : `<div class="door-ico">${inf.icon}</div>`}<div style="flex:1;min-width:0"><small class="mute">Door ${nx + 1} · work out ${state.workouts.some(w => dkey(w.date) === dkey(Date.now())) ? 'tomorrow' : 'today'} to open</small><h3 style="margin:2px 0 0">${esc(inf.name)}</h3><small class="mute">${inf.kind}${d.grand ? ' · grand prize' : ''}</small></div>`
+      : `<div style="flex:1"><h3 style="margin:0">All ${se.doors.length} doors opened 🎉</h3><small class="mute">You're the Pumpkin King.</small></div>`}</div></div>`;
 }
 function openSeasonTrack(){
-  const se = activeSeason() || SEASONS[SEASONS.length - 1], c = seasonCount(se), t = muscleTotals(), nxId = (se.track.find(([n, id]) => !state.cosmetics.owned.includes(id)) || [])[1];
+  const se = activeSeason() || SEASONS[SEASONS.length - 1], op = opened(se), t = muscleTotals(), nx = se.doors.findIndex((_, i) => !op.includes(i));
   openSheet(`<div class="row between"><h2 style="margin:0">${se.icon} ${se.name}</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
-    <small class="mute">Every workout you finish in ${se.month} counts. These rewards are only available until ${shortDate(se.end)} — once you earn one, it's yours to keep.</small>
-    <div class="season-count" style="--se:${se.color}"><b>${c}</b><span>${se.month} workouts</span></div>
-    <div class="h-track">${se.track.map(([n, id]) => { const it = SKINS.find(x => x[0] === id), got = state.cosmetics.owned.includes(id);
-      return `<div class="${got ? 'got' : nxId === id ? 'next' : ''}"><div class="hmini">${figMini({id, slot:it[2]}, t, true)}</div><span><b>${esc(it[1])}</b><small>${SLOT_NAME[it[2]]}</small></span>
-        ${got ? `<button class="btn ghost xs" data-act="hEquip" data-id="${id}" data-s="${it[2]}">${equippedSkin()[it[2]] === id ? 'Equipped' : 'Equip'}</button>` : `<small class="goal">🔒 ${n}</small>`}</div>`; }).join('')}</div>`);
+    <small class="mute">Each day you work out in ${se.month} opens the next door (one per day). Rewards are only available until ${shortDate(se.end)} — once you open a door, it's yours to keep.</small>
+    <div class="season-count" style="--se:${se.color}"><b>${op.length}/${se.doors.length}</b><span>doors opened</span></div>
+    <div class="h-track">${se.doors.map((d, i) => { const inf = doorInfo(d), o = op.includes(i);
+      return `<div class="${o ? 'got' : i === nx ? 'next' : ''}${d.grand ? ' grand' : ''}">${inf.slot ? `<div class="hmini">${figMini({id:inf.id, slot:inf.slot}, t, true)}</div>` : `<div class="door-ico sm">${inf.icon}</div>`}<span><b>${esc(inf.name)}</b><small>Door ${i + 1} · ${inf.kind}</small></span>
+        ${o ? (inf.slot ? `<button class="btn ghost xs" data-act="hEquip" data-id="${inf.id}" data-s="${inf.slot}">${equippedSkin()[inf.slot] === inf.id ? 'Equipped' : 'Equip'}</button>` : '<small class="goal" style="color:var(--teal)">✓</small>') : `<small class="goal">🔒 ${i + 1}</small>`}</div>`; }).join('')}</div>`);
 }
-function showSeasonReward(items){
-  if (!items.length) return;
-  const it = items[items.length - 1], d = document.createElement('div');
-  d.id = 'lvlUp'; d.className = 'lvlup-overlay season';
-  d.innerHTML = `<div class="lvlup-rays"></div><div class="lvlup-inner">
-    <div class="lvlup-kicker" style="color:${it.se.color}">${it.se.icon} ${it.se.name.toUpperCase()}</div>
-    <div class="reward-fig">${figMini(it)}</div>
-    <div class="lvlup-title" style="margin:4px 0 2px">${esc(it.name)}</div><small class="mute">${SLOT_NAME[it.slot]} · ${it.n} ${it.se.month} workouts · limited edition</small>
-    ${items.length > 1 ? `<div class="mute" style="margin-top:6px;font-size:12px">+ ${items.slice(0, -1).map(x => esc(x.name)).join(', ')}</div>` : ''}
-    <div class="row gap" style="margin-top:16px"><button class="btn ghost" style="flex:1" data-act="closeLvlUp">Later</button><button class="btn gold" style="flex:2" data-act="hEquip" data-id="${it.id}" data-s="${it.slot}">Equip it</button></div></div>`;
-  document.body.appendChild(d);
-}
-
 /* ---- Loot ---- */
 const RARITY = {common:['Common','#b8c4d6'], rare:['Rare','#4fd1c5'], epic:['Epic','#a78bfa'], legendary:['Legendary','#f2c94c']};
 function rollLoot(first){
@@ -2617,7 +2661,7 @@ async function finishWorkout(){
     ${w.prs.length ? `<div class="pr-box"><h4>🏆 NEW PR${w.prs.length > 1 ? 'S' : ''} · +${w.prs.length * 100} XP</h4>${w.prs.map(p => `<div class="mini-row"><span>${EX[p.ex].name} <small class="mute">${EX[p.ex].bw && !p.w ? 'BW' : p.w}×${p.r}</small></span><span><small class="mute">est. 1RM</small> ${p.prev} → <b style="color:var(--gold)">${p.rm}</b></span></div>`).join('')}</div>` : ''}
     ${quests.length ? `<div class="pr-box q"><h4>📜 QUEST${quests.length > 1 ? 'S' : ''} COMPLETE</h4>${quests.map(q => `<div class="mini-row"><span>${q.title}</span><span class="xp">+${q.xp}</span></div>`).join('')}</div>` : ''}
     ${achs.length ? `<div class="pr-box"><h4>TROPHY UNLOCKED</h4>${achs.map(id => { const x = achById(id); return `<div class="mini-row"><span>${x[1]} <b>${x[2]}</b> <small class="mute">${x[3]}</small></span><span class="xp">+100</span></div>`; }).join('')}</div>` : ''}
-    ${seasonal.length ? `<div class="pr-box season-box" data-act="seasonTrack"><h4>${seasonal[0].se.icon} ${seasonal[0].se.name.toUpperCase()} REWARD</h4>${seasonal.map(x => `<div class="mini-row"><span><b>${esc(x.name)}</b> <small class="mute">${SLOT_NAME[x.slot]}</small></span><span class="xp">NEW</span></div>`).join('')}<small class="mute">Equip it in the Armory</small></div>` : ''}
+    ${seasonal.length ? `<div class="pr-box season-box" data-act="seasonTrack"><h4>${seasonal[0].se.icon} DOOR ${seasonal.map(x => x.n).join(' + ')} OPENED</h4>${seasonal.map(x => `<div class="mini-row"><span>${x.icon} <b>${esc(x.name)}</b> <small class="mute">${x.kind}</small></span><span class="xp">NEW</span></div>`).join('')}<small class="mute">${seasonal.some(x => x.slot) ? 'Equip it in the Armory' : 'Tap to see the calendar'}</small></div>` : ''}
     ${comeback.length ? `<div class="hint">🕸️ Comeback bonus +50% on ${comeback.map(m => MUSCLES[m]).join(', ')}</div>` : ''}
     <div style="max-width:320px;margin:0 auto">${bodySVG(m => w.xp[m] ? (rankOf(lvl(after[m]))[2] === UNTR ? TEAL : rankOf(lvl(after[m]))[2]) : UNTR, {labels:false})}</div>
     ${gained.map(m => { const lb = lvl(before[m]), la = lvl(after[m]);
