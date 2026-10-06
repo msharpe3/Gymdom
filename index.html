@@ -19,7 +19,7 @@
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
 /* Only the content scrolls, so the iPhone bounce never drags the tab bar */
 html,body{overscroll-behavior:none}
-#app{position:fixed;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding-bottom:calc(80px + env(safe-area-inset-bottom))}
+body{padding-bottom:calc(80px + env(safe-area-inset-bottom))}
 .top{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:rgba(11,10,18,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
 .brand{display:flex;align-items:center;gap:10px;font-family:'Chakra Petch';font-weight:700;letter-spacing:.14em;font-size:17px}
 .logo{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:linear-gradient(135deg,var(--teal),var(--gold));color:#0b0a12;font-size:13px;letter-spacing:0}
@@ -362,12 +362,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.05.11"></script>
+<script src="exercises.js?v=2026.10.05.12"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.05.11';
+const APP_VERSION = '2026.10.05.12';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -2286,7 +2286,7 @@ function openHabitEdit(keep){
 
 /* ---- Habits: hold-and-drag to reorder (like moving apps on the Home Screen) ---- */
 let hd = null;
-const scEl = () => document.getElementById('app') || document.documentElement, scY = () => scEl().scrollTop;
+const scEl = () => document.scrollingElement || document.documentElement, scY = () => scEl().scrollTop;
 const pageY = y => y + scY();
 function hdDown(el, x, y){
   if (hd) return;
