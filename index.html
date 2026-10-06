@@ -1916,9 +1916,9 @@ const SKINS = [
   // backgrounds behind the muscle map
   ['bg_gym','Gym','bg',{}], ['bg_beach','Beach','bg',{}], ['bg_arena','Arena','bg',{}], ['bg_space','Space','bg',{}], ['bg_mountains','Mountains','bg',{}], ['bg_city','City Night','bg',{}], ['bg_dojo','Dojo','bg',{}], ['bg_volcano','Volcano','bg',{}],
   // seasonal event items (limited time — see SEASONS)
-  ['cowboy','Cowboy Hat','head',{}], ['pumpkinhead','Pumpkin Head','head',{}], ['skullmask','Skull Mask','face',{}], ['clownpaint','Creepy Clown','paint',{}],
+  ['cowboy','Cowboy Hat','head',{}], ['pumpkinhead','Pumpkin Head','head',{}], ['skullmask','Skull Mask','face',{}], 
   ['hockeymask','Hockey Mask','face',{}], ['vampcape','Vampire Cape','back',{}], ['ghostfire','Spectral Flame','aura',{}],
-  ['redeyes','Glowing Eyes','face',{}], ['plague','Plague Doctor','face',{}], ['madhair','Mad Scientist','head',{}], ['labcoat','Lab Coat','top',{}], ['bloodmoon','Blood Moon','aura',{}]
+  ['redeyes','Glowing Eyes','face',{}], ['plague','Plague Doctor','face',{}], ['madhair','Mad Scientist','head',{}], ['bloodmoon','Blood Moon','aura',{}]
 ];
 const SLOTS = [['head','Head'],['face','Face'],['paint','Body Paint'],['top','Top'],['bottom','Bottoms'],['neck','Neck'],['wrists','Wrists & Hands'],['waist','Waist'],['feet','Feet'],['back','Back'],['aura','Aura'],['bg','Background']];
 // Habits reward track: the order cosmetics unlock as you complete self-care tasks
@@ -1933,8 +1933,8 @@ const LOOT_TITLES = [['Treasure Hunter','epic'],['Chosen One','legendary']];
 const SEASONS = [
   // Door calendar: each day you work out during the event opens the next door (max one per day)
   {id:'spooky26', name:'Spooky Season', icon:'🎃', month:'October', start:'2026-10-01', end:'2026-10-31', color:'#f97316',
-    doors:[{xp:150, name:'Treat Bag'}, {skin:'cowboy'}, {skin:'madhair'}, {title:'Trick or Treater'}, {skin:'hockeymask'}, {skin:'labcoat'}, {title:'Grave Digger'},
-      {xp:300, name:'Candy Haul'}, {skin:'redeyes'}, {skin:'clownpaint'}, {title:'Night Lifter'}, {skin:'bloodmoon'}, {skin:'skullmask'}, {xp:350, name:'Candy Haul'},
+    doors:[{xp:150, name:'Treat Bag'}, {skin:'cowboy'}, {skin:'madhair'}, {title:'Trick or Treater'}, {skin:'hockeymask'}, {xp:250, name:'Treat Bag'}, {title:'Grave Digger'},
+      {xp:300, name:'Candy Haul'}, {skin:'redeyes'}, {xp:350, name:'Candy Haul'}, {title:'Night Lifter'}, {skin:'bloodmoon'}, {skin:'skullmask'}, {xp:350, name:'Candy Haul'},
       {xp:400, name:'Candy Haul'}, {skin:'vampcape'}, {skin:'plague'}, {xp:500, name:'Treat Chest'}, {skin:'pumpkinhead'}, {skin:'ghostfire', title:'Pumpkin King', grand:true}]}
 ];
 SEASONS.forEach(se => se.doors.forEach((d, i) => { if (d.skin){ const it = SKINS.find(s => s[0] === d.skin); if (it) it[3] = {season:se.id, n:i + 1}; } }));
@@ -1997,7 +1997,7 @@ const GEAR = {
   wrap: 'M40,172 L56,171 L57,187 L42,188 Z',
   glove: 'M43,185 C42,192 44,201 49,205 C53,208 60,207 64,200 C66,195 65,190 62,186 C57,182 48,182 43,185 Z'
 };
-const TOPS = {labcoat:['tank','#e9edf1',1], tank_red:['tank','#c0263f'], tank_black:['tank','#0b0a10'], stringer:['stringer','#e8e6f2'], comp_blue:['tank','#1d4ed8',1], singlet_gold:['tank','#d4a017']};
+const TOPS = { tank_red:['tank','#c0263f'], tank_black:['tank','#0b0a10'], stringer:['stringer','#e8e6f2'], comp_blue:['tank','#1d4ed8',1], singlet_gold:['tank','#d4a017']};
 const BOTTOMS = {shorts_black:['shorts','#0b0a10'], shorts_red:['shorts','#b91c1c'], board:['board','#0e7490','stripes'], joggers:['joggers','#5d5b78']};
 const SHOES = {kicks_white:['shoe','#f4f4f8','#e23b54'], kicks_red:['shoe','#d42d45','#f4f4f8'], hightops:['hightop','#4c46c8','#f4f4f8'], kicks_gold:['shoe','#e8b923','#7a5a00']};
 const WRISTS = {bands_red:['band','#e23b54'], bands_blue:['band','#3b82f6'], wraps:['wrap','#f1f0f6']};
@@ -2034,9 +2034,6 @@ function skinUnder(sk){
   let s = '';
   const TRIM = 'stroke="#d8d6ea" stroke-opacity=".55" stroke-width="1.1"';
   const t = TOPS[sk.top]; if (t){ s += `<path d="${GEAR[t[0]]}" fill="${t[1]}" ${TRIM} clip-path="url(#gdBody)"/>`; if (t[2]) s += both(GEAR.sleeve, `fill="${t[1]}" ${TRIM} clip-path="url(#gdBody)"`); }
-  if (sk.top === 'labcoat') s += `<g clip-path="url(#gdBody)"><path d="M73,180 L127,180 L130,262 L104,262 L100,236 L96,262 L70,262 Z" fill="#e9edf1" stroke="#c9ced6" stroke-width="1"/>
-      <path d="M100,64 V236" stroke="#aeb5c0" stroke-width="1.2"/><path d="M87,58 L97,96 L100,66 L103,96 L113,58" fill="none" stroke="#aeb5c0" stroke-width="1.3"/><rect x="77" y="200" width="12" height="11" rx="1.5" fill="none" stroke="#aeb5c0" stroke-width="1.1"/><rect x="111" y="200" width="12" height="11" rx="1.5" fill="none" stroke="#aeb5c0" stroke-width="1.1"/>
-      ${[[118, 230, 5], [80, 244, 3.5], [76, 150, 3], [124, 120, 3.6], [86, 222, 2.4]].map(([x, y, r]) => `<path d="M${x - r},${y} a${r},${r} 0 1,1 ${2 * r},0 c0,${r * .8} -${r * .4},${r * 1.6} -${r * .5},${r * 2.2} c-.2,-${r * .7} -${r},-${r * .6} -${r * 1.5},-${r * 2.2}Z" fill="#65d943" opacity=".85"/>`).join('')}</g>`;
   const b = BOTTOMS[sk.bottom]; if (b){ s += `<path d="${GEAR[b[0]]}" fill="${b[2] ? 'url(#gdStripes)' : b[1]}" ${TRIM} clip-path="url(#gdBody)"/>`;
     if (b[0] !== 'board') s += `<g clip-path="url(#gdBody)">${both(b[0] === 'joggers' ? 'M70,200 L66,262 L61,300 L60,360' : 'M71,200 L69,262', 'fill="none" stroke="#f4f4f8" stroke-opacity=".7" stroke-width="1.6"')}</g>`; }
   return s;
@@ -2047,18 +2044,6 @@ function skinFront(sk, front){
   if (sk.paint === 'tribal') s += both('M58,72 C52,80 54,88 62,90 M50,84 C46,92 50,100 57,100 M60,96 C56,104 58,110 64,110 M46,140 C42,148 46,156 52,154 M50,160 C46,168 50,174 55,172', 'fill="none" stroke="#a7a2cf" stroke-width="2.2" stroke-linecap="round" opacity=".85"');
   if (sk.paint === 'neon') s += `<g filter="url(#gdSoft)" opacity=".9">${both('M76,70 C72,110 76,150 82,184 M50,90 L44,130 M42,140 L44,176', 'fill="none" stroke="#22d3ee" stroke-width="1.6"')}</g>` + both('M76,70 C72,110 76,150 82,184 M50,90 L44,130 M42,140 L44,176', 'fill="none" stroke="#a5f3fc" stroke-width=".7"');
   if (front && sk.paint === 'eyeblack') s += `<rect x="88" y="29" width="8" height="3" rx="1.2" fill="#0b0a12"/><rect x="104" y="29" width="8" height="3" rx="1.2" fill="#0b0a12"/>`;
-  if (front && sk.paint === 'clownpaint') s += `<g clip-path="url(#gdBody)"><ellipse cx="100" cy="27" rx="15" ry="19" fill="#ddd8cc"/><path d="M88,12 l4,5 l-2,4 M111,14 l-3,4 l2,5 M95,40 l-2,4" stroke="#9b958a" stroke-width=".6" fill="none"/></g>
-    <path d="M87,20 Q93,15 97,21 Q95,28 92,28 Q88,27 87,20Z M113,20 Q107,15 103,21 Q105,28 108,28 Q112,27 113,20Z" fill="#120c14"/>
-    <path d="M90,27 l-.6,7 M93,28 l.4,9 M109,27 l.5,8 M106,28 l-.3,6" stroke="#120c14" stroke-width="1.3" stroke-linecap="round"/>
-    <circle cx="92.8" cy="22.5" r="1.3" fill="#ff2d2d"/><circle cx="107.2" cy="22.5" r="1.3" fill="#ff2d2d"/><circle cx="92.8" cy="22.5" r="2.6" fill="#ff2d2d" opacity=".35" filter="url(#gdSoft)"/><circle cx="107.2" cy="22.5" r="2.6" fill="#ff2d2d" opacity=".35" filter="url(#gdSoft)"/>
-    <circle cx="100" cy="30" r="2.5" fill="#b91c1c"/>
-    <path d="M88.5,34.5 Q100,39 111.5,34.5 Q109,45 100,45.5 Q91,45 88.5,34.5Z" fill="#7f1d1d"/><path d="M90.2,35.6 Q100,39.6 109.8,35.6 Q108,43.4 100,43.8 Q92,43.4 90.2,35.6Z" fill="#0b0508"/>
-    <path d="M91.5,36.4 l1.6,3.4 l1.4,-3 l1.5,3.6 l1.4,-3.3 l1.6,3.8 l1.4,-3.8 l1.6,3.8 l1.4,-3.3 l1.5,3.6 l1.4,-3 l1.6,3.4Z" fill="#efe9d8"/><path d="M93,43 l1.6,-2.8 l1.5,2.8 l1.6,-3 l1.6,3 l1.6,-3 l1.6,3 l1.5,-2.8 l1.6,2.8Z" fill="#efe9d8"/>`;
-  if (front && sk.paint === 'harlequin') s += `<g clip-path="url(#gdBody)"><ellipse cx="100" cy="27" rx="15" ry="19" fill="#f4f1ea"/><path d="M100,6 V48 H120 V6Z" fill="#3b2667"/></g>
-    <path d="M93,16 l3.4,6.5 l-3.4,6.5 l-3.4,-6.5Z" fill="#3b2667"/><path d="M107,16 l3.4,6.5 l-3.4,6.5 l-3.4,-6.5Z" fill="#f4f1ea"/><circle cx="93" cy="22.5" r="1.1" fill="#f4f1ea"/><circle cx="107" cy="22.5" r="1.1" fill="#3b2667"/>
-    <path d="M92.6,31 q-1.8,3.4 0,5 q1.8,-1.6 0,-5Z" fill="#3b2667"/><path d="M107.4,31 q-1.8,3.4 0,5 q1.8,-1.6 0,-5Z" fill="#f4f1ea"/>
-    <path d="M88,13 q5,-3 9,-.5 M103,12.5 q4,-2.5 9,.5" stroke="#9b1c31" stroke-width="1" fill="none" stroke-linecap="round"/>
-    <path d="M96.4,38.2 q1.8,-1.6 3.6,0 q1.8,-1.6 3.6,0 q-1.8,2.6 -3.6,2.8 q-1.8,-.2 -3.6,-2.8Z" fill="#c0263f"/>`;
   if (front && sk.paint === 'warpaint') s += `<path d="M88,26 l9,0 M87,30 l9,0 M103,26 l9,0 M104,30 l9,0" stroke="#e23b54" stroke-width="2" stroke-linecap="round"/><path d="M100,9 v12" stroke="#3b82f6" stroke-width="2.4" stroke-linecap="round"/>`;
   // neck
   if (front && (sk.neck === 'chain_gold' || sk.neck === 'chain_silver')){ const c = sk.neck === 'chain_gold' ? '#f2c94c' : '#d6dbe6';
