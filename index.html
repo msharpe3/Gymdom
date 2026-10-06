@@ -198,7 +198,7 @@ select{font:16px Inter;background:var(--panel2);color:var(--text);border:1px sol
 .theme-tile b{font-size:13px}.theme-tile small{font-size:11px;color:#a9a6c2}
 .chip.locked{opacity:.5}.chip small{font-size:10px;opacity:.8}
 svg.body .aura{opacity:.55;animation:auraP 2.6s ease-in-out infinite}
-svg.body .aura.flame,svg.body .aura.ghostfire,svg.body .aura.wisps{animation:flick .5s ease-in-out infinite alternate}
+svg.body .aura.flame,svg.body .aura.ghostfire{animation:flick .5s ease-in-out infinite alternate}
 @keyframes auraP{50%{opacity:.9}}@keyframes flick{from{opacity:.45}to{opacity:.95}}
 .lvlup-overlay{position:fixed;inset:0;z-index:60;background:color-mix(in srgb,var(--bg) 92%,transparent);display:flex;align-items:center;justify-content:center;overflow:hidden;animation:fadeIn .3s}
 .lvlup-overlay.out{animation:fadeOut .3s forwards}
@@ -1918,7 +1918,7 @@ const SKINS = [
   // seasonal event items (limited time — see SEASONS)
   ['cowboy','Cowboy Hat','head',{}], ['pumpkinhead','Pumpkin Head','head',{}], ['skullmask','Skull Mask','face',{}], 
   ['hockeymask','Hockey Mask','face',{}], ['vampcape','Vampire Cape','back',{}], ['ghostfire','Spectral Flame','aura',{}],
-  ['redeyes','Glowing Eyes','face',{}], ['plague','Plague Doctor','face',{}], ['madhair','Mad Scientist','head',{}], ['bloodmoon','Blood Moon','aura',{}], ['cyclops','Cyclops','face',{}], ['gasmask','Gas Mask','face',{}], ['toxic','Toxic Ooze','aura',{}], ['wisps',"Will-o'-Wisps",'aura',{}]
+  ['redeyes','Glowing Eyes','face',{}], ['plague','Plague Doctor','face',{}], ['madhair','Mad Scientist','head',{}], ['bloodmoon','Blood Moon','aura',{}], ['gasmask','Gas Mask','face',{}], ['toxic','Toxic Ooze','aura',{}]
 ];
 const SLOTS = [['head','Head'],['face','Face'],['paint','Body Paint'],['top','Top'],['bottom','Bottoms'],['neck','Neck'],['wrists','Wrists & Hands'],['waist','Waist'],['feet','Feet'],['back','Back'],['aura','Aura'],['bg','Background']];
 // Habits reward track: the order cosmetics unlock as you complete self-care tasks
@@ -1933,8 +1933,8 @@ const LOOT_TITLES = [['Treasure Hunter','epic'],['Chosen One','legendary']];
 const SEASONS = [
   // Door calendar: each day you work out during the event opens the next door (max one per day)
   {id:'spooky26', name:'Spooky Season', icon:'🎃', month:'October', start:'2026-10-01', end:'2026-10-31', color:'#f97316',
-    doors:[{xp:150, name:'Treat Bag'}, {skin:'cowboy'}, {skin:'madhair'}, {title:'Trick or Treater'}, {skin:'hockeymask'}, {skin:'cyclops'}, {title:'Grave Digger'},
-      {xp:300, name:'Candy Haul'}, {skin:'redeyes'}, {skin:'gasmask'}, {title:'Night Lifter'}, {skin:'bloodmoon'}, {skin:'skullmask'}, {skin:'wisps'},
+    doors:[{xp:150, name:'Treat Bag'}, {skin:'cowboy'}, {skin:'madhair'}, {title:'Trick or Treater'}, {skin:'hockeymask'}, {xp:250, name:'Treat Bag'}, {title:'Grave Digger'},
+      {xp:300, name:'Candy Haul'}, {skin:'redeyes'}, {skin:'gasmask'}, {title:'Night Lifter'}, {skin:'bloodmoon'}, {skin:'skullmask'}, {xp:350, name:'Candy Haul'},
       {xp:400, name:'Candy Haul'}, {skin:'vampcape'}, {skin:'plague'}, {skin:'toxic'}, {skin:'pumpkinhead'}, {skin:'ghostfire', title:'Pumpkin King', grand:true}]}
 ];
 SEASONS.forEach(se => se.doors.forEach((d, i) => { if (d.skin){ const it = SKINS.find(s => s[0] === d.skin); if (it) it[3] = {season:se.id, n:i + 1}; } }));
@@ -2001,7 +2001,7 @@ const TOPS = { tank_red:['tank','#c0263f'], tank_black:['tank','#0b0a10'], strin
 const BOTTOMS = {shorts_black:['shorts','#0b0a10'], shorts_red:['shorts','#b91c1c'], board:['board','#0e7490','stripes'], joggers:['joggers','#5d5b78']};
 const SHOES = {kicks_white:['shoe','#f4f4f8','#e23b54'], kicks_red:['shoe','#d42d45','#f4f4f8'], hightops:['hightop','#4c46c8','#f4f4f8'], kicks_gold:['shoe','#e8b923','#7a5a00']};
 const WRISTS = {bands_red:['band','#e23b54'], bands_blue:['band','#3b82f6'], wraps:['wrap','#f1f0f6']};
-const AURA_C = {toxic:'#84cc16', wisps:'#60a5fa', bloodmoon:'#dc2626', ghostfire:'#4ade80', glow:'var(--gold)', flame:'#fb923c', lightning:'#60a5fa', ice:'#a5f3fc', shadow:'#7c3aed', rainbow:'url(#gdRainbow)'};
+const AURA_C = {toxic:'#84cc16', bloodmoon:'#dc2626', ghostfire:'#4ade80', glow:'var(--gold)', flame:'#fb923c', lightning:'#60a5fa', ice:'#a5f3fc', shadow:'#7c3aed', rainbow:'url(#gdRainbow)'};
 const SKIN_DEFS = `<defs><filter id="gdBlur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5"/></filter>
   <filter id="gdSoft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.6"/></filter>
   <clipPath id="gdBody"><path d="${OUTLINE}"/></clipPath>
@@ -2019,12 +2019,10 @@ const WING_DRAGON = 'M84,72 C66,46 40,24 8,20 L22,46 L4,50 L24,66 L6,76 L30,86 L
 const both = (d, attrs) => `<path d="${d}" ${attrs}/><path d="${d}" ${MIR} ${attrs}/>`;
 function skinBehind(sk, front){
   let s = '';
-  if (sk.aura) s += `<path d="${OUTLINE}" class="aura ${sk.aura}" fill="none" stroke="${AURA_C[sk.aura] || 'var(--gold)'}" stroke-width="${['flame', 'shadow', 'ghostfire', 'bloodmoon', 'toxic'].includes(sk.aura) ? 12 : sk.aura === 'wisps' ? 5 : 9}" filter="url(#gdBlur)"/>`;
+  if (sk.aura) s += `<path d="${OUTLINE}" class="aura ${sk.aura}" fill="none" stroke="${AURA_C[sk.aura] || 'var(--gold)'}" stroke-width="${['flame', 'shadow', 'ghostfire', 'bloodmoon', 'toxic'].includes(sk.aura) ? 12 : 9}" filter="url(#gdBlur)"/>`;
   if (sk.aura === 'bloodmoon') s = `<g class="aura bloodmoon"><circle cx="100" cy="22" r="30" fill="#7f1d1d" opacity=".55" filter="url(#gdBlur)"/><circle cx="100" cy="22" r="25" fill="#b91c1c" opacity=".45"/></g>` + s;
   if (sk.aura === 'toxic') s += `<g class="aura toxic">${[[22, 150, 4], [178, 130, 3], [30, 230, 3.4], [172, 250, 4.4], [60, 380, 3], [140, 384, 3.6], [16, 90, 2.4], [186, 70, 2.8]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="#bef264" stroke-width="1.2"/><circle cx="${x - r * .35}" cy="${y - r * .35}" r="${r * .25}" fill="#ecfccb"/>`).join('')}
     <path d="M40,388 c0,6 -3,8 -3,12 a3,3 0 0 0 6,0 c0,-4 -3,-6 -3,-12Z M160,390 c0,5 -2.6,7 -2.6,10 a2.6,2.6 0 0 0 5.2,0 c0,-3 -2.6,-5 -2.6,-10Z" fill="#84cc16"/></g>`;
-  if (sk.aura === 'wisps') s += `<g class="aura wisps" filter="url(#gdSoft)">${[[18, 110], [182, 86], [12, 210], [188, 196], [34, 310], [168, 300], [50, 30], [150, 18]].map(([x, y], i) => `<path d="M${x},${y + 8} c-5,0 -7,-4 -5,-8 c1.5,3 3,3 3,1 c0,-4 2,-7 4,-10 c0,4 4,6 4,11 c0,3 -2.6,6 -6,6Z" fill="${i % 2 ? '#7dd3fc' : '#93c5fd'}" opacity="${.65 + (i % 3) * .1}"/>`).join('')}</g>`
-    + [[18, 110], [182, 86], [12, 210], [188, 196], [34, 310], [168, 300], [50, 30], [150, 18]].map(([x, y]) => `<circle cx="${x}" cy="${y + 3}" r="1.6" fill="#eff6ff"/>`).join('');
   if (sk.aura === 'ghostfire') s += `<g class="aura ghostfire" filter="url(#gdSoft)">${[[14, 120], [178, 96], [22, 250], [182, 220], [40, 40], [160, 30]].map(([x, y], i) => `<path d="M${x},${y} c-4,0 -6,4 -6,8 l0,7 l2,-2 l2,2 l2,-2 l2,2 l2,-2 l2,2 l0,-7 c0,-4 -2,-8 -6,-8z" fill="#86efac" opacity="${.5 + (i % 3) * .15}"/>`).join('')}</g>`;
   if (sk.back === 'angel') s += both(WING_ANGEL, 'fill="url(#gdAngel)" stroke="#aab4d6" stroke-width=".8"') + both('M80,76 C60,60 40,50 20,48 M78,84 C62,74 46,70 30,72', 'fill="none" stroke="#aab4d6" stroke-width=".8"');
   if (sk.back === 'vampcape'){ s += both('M80,59 C68,47 67,29 77,19 C81,32 86,42 93,51 Z', 'fill="#b91c1c" stroke="#140b18" stroke-width="1.4"');
@@ -2079,8 +2077,6 @@ function skinFront(sk, front){
     ${[[97, 11], [103, 11], [97, 15], [103, 15], [100, 30], [96, 34], [100, 34], [104, 34], [92, 37], [108, 37], [96, 39.5], [100, 40.5], [104, 39.5]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r=".95" fill="#1b2a33"/>`).join('')}
     <path d="M89,9.5 q4,-3 8,-3" stroke="#fff" stroke-width="1" fill="none" stroke-linecap="round"/>`
     : `<path d="M84,24 Q100,30 116,24 M86,14 Q100,8 114,14" stroke="#3f4a52" stroke-width="2.6" fill="none"/>`;
-  if (front && sk.face === 'cyclops') s += `<ellipse cx="100" cy="23" rx="9" ry="7" fill="#f4f1e6" stroke="#0b0a12" stroke-width="1"/><circle cx="100" cy="23.5" r="4.8" fill="#16a34a"/><circle cx="100" cy="23.5" r="4.8" fill="#4ade80" opacity=".5" filter="url(#gdSoft)"/><ellipse cx="100" cy="23.5" rx="1.4" ry="3.8" fill="#0b0a12"/><circle cx="98.4" cy="21.4" r="1" fill="#fff"/>
-    <path d="M90.5,19 Q100,11.5 109.5,19" stroke="#0b0a12" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M93,26.6 l-1.2,1.4 M100,30.2 v1.6 M107,26.6 l1.2,1.4" stroke="#7f1d1d" stroke-width=".8" stroke-linecap="round" opacity=".7"/>`;
   if (sk.face === 'gasmask') s += front ? `<path d="M100,8 C111,8 116.5,15 116.5,25 C116.5,33 113,39 108,42 L92,42 C87,39 83.5,33 83.5,25 C83.5,15 89,8 100,8Z" fill="#2f3a2f" stroke="#151c15" stroke-width="1"/>
     <circle cx="92.5" cy="22" r="4.8" fill="#9fb8a4" stroke="#556b55" stroke-width="1.6"/><circle cx="107.5" cy="22" r="4.8" fill="#9fb8a4" stroke="#556b55" stroke-width="1.6"/><path d="M90.6,20 l2,-1.6 M105.6,20 l2,-1.6" stroke="#f0fdf4" stroke-width="1" stroke-linecap="round" opacity=".8"/>
     <path d="M95,30 L105,30 L107,40 L93,40Z" fill="#232b23"/><rect x="93.5" y="39" width="13" height="10" rx="2.6" fill="#4b5a4b" stroke="#151c15" stroke-width=".8"/><path d="M95,42 H105 M95,45 H105" stroke="#2f3a2f" stroke-width="1"/>
