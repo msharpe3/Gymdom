@@ -17,7 +17,9 @@
 :root{--bg:#0b0a12;--panel:#15141f;--panel2:#1d1c2b;--line:#2a2839;--text:#eeedf7;--mute:#8e8aa8;--teal:#4fd1c5;--gold:#f2c94c;--purple:#a78bfa;--red:#f2667a;--base:#272637;--untrained:#3b3a52}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
-body{padding-bottom:calc(80px + env(safe-area-inset-bottom))}
+/* Only the content scrolls, so the iPhone bounce never drags the tab bar */
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+#app{position:fixed;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding-bottom:calc(80px + env(safe-area-inset-bottom))}
 .top{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:rgba(11,10,18,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
 .brand{display:flex;align-items:center;gap:10px;font-family:'Chakra Petch';font-weight:700;letter-spacing:.14em;font-size:17px}
 .logo{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:linear-gradient(135deg,var(--teal),var(--gold));color:#0b0a12;font-size:13px;letter-spacing:0}
@@ -347,23 +349,25 @@ body.resting main{padding-bottom:170px}
 </style>
 </head>
 <body>
+<div id="app">
 <header class="top">
   <div class="brand"><span class="logo">G</span><span>GYMDOM</span></div>
   <button class="icon-btn" data-act="settings" aria-label="Settings">⚙︎</button>
 </header>
 <main id="view"></main>
+</div>
 <nav class="tabs" id="tabs"></nav>
 <div id="restBar" class="rest-bar" hidden></div>
 <div id="sheetWrap" class="sheet-wrap"><div class="sheet" id="sheet"></div></div>
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.05.9"></script>
+<script src="exercises.js?v=2026.10.05.10"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.05.9';
+const APP_VERSION = '2026.10.05.10';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -2282,7 +2286,8 @@ function openHabitEdit(keep){
 
 /* ---- Habits: hold-and-drag to reorder (like moving apps on the Home Screen) ---- */
 let hd = null;
-const pageY = y => y + window.scrollY;
+const scEl = () => document.getElementById('app') || document.documentElement, scY = () => scEl().scrollTop;
+const pageY = y => y + scY();
 function hdDown(el, x, y){
   if (hd) return;
   hd = {el, x0:x, y0:y, timer:setTimeout(() => hdBegin(y), 380)};
@@ -2291,7 +2296,7 @@ function hdBegin(y){
   if (!hd) return;
   const el = hd.el, sec = el.closest('.h-sec'); if (!sec){ hd = null; return; }
   const items = [...sec.querySelectorAll('.h-task')], from = items.indexOf(el);
-  const sy = window.scrollY, rects = items.map(i => { const r = i.getBoundingClientRect(); return {top:r.top + sy, h:r.height}; });
+  const sy = scY(), rects = items.map(i => { const r = i.getBoundingClientRect(); return {top:r.top + sy, h:r.height}; });
   Object.assign(hd, {on:true, sec, g:sec.dataset.g, items, from, to:from, rects, gap:8, startPY:pageY(y), lastY:y, other:null});
   el.classList.add('lift'); document.body.classList.add('h-dragging');
   if (navigator.vibrate) navigator.vibrate(25);
@@ -2308,7 +2313,7 @@ function hdLayout(){
   el.style.transform = `translateY(${dy}px) scale(1.04)`;
   // Over a different section? Highlight it as the drop target
   let other = null;
-  document.querySelectorAll('.h-sec').forEach(sc => { const r = sc.getBoundingClientRect(), t = r.top + window.scrollY;
+  document.querySelectorAll('.h-sec').forEach(sc => { const r = sc.getBoundingClientRect(), t = r.top + scY();
     const hit = sc !== hd.sec && cy >= t && cy <= t + r.height; sc.classList.toggle('drop', hit); if (hit) other = sc; });
   hd.other = other;
   const to = other ? from : items.filter((_, j) => j !== from && rects[j].top + rects[j].h / 2 < cy).length;
@@ -2318,7 +2323,7 @@ function hdLayout(){
 function hdTick(){ // auto-scroll when the dragged task nears the top or bottom of the screen
   if (!hd || !hd.on) return;
   const y = hd.lastY, edge = 110, sp = y < edge ? -Math.ceil((edge - y) / 10) : y > innerHeight - edge - 70 ? Math.ceil((y - (innerHeight - edge - 70)) / 10) : 0;
-  if (sp){ window.scrollBy(0, sp); hdLayout(); }
+  if (sp){ scEl().scrollTop += sp; hdLayout(); }
   requestAnimationFrame(hdTick);
 }
 function hdUp(){
@@ -2327,7 +2332,7 @@ function hdUp(){
   const {items, from, to, other, rects} = hd, arr = habitList(), moved = arr.find(t => t.id === items[from].dataset.id);
   if (moved && other){ // drop into another section, at the spot under the finger
     const g = other.dataset.g, cy = rects[from].top + rects[from].h / 2 + pageY(hd.lastY) - hd.startPY;
-    const tgt = [...other.querySelectorAll('.h-task')].find(it => { const r = it.getBoundingClientRect(); return r.top + window.scrollY + r.height / 2 > cy; });
+    const tgt = [...other.querySelectorAll('.h-task')].find(it => { const r = it.getBoundingClientRect(); return r.top + scY() + r.height / 2 > cy; });
     arr.splice(arr.indexOf(moved), 1); moved.g = g;
     const before = tgt && arr.find(t => t.id === tgt.dataset.id);
     if (before) arr.splice(arr.indexOf(before), 0, moved);
@@ -2777,7 +2782,7 @@ function openSettings(){
 
 /* ============ ACTIONS ============ */
 const ACT = {
-  tab: d => { ui.tab = d.tab; closeSheet(); render(); window.scrollTo(0,0); },
+  tab: d => { ui.tab = d.tab; closeSheet(); render(); scEl().scrollTop = 0; },
   closeSheet,
   settings: openSettings,
   muscle: d => muscleInfo(d.m),
