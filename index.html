@@ -318,7 +318,7 @@ body.resting main{padding-bottom:170px}
 .pp-ranks em{font-style:normal;font-size:11px;color:var(--mute);min-width:44px;text-align:right}.pp-ranks em.up{color:var(--teal)}.pp-ranks em.dn{color:#f2667a}
 .h-sec{margin-bottom:6px;border-radius:14px;transition:background .15s,box-shadow .15s}
 .h-sec.drop{background:color-mix(in srgb,var(--teal) 10%,transparent);box-shadow:0 0 0 2px var(--teal) inset}
-.h-task{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+.h-task{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:pan-y}
 .h-sec-body .h-task{transition:transform .2s cubic-bezier(.2,.8,.3,1),background .2s,border-color .2s}
 .h-task.lift{position:relative;z-index:20;transition:none;box-shadow:0 14px 34px #000a;border-color:var(--teal);background:var(--panel2)}
 .h-days{display:flex;align-items:center;gap:2px;margin:12px -4px 0}
@@ -349,6 +349,16 @@ body.resting main{padding-bottom:170px}
 .h-sec-hd small{margin-left:auto;color:var(--mute);font-size:12px;font-weight:600}.h-sec.all .h-sec-hd small{color:var(--teal)}
 .h-sec-hd i{font-style:normal;color:var(--mute);font-size:18px;transform:rotate(90deg);transition:transform .2s;width:14px;text-align:center}.h-sec.shut .h-sec-hd i{transform:none}
 .h-sub{display:flex;align-items:center;gap:7px;font:600 11px Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin:12px 0 6px}
+.h-seg{position:relative;display:grid;grid-template-columns:1fr 1fr;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:3px;margin:14px 0 10px}
+.h-seg button{position:relative;z-index:1;background:none;border:0;color:var(--mute);font:600 14px Inter;padding:8px 0;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:color .2s}
+.h-seg button.on{color:#06231f}.h-seg button i{font-style:normal;font-size:10px;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:grid;place-items:center;padding:0 4px;background:var(--panel2);color:var(--text)}
+.h-seg button.on i{background:#06231f33;color:#06231f}
+.h-seg-ind{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:9px;background:var(--teal);transform:translateX(calc(var(--x, var(--i, 0)) * 100%))}
+.h-pager{display:flex;align-items:flex-start;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-behavior:smooth;overscroll-behavior-x:contain;scrollbar-width:none;margin:0 -16px 14px;transition:height .25s}
+.h-pager::-webkit-scrollbar{display:none}
+.h-pager>.h-sp{flex:0 0 16px;height:1px}.h-pager>.h-page+.h-sp{flex-basis:16px}
+.h-pager>.h-page{flex:0 0 calc(100% - 32px);box-sizing:border-box;scroll-snap-align:start;scroll-margin-left:16px;scroll-snap-stop:always;margin:0}
+.h-pager>.h-page+.h-page{margin-left:32px}
 .reward-card.in{background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 10%,var(--panel2)),var(--panel2) 70%);border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:12px}
 .nl-tabs{margin:12px 0 10px}.nl-tabs .chip{display:inline-flex;align-items:center;gap:6px}.nl-new{font-weight:700;padding-left:14px;padding-right:14px}
 .nl-dot{font-style:normal;font-size:10px;font-weight:700;min-width:17px;height:17px;border-radius:9px;background:var(--panel2);color:var(--mute);display:grid;place-items:center;padding:0 4px}
@@ -448,12 +458,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.07.5"></script>
+<script src="exercises.js?v=2026.10.07.6"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.07.5';
+const APP_VERSION = '2026.10.07.6';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -2556,7 +2566,9 @@ function renderHabits(){
     <div class="stats" style="margin-top:12px"><div class="stat"><b>${done}/${act.length}</b><small>${isToday ? 'Today' : shortDate(sel)}</small></div><div class="stat"><b>${streak}🔥</b><small>Day streak</small></div><div class="stat"><b>${fmt(tot)}</b><small>Tasks done</small></div></div>`;
   // Today's tasks
   const dn0 = dnum(sel) - dowOf(sel), title = isToday ? 'Today' : sel === dkOf(dnum(tk) + 1) ? 'Tomorrow' : sel === dkOf(dnum(tk) - 1) ? 'Yesterday' : kDate(sel, {weekday:'long'});
-  h += `<div class="card"><div class="row between"><h3 style="margin:0">${title}</h3>${isToday ? `<small class="mute">${kDate(sel, {weekday:'long', month:'short', day:'numeric'})}</small>` : `<span class="row gap" style="align-items:center"><small class="mute">${kDate(sel, {month:'short', day:'numeric'})}</small><button class="chip" style="padding:4px 10px;font-size:12px" data-act="hDay" data-v="${tk}">Back to today</button></span>`}</div>
+  const open = state.notes.lists.reduce((n, l) => n + l.items.filter(i => !i.d).length, 0), pg = ui.hPage || 0;
+  h += `<div class="h-seg" style="--i:${pg}"><button class="${pg ? '' : 'on'}" data-act="hPage" data-v="0">Habits</button><button class="${pg ? 'on' : ''}" data-act="hPage" data-v="1">Lists${open ? `<i>${open}</i>` : ''}</button><span class="h-seg-ind"></span></div>
+    <div class="h-pager" id="hPager"><i class="h-sp"></i><div class="card h-page"><div class="row between"><h3 style="margin:0">${title}</h3>${isToday ? `<small class="mute">${kDate(sel, {weekday:'long', month:'short', day:'numeric'})}</small>` : `<span class="row gap" style="align-items:center"><small class="mute">${kDate(sel, {month:'short', day:'numeric'})}</small><button class="chip" style="padding:4px 10px;font-size:12px" data-act="hDay" data-v="${tk}">Back to today</button></span>`}</div>
     <div class="h-days"><button class="h-wk" data-act="hDay" data-v="${dkOf(dnum(sel) - 7)}" aria-label="Previous week">‹</button>${[0, 1, 2, 3, 4, 5, 6].map(i => { const k = dkOf(dn0 + i), due = dueActive(k), got = habitDay(k).filter(id => due.some(t => t.id === id)).length, sk = !due.length && habitSkips(k).length;
       return `<button class="h-dd${k === sel ? ' on' : ''}${k === tk ? ' tk' : ''}" data-act="hDay" data-v="${k}"><small>${DOW[dowOf(k)][0]}</small><b>${+k.slice(8)}</b><i class="${sk ? 'skip' : !due.length ? '' : got >= due.length ? 'full' : got ? 'some' : 'due'}"></i></button>`; }).join('')}<button class="h-wk" data-act="hDay" data-v="${dkOf(dnum(sel) + 7)}" aria-label="Next week">›</button></div><div style="margin-top:6px">`;
   const now = nowSection(), shut = (ui.hShut = ui.hShut || {}), shutK = isToday ? shut : {};
@@ -2569,7 +2581,7 @@ function renderHabits(){
         return `<button class="h-task${on ? ' done' : ''}${sk ? ' skipped' : ''}${future ? ' future' : ''}" data-act="hToggle" data-id="${esc(t.id)}">${hIcon(t)}<b>${esc(t.n)}${lbl ? `<small>${esc(lbl)}</small>` : ''}</b><span class="ck">${on ? '✓' : sk ? '<svg viewBox="0 0 24 24" width="13" height="13"><path d="M5 5l8 7-8 7zM14 5l8 7-8 7z" fill="currentColor"/></svg>' : ''}</span></button>`; }).join('')}</div>`}</div>`; }).join('') + `<small class="mute h-hint">${future ? 'Coming up — swipe left to skip one ahead of time' : 'Hold to move · swipe left to skip'}</small>`
     : `<p class="mute" style="margin:10px 0 4px;text-align:center">${all.length ? 'Nothing scheduled for this day 🌤️' : 'No tasks yet — tap Edit tasks to pick some.'}</p>`;
   h += `</div>${act.length && done === act.length && !future ? `<div class="h-alldone">🌱 All done for ${isToday ? 'today' : 'the day'}!</div>` : tasks.length && !act.length ? `<div class="h-alldone skip">😌 Everything skipped — your streak is safe</div>` : ''}</div>`;
-  h += notesCard();
+  h += notesCard() + '<i class="h-sp"></i></div>';
   // Week
   const days = []; for (let i = 6; i >= 0; i--){ const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - i); days.push(d); }
   h += `<div class="card"><h3>This week</h3><div class="h-week">${days.map((d, i) => { const k = dkey(d), n = habitDay(k).length, most = Math.max(1, dueActive(k).length);
@@ -2591,7 +2603,7 @@ function renderHabits(){
 const nlCur = () => { const N = state.notes; return N.lists.find(l => l.id === N.cur) || N.lists[0]; };
 function notesCard(){
   const N = state.notes, L = nlCur(), done = L.items.filter(i => i.d).length;
-  return `<div class="card notes" id="notesCard"><div class="row between"><h3 style="margin:0">Lists</h3>${L.items.length ? `<small class="mute">${done}/${L.items.length} checked</small>` : ''}</div>
+  return `<div class="card notes h-page" id="notesCard"><div class="row between"><h3 style="margin:0">Lists</h3>${L.items.length ? `<small class="mute">${done}/${L.items.length} checked</small>` : ''}</div>
     <div class="chips nl-tabs">${N.lists.map(l => `<button class="chip${l.id === L.id ? ' on' : ''}" data-act="nlList" data-id="${l.id}">${esc(l.name)}${l.items.some(i => !i.d) && l.id !== L.id ? `<i class="nl-dot">${l.items.filter(i => !i.d).length}</i>` : ''}</button>`).join('')}<button class="chip nl-new" data-act="nlNewList" aria-label="New list">+</button></div>
     <div class="nl-items">${L.items.map(it => ui.nlEdit === it.id
       ? `<div class="nl-row editing" data-id="${it.id}"><span class="nl-ck${it.d ? ' on' : ''}"></span><input class="nl-edit" data-id="${it.id}" value="${esc(it.t)}" enterkeyhint="done"></div>`
@@ -2600,9 +2612,23 @@ function notesCard(){
     <div class="nl-add"><input id="nlIn" placeholder="${/groc/i.test(L.name) ? 'Add an item (e.g. eggs)' : 'Add a note…'}" enterkeyhint="enter" autocomplete="off"><button class="btn sm" data-act="nlAdd" aria-label="Add">Add</button></div>
     <div class="row between nl-foot">${done ? `<button class="btn ghost xs" data-act="nlClear">Clear ${done} checked</button>` : '<span></span>'}<span class="row gap" style="align-items:center">${L.items.length > 1 ? '<small class="mute" style="font-size:11px">Hold to move</small>' : ''}<button class="btn ghost xs" data-act="nlListEdit">Edit list</button></span></div></div>`;
 }
+/* ---- Habits ⇄ Lists pager: native swipe with snap; height follows the page you're on ---- */
+const hPages = p => [...p.querySelectorAll(':scope > .h-page')];
+const hStep = p => { const pg = hPages(p); return pg.length > 1 ? pg[1].offsetLeft - pg[0].offsetLeft : p.clientWidth; };
+function hPagerInit(){ const p = $('#hPager'); if (!p) return; p.style.scrollBehavior = 'auto'; p.scrollLeft = (ui.hPage || 0) * hStep(p); p.style.scrollBehavior = ''; hPagerSync(true); }
+function hPagerSync(settle){
+  const p = $('#hPager'); if (!p || !p.clientWidth) return;
+  const pages = hPages(p), x = p.scrollLeft / hStep(p), i = Math.max(0, Math.min(pages.length - 1, Math.floor(x))), f = Math.min(1, x - i);
+  const h0 = pages[i].offsetHeight, h1 = (pages[i + 1] || pages[i]).offsetHeight;
+  p.style.height = Math.round(h0 + (h1 - h0) * f) + 'px';
+  const seg = $('.h-seg'); if (seg){ seg.style.setProperty('--x', x); }
+  const cur = Math.round(x); if (settle || cur !== ui.hPage){ ui.hPage = cur; if (seg) seg.querySelectorAll('button').forEach((b, j) => b.classList.toggle('on', j === cur)); }
+}
+document.addEventListener('scroll', e => { if (e.target.id === 'hPager') requestAnimationFrame(() => hPagerSync()); }, true);
+window.addEventListener('resize', () => { if (ui.tab === 'habits') hPagerInit(); });
 function refreshNotes(focus){ // redraw just this card so the keyboard stays up while adding items
   const el = $('#notesCard'); if (!el) return render();
-  el.outerHTML = notesCard();
+  el.outerHTML = notesCard(); hPagerSync(true);
   if (focus === 'add'){ const i = $('#nlIn'); if (i) i.focus(); }
   else if (focus === 'edit'){ const i = $('.nl-edit'); if (i){ i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
 }
@@ -2877,6 +2903,7 @@ function render(){
   const v = $('#view');
   v.innerHTML = ({body:renderBody, progress:renderProgress, food:renderFood, train:renderTrain, splits:renderSplits, library:renderLibrary, coach:renderCoach, habits:renderHabits})[ui.tab]();
   if (ui.tab === 'library') renderLibList();
+  if (ui.tab === 'habits') hPagerInit();
 }
 
 /* ============ BODY VIEW ============ */
@@ -3456,6 +3483,7 @@ const ACT = {
     const got = claimHabitRewards(); save(); render();
     if (got.length) showHabitReward(got);
     else if (i < 0 && dueActive(k).every(t => habitDay(k).includes(t.id))) toast(k === todayKey() ? `All done for today 🌱 ${habitStreak()}-day streak` : `All done for ${shortDate(k)} 🌱`); },
+  hPage: d => { const p = $('#hPager'); if (p) p.scrollTo({left:+d.v * hStep(p), behavior:'smooth'}); },
   nlList: d => { state.notes.cur = d.id; ui.nlEdit = null; save(); refreshNotes(); },
   nlTog: d => { const it = nlCur().items.find(i => i.id === d.id); if (!it) return; it.d = !it.d; if (it.d && navigator.vibrate) navigator.vibrate(10); save(); refreshNotes(); },
   nlEdit: d => { ui.nlEdit = d.id; refreshNotes('edit'); },
