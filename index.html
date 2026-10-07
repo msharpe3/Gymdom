@@ -96,6 +96,12 @@ svg.body text{fill:var(--mute);font:600 11px 'Chakra Petch';letter-spacing:.25em
 .item-row.sx{background:var(--panel);border-radius:10px;padding:2px 0 2px 4px;margin-left:-4px;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;transition:transform .2s cubic-bezier(.2,.8,.3,1)}
 .item-row.sx input{-webkit-user-select:text;user-select:text}
 .sx-nm{display:block;min-width:0;cursor:grab;padding:6px 0;line-height:1.3}.sx-grip{font-style:normal;color:var(--mute);opacity:.55;font-size:11px;letter-spacing:-2px;margin-right:7px;vertical-align:1px}
+.sday{margin-top:12px}.sday-hd{margin-bottom:10px;align-items:center}.sp-tip{display:block;margin-top:8px}
+.sday-grip{font-size:15px;opacity:.85;padding:10px 4px 10px 2px;margin-right:-4px;cursor:grab;touch-action:none}
+.sday-n{display:none;flex:none;font-size:12px;color:var(--mute)}
+.sp-days.collapse .sday>:not(.sday-hd){display:none}.sp-days.collapse .sday-hd{margin-bottom:0}.sp-days.collapse .sday-n{display:block}
+.sp-days .sday{transition:transform .2s cubic-bezier(.2,.8,.3,1)}
+.sday.lift{position:relative;z-index:20;transition:none;box-shadow:0 14px 34px #000a;border-color:var(--teal)}
 .item-row.sx.lift{position:relative;z-index:20;transition:none;box-shadow:0 12px 30px #000a;outline:1px solid var(--teal)}
 .prow{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;cursor:pointer}.prow:last-child{border-bottom:0}
 .prow .sr{font:600 13px 'Chakra Petch';color:var(--teal);white-space:nowrap}
@@ -409,12 +415,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.07.1"></script>
+<script src="exercises.js?v=2026.10.07.2"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.07.1';
+const APP_VERSION = '2026.10.07.2';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -2589,7 +2595,7 @@ document.addEventListener('mousemove', e => { if (hd) hdMove(e.clientX, e.client
 document.addEventListener('mouseup', hdUp);
 document.addEventListener('change', e => { if (!['hRepN','hRepDate','hRepStart'].includes(e.target.id)) return; readRep();
   const r = ui.hForm && ui.hForm.r, el = $('.h-rep-sum'); if (r && el) el.textContent = schedLabel(r.mode === 'daily' && (!r.start || r.start <= todayKey()) ? null : r) || 'Shows up every day'; });
-document.addEventListener('contextmenu', e => { if (e.target.closest('.h-task, .item-row.sx')) e.preventDefault(); });
+document.addEventListener('contextmenu', e => { if (e.target.closest('.h-task, .item-row.sx, .sday-grip')) e.preventDefault(); });
 
 /* ---- Split editor: hold an exercise and drag to reorder it within its day ---- */
 let wd = null;
@@ -2601,10 +2607,14 @@ function moveEntry(L, from, to){
   L.forEach((x, i) => { x.ss = !!(lab[i] && lab[i] === lab[i + 1]); });
   return join ? (join === l ? '' : 'Added to the superset') : l ? 'Moved out of its superset' : '';
 }
-function wdDown(el, x, y){ if (wd) return; wd = {el, x0:x, y0:y, timer:setTimeout(() => wdBegin(y), 300)}; }
+function wdDown(el, x, y, day){ if (wd) return; wd = {el, x0:x, y0:y, day, timer:setTimeout(() => wdBegin(y), 300)}; }
 function wdBegin(y){
   if (!wd) return;
-  const items = [...wd.el.parentElement.querySelectorAll('.item-row.sx')], from = items.indexOf(wd.el), sy = scY();
+  if (wd.day){ // fold every day down to its name so they're easy to shuffle, keeping the held one under the finger
+    wd.el.parentElement.classList.add('collapse');
+    const r = wd.el.getBoundingClientRect(); scEl().scrollTop += r.top + r.height / 2 - y;
+  }
+  const items = [...wd.el.parentElement.querySelectorAll(wd.day ? '.sday' : '.item-row.sx')], from = items.indexOf(wd.el), sy = scY();
   const rects = items.map(i => { const r = i.getBoundingClientRect(); return {top:r.top + sy, h:r.height}; });
   Object.assign(wd, {on:true, items, from, to:from, rects, startPY:pageY(y), lastY:y});
   wd.el.classList.add('lift'); document.body.classList.add('h-dragging');
@@ -2620,7 +2630,7 @@ function wdMove(x, y, e){
 function wdLayout(){
   const {el, items, from, rects} = wd, dy = pageY(wd.lastY) - wd.startPY, cy = rects[from].top + rects[from].h / 2 + dy;
   el.style.transform = `translateY(${dy}px) scale(1.03)`;
-  const to = wd.to = items.filter((_, j) => j !== from && rects[j].top + rects[j].h / 2 < cy).length, H = rects[from].h + 8;
+  const to = wd.to = items.filter((_, j) => j !== from && rects[j].top + rects[j].h / 2 < cy).length, H = rects[from].h + (wd.day ? 12 : 8);
   items.forEach((it, j) => { if (j === from) return; it.style.transform = j < from && j >= to ? `translateY(${H}px)` : j > from && j <= to ? `translateY(${-H}px)` : ''; });
 }
 function wdTick(){
@@ -2634,14 +2644,20 @@ function wdUp(){
   const {on, from, to, el} = wd; wd = null; document.body.classList.remove('h-dragging');
   if (!on) return;
   ui.dragEnd = Date.now();
-  if (to !== from && ui.edit){ const msg = moveEntry(ui.edit.days[+el.dataset.d].items, from, to); if (msg) toast(msg); }
-  const y = scY(); render(); scEl().scrollTop = y;
+  const day = el.classList.contains('sday');
+  if (to !== from && ui.edit){
+    if (day){ const D = ui.edit.days, [m] = D.splice(from, 1); D.splice(to, 0, m); }
+    else { const msg = moveEntry(ui.edit.days[+el.dataset.d].items, from, to); if (msg) toast(msg); }
+  }
+  const y = scY(), top = day && el.getBoundingClientRect().top; render();
+  if (day){ const nd = document.querySelectorAll('.sday')[to]; scEl().scrollTop = nd ? nd.getBoundingClientRect().top + scY() - Math.max(80, top) : y; } else scEl().scrollTop = y;
 }
 const wdTarget = e => !e.target.closest('input, button') && e.target.closest('.item-row.sx');
-document.addEventListener('touchstart', e => { const el = wdTarget(e); if (el && e.touches.length === 1) wdDown(el, e.touches[0].clientX, e.touches[0].clientY); }, {passive:true});
+const ddTarget = e => e.target.closest('.sday-grip') && e.target.closest('.sday');
+document.addEventListener('touchstart', e => { if (e.touches.length !== 1) return; const t = e.touches[0], dd = ddTarget(e), el = dd || wdTarget(e); if (el) wdDown(el, t.clientX, t.clientY, !!dd); }, {passive:true});
 document.addEventListener('touchmove', e => { if (wd) wdMove(e.touches[0].clientX, e.touches[0].clientY, e); }, {passive:false});
 document.addEventListener('touchend', wdUp); document.addEventListener('touchcancel', wdUp);
-document.addEventListener('mousedown', e => { const el = e.button === 0 && wdTarget(e); if (el) wdDown(el, e.clientX, e.clientY); });
+document.addEventListener('mousedown', e => { if (e.button !== 0) return; const dd = ddTarget(e), el = dd || wdTarget(e); if (el) wdDown(el, e.clientX, e.clientY, !!dd); });
 document.addEventListener('mousemove', e => { if (wd) wdMove(e.clientX, e.clientY, e); });
 document.addEventListener('mouseup', wdUp);
 /* ============ UI HELPERS ============ */
@@ -2828,10 +2844,10 @@ function renderSplits(){
   const ed = ui.edit;
   if (ed){
     return `<h2>${ed.isNew ? 'New' : 'Edit'} Split</h2><input id="splitName" value="${esc(ed.name)}" placeholder="Split name (e.g. PPL)">
-    ${ed.days.map((d, di) => `<div class="card" style="margin-top:12px"><div class="row gap" style="margin-bottom:10px"><input data-sf="dayName" data-d="${di}" value="${esc(d.name)}" placeholder="Day name"><button class="icon-btn" data-act="rmDay" data-d="${di}">✕</button></div>
+    ${ed.days.length > 1 ? '<small class="mute sp-tip">Hold ⋮⋮ on a day to move it · hold an exercise to move it</small>' : ''}<div class="sp-days">${ed.days.map((d, di) => `<div class="card sday" data-d="${di}"><div class="row gap sday-hd">${ed.days.length > 1 ? '<i class="sx-grip sday-grip">⋮⋮</i>' : ''}<input data-sf="dayName" data-d="${di}" value="${esc(d.name)}" placeholder="Day name"><small class="sday-n">${d.items.length} exercise${d.items.length === 1 ? '' : 's'}</small><button class="icon-btn" data-act="rmDay" data-d="${di}">✕</button></div>
       ${d.items.length ? `<div class="item-row hdr"><small class="mute">EXERCISE</small><small class="mute" style="text-align:center">SETS</small><span></span><small class="mute" style="text-align:center">REPS</small><span></span><span></span></div>` : ''}
       ${d.items.map((it, i, arr) => `<div class="item-row sx" data-d="${di}" data-i="${i}"><span class="sx-nm"><i class="sx-grip">⋮⋮</i>${EX[it.ex]?.name}${ssLabels(arr)[i] ? ` <span class="sstag">SS ${ssLabels(arr)[i]}</span>` : ''}</span><input inputmode="numeric" data-sf="sets" data-d="${di}" data-i="${i}" value="${esc(it.sets)}"><span class="x">×</span><input data-sf="reps" data-d="${di}" data-i="${i}" value="${esc(it.reps)}">${i < d.items.length - 1 ? `<button class="icon-btn sm${it.ss ? ' on' : ''}" data-act="ssItem" data-d="${di}" data-i="${i}" aria-label="Superset with next">⛓</button>` : '<span></span>'}<button class="icon-btn sm" data-act="rmDayEx" data-d="${di}" data-i="${i}">✕</button></div>`).join('')}
-      <div class="row between" style="align-items:center;margin-top:4px"><button class="btn ghost sm" data-act="addDayEx" data-d="${di}">+ Exercise</button>${d.items.length > 1 ? '<small class="mute">Hold an exercise to move it</small>' : ''}</div></div>`).join('')}
+      <div class="row between" style="align-items:center;margin-top:4px"><button class="btn ghost sm" data-act="addDayEx" data-d="${di}">+ Exercise</button></div></div>`).join('')}</div>
     <button class="btn ghost block" data-act="addDay" style="margin:12px 0">+ Add day</button>
     <div class="row gap"><button class="btn ghost" data-act="cancelSplit">Cancel</button><button class="btn" style="flex:1" data-act="saveSplit">Save split</button></div>`;
   }
