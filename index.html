@@ -358,7 +358,9 @@ body.resting main{padding-bottom:170px}
 .pl-svg{width:100%;display:block;margin-top:4px}.pl-sum{text-align:center;margin:2px 0 12px;font-size:14px}
 .pl-discs{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
 .pl-disc{aspect-ratio:1;border-radius:50%;border:0;padding:0;background:radial-gradient(circle,var(--c) 0 54%,var(--e) 55% 59%,var(--c) 60% 100%);color:var(--t);font:800 15px 'Chakra Petch';cursor:pointer;box-shadow:inset 0 0 0 3px #0003,0 3px 8px #0006;display:grid;place-items:center;-webkit-tap-highlight-color:transparent}
-.pl-disc:active{transform:scale(.92)}.pl-disc.face{background:none;box-shadow:0 3px 8px #0007}.pl-face{width:100%;height:100%;display:block}
+.pl-disc:active{transform:scale(.92)}.arm-plate{width:64px;height:64px;margin:4px auto 2px}.arm-plate svg{width:100%;height:100%;display:block;filter:drop-shadow(0 2px 4px #0007)}.arm-tile.locked .arm-plate{opacity:.45}
+.arm-plate.sm{width:34px;height:34px;margin:0 8px 0 0;flex:none}.plate-new{align-items:center}
+.pl-disc.face{background:none;box-shadow:0 3px 8px #0007}.pl-face{width:100%;height:100%;display:block}
 .pl-custom{display:inline-flex;align-items:center;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:0 10px 0 4px;flex:none}.pl-custom.on{border-color:var(--teal)}
 .pl-custom input{width:62px;border:0;background:none;padding:6px 4px;text-align:center}.pl-custom small{color:var(--mute);font-size:12px}
 .pl-target{margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}.pl-target .row{margin-top:6px}.pl-target input{flex:1;min-width:0}
@@ -461,12 +463,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.07.9"></script>
+<script src="exercises.js?v=2026.10.07.10"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.07.9';
+const APP_VERSION = '2026.10.07.10';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1184,9 +1186,19 @@ function openTrophies(){
 /* ---- Plate calculator ---- */
 const PLATES = [[45,'',92],[35,'',82],[25,'',72],[10,'',56],[5,'',44],[2.5,'',36]];
 // Plate look in one place, so plate styles can be unlocked as rewards later; default is plain iron grey
+const BUMPER = {fill:'#18191d', edge:'#2b2d33', text:'#c3c7ce'};
+// Speckled rubber bumpers, one fleck colour each, earned by lifting heavier on any barbell lift
 const PLATE_SKINS = {iron:{name:'Iron', fill:'#5b616d', edge:'#3d424b', text:'#e8ebf0'},
-  // speckled rubber bumpers: black with coloured flecks, colour by weight
-  fleck:{name:'Speckled Bumpers', fill:'#18191d', edge:'#2b2d33', text:'#c3c7ce', fleck:{45:'#e4573d', 35:'#3f8ff0', 25:'#f2c94c', 10:'#ececec', 5:'#f08a3a', 2.5:'#6fd27a'}}};
+  sp_white:{name:'White Speckle', ...BUMPER, fleck:'#ececec', lift:135}, sp_yellow:{name:'Yellow Speckle', ...BUMPER, fleck:'#f2c94c', lift:185},
+  sp_blue:{name:'Blue Speckle', ...BUMPER, fleck:'#3f8ff0', lift:225}, sp_green:{name:'Green Speckle', ...BUMPER, fleck:'#6fd27a', lift:275},
+  sp_orange:{name:'Orange Speckle', ...BUMPER, fleck:'#f08a3a', lift:315}, sp_red:{name:'Red Speckle', ...BUMPER, fleck:'#e4573d', lift:405}};
+const plateOwned = id => !!PLATE_SKINS[id] && (!PLATE_SKINS[id].lift || state.cosmetics.owned.includes('plate:' + id));
+const bbBest = () => { let m = 0; for (const w of state.workouts) for (const e of w.entries) if (EX[e.ex] && EX[e.ex].eq === 'bb') for (const s of e.sets) if (+s.r > 0 && +s.w > m) m = +s.w; return m; };
+function claimPlates(){ // retroactive: any barbell set ever logged counts
+  const m = bbBest(), got = [];
+  for (const id in PLATE_SKINS){ const k = PLATE_SKINS[id]; if (k.lift && m >= k.lift && !plateOwned(id)){ state.cosmetics.owned.push('plate:' + id); got.push(id); } }
+  return got;
+}
 const prng = seed => () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = (t + Math.imul(t ^ t >>> 7, 61 | t)) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 function flecks(inside, n, col, seed, r0 = .5, r1 = 1.2){ // scattered specks, same pattern every time
   const R = prng(seed); let o = '';
@@ -1194,22 +1206,20 @@ function flecks(inside, n, col, seed, r0 = .5, r1 = 1.2){ // scattered specks, s
     o += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${(r0 + R() * (r1 - r0)).toFixed(2)}" fill="${R() < .14 ? '#9a9da5' : col}" opacity="${(.65 + R() * .35).toFixed(2)}"/>`; }
   return o;
 }
-function plateDisc(v){ // the tappable plate button, drawn as a plate face
-  const k = plateSkin();
-  if (!k.fleck) return `${v}`;
-  const c = k.fleck[v] || '#ccc', inside = (a, b) => { const x = a * 100, y = b * 100, d = Math.hypot(x - 50, y - 50); return d < 47 && d > 12 && Math.abs(d - 33) > 2.2 ? [x, y] : null; };
+function plateDisc(v, k = plateSkin()){ // a plate face: the tappable plate buttons + Armory previews
+  const c = k.fleck, inside = (a, b) => { const x = a * 100, y = b * 100, d = Math.hypot(x - 50, y - 50); return d < 47 && d > 12 && Math.abs(d - 33) > 2.2 ? [x, y] : null; };
   return `<svg viewBox="0 0 100 100" class="pl-face"><circle cx="50" cy="50" r="49" fill="${k.fill}" stroke="${k.edge}" stroke-width="2"/><circle cx="50" cy="50" r="33" fill="none" stroke="#2f3137" stroke-width="2.5"/>
-    ${flecks(inside, 190, c, v * 97 + 3, .55, 1.35)}<circle cx="50" cy="50" r="11" fill="#c8ccd3"/><circle cx="50" cy="50" r="7.5" fill="#0b0c0f"/>
+    ${c ? flecks(inside, 190, c, v * 97 + 3, .55, 1.35) : ''}<circle cx="50" cy="50" r="11" fill="#c8ccd3"/><circle cx="50" cy="50" r="7.5" fill="#0b0c0f"/>
     <text x="50" y="${v === 2.5 ? 29 : 28}" text-anchor="middle" font-family="Chakra Petch,Arial" font-weight="800" font-size="${v === 2.5 ? 15 : 17}" fill="${k.text}" stroke="${k.fill}" stroke-width="4" paint-order="stroke">${v}</text></svg>`;
 }
-const plateSkin = () => PLATE_SKINS[state.plateSkin] || PLATE_SKINS.iron;
+const plateSkin = () => plateOwned(state.plateSkin) ? PLATE_SKINS[state.plateSkin] : PLATE_SKINS.iron;
 function plateMath(total, bar){ let side = (total - bar) / 2; const out = []; if (side < 0) return {out, rem:0, under:true}; for (const [p] of PLATES) while (side >= p - 1e-9){ out.push(p); side -= p; } return {out, rem: Math.round(side * 2 * 100) / 100}; }
 function plateSvg(out){ // one sleeve, plates stacked out from the collar
   let x = 62, svg = '';
   const k = plateSkin();
   out.forEach((p, j) => { const [, , h] = PLATES.find(q => q[0] === p), y0 = 60 - h / 2;
     svg += `<rect x="${x}" y="${y0}" width="13" height="${h}" rx="3" fill="${k.fill}" stroke="${k.edge}" stroke-width="1.5"/>`;
-    if (k.fleck) svg += flecks((a, b) => [x + 1.5 + a * 10, y0 + 2 + b * (h - 4)], Math.round(h / 1.4), k.fleck[p] || '#ccc', p * 31 + j * 7, .3, .7);
+    if (k.fleck) svg += flecks((a, b) => [x + 1.5 + a * 10, y0 + 2 + b * (h - 4)], Math.round(h / 1.4), k.fleck, p * 31 + j * 7, .3, .7);
     x += 15; });
   return `<svg viewBox="0 0 300 120" class="pl-svg"><rect x="4" y="55" width="292" height="10" rx="4" fill="#8b919b"/><rect x="50" y="44" width="9" height="32" rx="2" fill="#b8c4d6"/>${svg}</svg>`;
 }
@@ -1238,7 +1248,7 @@ function renderPlates(){
     <div class="pl-total"><b>${r1(tot)}</b><span>lb total</span></div>
     ${plateSvg(P.plates)}
     <p class="pl-sum">${P.plates.length ? `${P.sides === 2 ? 'Each side' : 'Loaded'}: ${P.plates.join(' + ')}` : 'Tap plates below to load them'}${P.start ? ` <span class="mute">· ${r1(P.start)} lb start</span>` : ''}</p>
-    <div class="pl-discs" style="--c:${plateSkin().fill};--e:${plateSkin().edge};--t:${plateSkin().text}">${PLATES.map(([v]) => `<button class="pl-disc${plateSkin().fleck ? ' face' : ''}" data-act="plAdd" data-v="${v}" aria-label="${v} lb plate">${plateDisc(v)}</button>`).join('')}</div>
+    <div class="pl-discs" style="--c:${plateSkin().fill};--e:${plateSkin().edge};--t:${plateSkin().text}">${PLATES.map(([v]) => `<button class="pl-disc face" data-act="plAdd" data-v="${v}" aria-label="${v} lb plate">${plateDisc(v)}</button>`).join('')}</div>
     <div class="row gap" style="margin-top:10px"><button class="btn ghost sm" style="flex:1" data-act="plUndo"${P.plates.length ? '' : ' disabled'}>↶ Remove last</button><button class="btn ghost sm" style="flex:1" data-act="plClear"${P.plates.length ? '' : ' disabled'}>Clear</button></div>
     ${left.length ? `<button class="btn gold block" style="margin-top:12px" data-act="plUse">Use ${r1(tot)} lb for set${left.length === 1 ? ' ' + left[0] : `s ${left[0]}–${left[left.length - 1]}`}</button>` : ''}
     <div class="pl-target"><small class="mute">Working backwards?</small><div class="row gap"><input id="plTarget" type="number" inputmode="decimal" placeholder="Target total (lb)"><button class="btn sm" data-act="plLoad">Load it</button></div><small id="plTMsg" class="mute"></small></div>`);
@@ -2524,6 +2534,9 @@ function openArmory(){
       return `<div class="arm-hd"><label class="lbl">${sn}</label><small class="mute">${owned}/${items.length}</small></div><div class="arm-row" data-slot="${slot}">
         <button class="arm-tile${!sk[slot] ? ' on' : ''}" data-act="eqSkin" data-s="${slot}" data-v=""><div class="arm-none">∅</div><b>None</b><small>${!sk[slot] ? 'Equipped' : '&nbsp;'}</small></button>
         ${items.map(([id, n, , u, ok]) => `<button class="arm-tile z-${ARM_ZOOM[slot] || 'full'}${sk[slot] === id ? ' on' : ''}${ok ? '' : ' locked'}" data-act="eqSkin" data-s="${slot}" data-v="${id}"><div class="hmini">${figMini({id, slot}, t, true)}</div><b>${esc(n)}</b><small>${sk[slot] === id ? 'Equipped' : ok ? 'Unlocked' : '🔒 ' + unlockLabel(u)}</small></button>`).join('')}</div>`; }).join('')}
+    <div class="arm-hd"><label class="lbl">Plates</label><small class="mute">${Object.keys(PLATE_SKINS).filter(plateOwned).length}/${Object.keys(PLATE_SKINS).length}</small></div><div class="arm-row" data-slot="plates">
+      ${Object.entries(PLATE_SKINS).map(([id, k]) => { const ok = plateOwned(id), on = plateSkin() === k;
+        return `<button class="arm-tile${on ? ' on' : ''}${ok ? '' : ' locked'}" data-act="eqPlate" data-v="${id}"><div class="arm-plate">${plateDisc(45, k)}</div><b>${esc(k.name)}</b><small>${on ? 'Equipped' : ok ? 'Unlocked' : `🔒 ${k.lift} lb barbell`}</small></button>`; }).join('')}</div>
     <details class="icon-more"${ui.iconOpen ? ' open' : ''}><summary><img src="icons/${iconId()}-180.png" alt=""><span>App icon</span><small>${APP_ICONS.find(x => x[0] === iconId())[1]}</small></summary>
       <div class="icons-grid">${APP_ICONS.map(([id, n]) => `<button class="icon-tile${iconId() === id ? ' on' : ''}" data-act="eqIcon" data-v="${id}"><img src="icons/${id}-180.png" alt="" loading="lazy"><small>${n}</small></button>`).join('')}</div>
       <button class="btn ghost sm block" style="margin-top:8px" data-act="iconHelp">Update Home Screen icon</button></details>`);
@@ -3051,7 +3064,7 @@ async function finishWorkout(){
   const achs = checkAchievements(); bonus += achs.length * 100;
   state.bonusXP += bonus;
   const loot = rollLoot(state.workouts.length === 1); if (loot && loot.kind === 'xp') state.bonusXP += loot.xp; w.loot = loot;
-  const seasonal = claimSeason();
+  const seasonal = claimSeason(), newPlates = claimPlates();
   save();
   const after = muscleTotals(), plA = playerLvl(sumObj(after) + state.bonusXP);
   ui.tab = 'body'; render(); publishStats(true);
@@ -3065,6 +3078,7 @@ async function finishWorkout(){
     ${quests.length ? `<div class="pr-box q"><h4>📜 QUEST${quests.length > 1 ? 'S' : ''} COMPLETE</h4>${quests.map(q => `<div class="mini-row"><span>${q.title}</span><span class="xp">+${q.xp}</span></div>`).join('')}</div>` : ''}
     ${achs.length ? `<div class="pr-box"><h4>TROPHY UNLOCKED</h4>${achs.map(id => { const x = achById(id); return `<div class="mini-row"><span>${x[1]} <b>${x[2]}</b> <small class="mute">${x[3]}</small></span><span class="xp">+100</span></div>`; }).join('')}</div>` : ''}
     ${seasonal.length ? `<div class="pr-box season-box" data-act="seasonTrack"><h4>${seasonal[0].se.icon} DOOR ${seasonal.map(x => x.n).join(' + ')} OPENED</h4>${seasonal.map(x => `<div class="mini-row"><span>${x.icon} <b>${esc(x.name)}</b> <small class="mute">${x.kind}</small></span><span class="xp">NEW</span></div>`).join('')}<small class="mute">${seasonal.some(x => x.slot) ? 'Equip it in the Armory' : 'Tap to see the calendar'}</small></div>` : ''}
+    ${newPlates.length ? `<div class="pr-box"><h4>🏋 NEW PLATES UNLOCKED</h4>${newPlates.map(id => `<div class="mini-row plate-new"><span class="arm-plate sm">${plateDisc(45, PLATE_SKINS[id])}</span><span style="flex:1"><b>${PLATE_SKINS[id].name}</b> <small class="mute">${PLATE_SKINS[id].lift} lb barbell</small></span><button class="btn ghost xs" data-act="eqPlateNew" data-v="${id}">Equip</button></div>`).join('')}</div>` : ''}
     ${comeback.length ? `<div class="hint">🕸️ Comeback bonus +50% on ${comeback.map(m => MUSCLES[m]).join(', ')}</div>` : ''}
     <div style="max-width:320px;margin:0 auto">${bodySVG(m => w.xp[m] ? (rankOf(lvl(after[m]))[2] === UNTR ? TEAL : rankOf(lvl(after[m]))[2]) : UNTR, {labels:false})}</div>
     ${gained.map(m => { const lb = lvl(before[m]), la = lvl(after[m]);
@@ -3580,6 +3594,9 @@ const ACT = {
   eqIcon: d => { ui.iconOpen = true; state.cosmetics.icon = d.v; save(); applyIcon(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; toast('Icon picked: tap "Update Home Screen icon" to apply it'); },
   iconHelp: openIconHelp,
   eqTheme: d => { const th = THEMES.find(t => t[0] === d.v); if (!isUnlocked(d.v, th[2])) return toast(`Unlocks with ${unlockLabel(th[2])}`); state.cosmetics.theme = d.v; save(); applyTheme(); render(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; publishStats(true); },
+  eqPlateNew: (d, b) => { state.plateSkin = d.v; save(); b.textContent = 'Equipped'; b.disabled = true; },
+  eqPlate: d => { const k = PLATE_SKINS[d.v]; if (!k) return; if (!plateOwned(d.v)) return toast(`Lift ${k.lift} lb on any barbell exercise to unlock`);
+    state.plateSkin = d.v; save(); const y = $('#sheet').scrollTop, xs = Object.fromEntries([...document.querySelectorAll('.arm-row')].map(r => [r.dataset.slot, r.scrollLeft])); openArmory(); $('#sheet').scrollTop = y; document.querySelectorAll('.arm-row').forEach(r => r.scrollLeft = xs[r.dataset.slot] || 0); toast(`${k.name} plates equipped`); },
   eqSkin: d => { const it = SKINS.find(s => s[0] === d.v); if (it && !isUnlocked(d.v, it[3])) return toast(`Unlocks with ${unlockLabel(it[3])}`); state.cosmetics[d.s] = d.v; save(); render(); const y = $('#sheet').scrollTop, xs = Object.fromEntries([...document.querySelectorAll('.arm-row')].map(r => [r.dataset.slot, r.scrollLeft])); openArmory(); $('#sheet').scrollTop = y; document.querySelectorAll('.arm-row').forEach(r => r.scrollLeft = xs[r.dataset.slot] || 0); publishStats(true); },
   closeLvlUp: () => { const d = document.getElementById('lvlUp'); if (d){ d.classList.add('out'); setTimeout(() => d.remove(), 300); } },
   openLoot: (d, b) => { if (b.classList.contains('opening') || b.classList.contains('open')) return; b.classList.add('opening'); if (navigator.vibrate) navigator.vibrate([20, 40, 20, 40, 20]);
@@ -3670,6 +3687,7 @@ setInterval(() => { const el = $('#elapsed'); if (el && state.active) el.textCon
 
 if (state.active) ui.tab = 'train';
 try { if (claimSeason().length) saveLocal(); } catch(e){}
+try { if (claimPlates().length) saveLocal(); } catch(e){}
 render();
 initSync();
 setTimeout(backfillNutrition, 2500);
