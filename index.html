@@ -349,6 +349,21 @@ body.resting main{padding-bottom:170px}
 .h-sec-hd small{margin-left:auto;color:var(--mute);font-size:12px;font-weight:600}.h-sec.all .h-sec-hd small{color:var(--teal)}
 .h-sec-hd i{font-style:normal;color:var(--mute);font-size:18px;transform:rotate(90deg);transition:transform .2s;width:14px;text-align:center}.h-sec.shut .h-sec-hd i{transform:none}
 .h-sub{display:flex;align-items:center;gap:7px;font:600 11px Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin:12px 0 6px}
+.reward-card.in{background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 10%,var(--panel2)),var(--panel2) 70%);border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:12px}
+.nl-tabs{margin:12px 0 10px}.nl-tabs .chip{display:inline-flex;align-items:center;gap:6px}.nl-new{font-weight:700;padding-left:14px;padding-right:14px}
+.nl-dot{font-style:normal;font-size:10px;font-weight:700;min-width:17px;height:17px;border-radius:9px;background:var(--panel2);color:var(--mute);display:grid;place-items:center;padding:0 4px}
+.nl-row{display:flex;align-items:center;gap:10px;padding:9px 8px 9px 10px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);margin-bottom:6px;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;transition:transform .2s cubic-bezier(.2,.8,.3,1)}
+.nl-ck{flex:none;width:24px;height:24px;border-radius:50%;border:2px solid var(--line);background:none;display:grid;place-items:center;color:#06231f;font:700 13px Inter;cursor:pointer;padding:0}
+.nl-ck.on{background:var(--teal);border-color:var(--teal);animation:pop .3s cubic-bezier(.2,1.6,.4,1)}
+.nl-t{flex:1;min-width:0;font-size:15px;line-height:1.35;word-break:break-word;cursor:text}
+.nl-row.done .nl-t{text-decoration:line-through;text-decoration-thickness:2px;color:var(--mute)}.nl-row.done{opacity:.7}
+.nl-x{flex:none;background:none;border:0;color:var(--mute);font-size:13px;padding:4px 6px;cursor:pointer;opacity:.6}
+.nl-edit{flex:1;min-width:0;padding:4px 8px;font-size:15px}.nl-row.editing{border-color:var(--teal)}
+.nl-row.lift{position:relative;z-index:20;transition:none;box-shadow:0 14px 34px #000a;border-color:var(--teal)}
+.nl-empty{font-size:13px;text-align:center;margin:6px 0 10px}
+.nl-add{display:flex;gap:8px;margin-top:4px}.nl-add input{flex:1;min-width:0}
+.nl-foot{margin-top:10px;align-items:center}
+#toast.act.show{pointer-events:auto}.toast-undo{background:none;border:0;color:var(--teal);font:700 14px Inter;margin-left:10px;padding:0;cursor:pointer}
 .h-alldone{text-align:center;color:var(--teal);font-weight:600;margin-top:6px}
 .h-week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
 .h-week .dot{display:grid;place-items:center;width:34px;height:34px;margin:0 auto 4px;border-radius:50%;background:conic-gradient(var(--teal) var(--p),var(--panel2) 0)}
@@ -433,12 +448,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.07.4"></script>
+<script src="exercises.js?v=2026.10.07.5"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.07.4';
+const APP_VERSION = '2026.10.07.5';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -989,6 +1004,7 @@ function migrate(s){
   if (!s.habits.tasks) s.habits.tasks = HABIT_DEFAULT.map(id => { const p = HABIT_PRESETS.find(x => x[0] === id); return {id, i:p[1], n:p[2], g:presetSec(id)}; });
   s.habits.tasks.forEach(t => { if (!t.i){ const p = HABIT_PRESETS.find(x => x[0] === t.id); t.i = p ? p[1] : EMOJI_ICON[t.e] || 'star'; } delete t.e; if (!t.g) t.g = t.id.startsWith('p:') ? presetSec(t.id) : 'anytime'; });
   s.restSec = s.restSec || 90;
+  if (!s.notes || !s.notes.lists || !s.notes.lists.length) s.notes = {lists:[{id:'groc', name:'Groceries', items:[]}, {id:'notes', name:'Notes', items:[]}], cur:'groc'};
   s.savedMeals = s.savedMeals || []; s.waterGoal = s.waterGoal || 64; s.friends = s.friends || [];
   if (!s.profile.playerId) s.profile.playerId = newPlayerId();
   s.food = s.food || {}; s.foodRecent = s.foodRecent || []; s.foodTargets = s.foodTargets || null;
@@ -2538,13 +2554,6 @@ function renderHabits(){
   const prevGoal = nx && nx.i ? trackItem(nx.i - 1).goal : 0;
   let h = `<div class="row between"><h2 style="margin:0">Habits</h2><button class="btn ghost xs" data-act="hEdit">Edit tasks</button></div>
     <div class="stats" style="margin-top:12px"><div class="stat"><b>${done}/${act.length}</b><small>${isToday ? 'Today' : shortDate(sel)}</small></div><div class="stat"><b>${streak}🔥</b><small>Day streak</small></div><div class="stat"><b>${fmt(tot)}</b><small>Tasks done</small></div></div>`;
-  // Next reward
-  if (nx){
-    const pct = Math.min(100, (tot - prevGoal) / (nx.goal - prevGoal) * 100);
-    h += `<div class="card reward-card" data-act="hTrack"><div class="reward-prev">${figMini(nx)}</div>
-      <div style="flex:1;min-width:0"><small class="kick">NEXT REWARD</small><h3 style="margin:2px 0 0">${esc(nx.name)}</h3><small class="mute">${SLOT_NAME[nx.slot]}</small>
-      <div class="bar" style="margin:10px 0 6px"><i style="width:${pct}%"></i></div><small class="mute">${nx.goal - tot} more task${nx.goal - tot === 1 ? '' : 's'} · ${tot}/${nx.goal}</small></div></div>`;
-  } else h += `<div class="card reward-card"><div style="flex:1"><small class="kick">REWARD TRACK</small><h3 style="margin:2px 0">All ${HABIT_TRACK.length} rewards unlocked 👑</h3><small class="mute">Keep the streak alive.</small></div></div>`;
   // Today's tasks
   const dn0 = dnum(sel) - dowOf(sel), title = isToday ? 'Today' : sel === dkOf(dnum(tk) + 1) ? 'Tomorrow' : sel === dkOf(dnum(tk) - 1) ? 'Yesterday' : kDate(sel, {weekday:'long'});
   h += `<div class="card"><div class="row between"><h3 style="margin:0">${title}</h3>${isToday ? `<small class="mute">${kDate(sel, {weekday:'long', month:'short', day:'numeric'})}</small>` : `<span class="row gap" style="align-items:center"><small class="mute">${kDate(sel, {month:'short', day:'numeric'})}</small><button class="chip" style="padding:4px 10px;font-size:12px" data-act="hDay" data-v="${tk}">Back to today</button></span>`}</div>
@@ -2560,6 +2569,7 @@ function renderHabits(){
         return `<button class="h-task${on ? ' done' : ''}${sk ? ' skipped' : ''}${future ? ' future' : ''}" data-act="hToggle" data-id="${esc(t.id)}">${hIcon(t)}<b>${esc(t.n)}${lbl ? `<small>${esc(lbl)}</small>` : ''}</b><span class="ck">${on ? '✓' : sk ? '<svg viewBox="0 0 24 24" width="13" height="13"><path d="M5 5l8 7-8 7zM14 5l8 7-8 7z" fill="currentColor"/></svg>' : ''}</span></button>`; }).join('')}</div>`}</div>`; }).join('') + `<small class="mute h-hint">${future ? 'Coming up — swipe left to skip one ahead of time' : 'Hold to move · swipe left to skip'}</small>`
     : `<p class="mute" style="margin:10px 0 4px;text-align:center">${all.length ? 'Nothing scheduled for this day 🌤️' : 'No tasks yet — tap Edit tasks to pick some.'}</p>`;
   h += `</div>${act.length && done === act.length && !future ? `<div class="h-alldone">🌱 All done for ${isToday ? 'today' : 'the day'}!</div>` : tasks.length && !act.length ? `<div class="h-alldone skip">😌 Everything skipped — your streak is safe</div>` : ''}</div>`;
+  h += notesCard();
   // Week
   const days = []; for (let i = 6; i >= 0; i--){ const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - i); days.push(d); }
   h += `<div class="card"><h3>This week</h3><div class="h-week">${days.map((d, i) => { const k = dkey(d), n = habitDay(k).length, most = Math.max(1, dueActive(k).length);
@@ -2567,10 +2577,53 @@ function renderHabits(){
   // Upcoming rewards
   const t = muscleTotals(), up = []; if (nx) for (let i = nx.i + 1; i < HABIT_TRACK.length && up.length < 4; i++) up.push(trackItem(i));
   const owned = HABIT_TRACK.filter(id => state.cosmetics.owned.includes(id)).length;
+  const pct = nx ? Math.min(100, (tot - prevGoal) / (nx.goal - prevGoal) * 100) : 100;
   h += `<div class="card"><div class="row between"><h3 style="margin:0">Reward track</h3><small class="mute">${owned}/${HABIT_TRACK.length} unlocked</small></div>
+    ${nx ? `<div class="reward-card in" data-act="hTrack"><div class="reward-prev">${figMini(nx)}</div>
+      <div style="flex:1;min-width:0"><small class="kick">NEXT REWARD</small><h3 style="margin:2px 0 0">${esc(nx.name)}</h3><small class="mute">${SLOT_NAME[nx.slot]}</small>
+      <div class="bar" style="margin:10px 0 6px"><i style="width:${pct}%"></i></div><small class="mute">${nx.goal - tot} more task${nx.goal - tot === 1 ? '' : 's'} · ${tot}/${nx.goal}</small></div></div>`
+      : `<div class="reward-card in"><div style="flex:1"><h3 style="margin:2px 0">All ${HABIT_TRACK.length} rewards unlocked 👑</h3><small class="mute">Keep the streak alive.</small></div></div>`}
     ${up.length ? `<div class="h-up">${up.map(it => `<div><div class="hmini">${figMini(it, t, true)}</div><b>${esc(it.name)}</b><small>${it.goal} tasks</small></div>`).join('')}</div>` : ''}
     <button class="btn ghost sm block" style="margin-top:12px" data-act="hTrack">See all ${HABIT_TRACK.length} rewards</button></div>`;
   return h;
+}
+/* ---- Checklist / notes on the Habits tab: lists of items you can tick off ---- */
+const nlCur = () => { const N = state.notes; return N.lists.find(l => l.id === N.cur) || N.lists[0]; };
+function notesCard(){
+  const N = state.notes, L = nlCur(), done = L.items.filter(i => i.d).length;
+  return `<div class="card notes" id="notesCard"><div class="row between"><h3 style="margin:0">Lists</h3>${L.items.length ? `<small class="mute">${done}/${L.items.length} checked</small>` : ''}</div>
+    <div class="chips nl-tabs">${N.lists.map(l => `<button class="chip${l.id === L.id ? ' on' : ''}" data-act="nlList" data-id="${l.id}">${esc(l.name)}${l.items.some(i => !i.d) && l.id !== L.id ? `<i class="nl-dot">${l.items.filter(i => !i.d).length}</i>` : ''}</button>`).join('')}<button class="chip nl-new" data-act="nlNewList" aria-label="New list">+</button></div>
+    <div class="nl-items">${L.items.map(it => ui.nlEdit === it.id
+      ? `<div class="nl-row editing" data-id="${it.id}"><span class="nl-ck${it.d ? ' on' : ''}"></span><input class="nl-edit" data-id="${it.id}" value="${esc(it.t)}" enterkeyhint="done"></div>`
+      : `<div class="nl-row${it.d ? ' done' : ''}" data-id="${it.id}"><button class="nl-ck${it.d ? ' on' : ''}" data-act="nlTog" data-id="${it.id}" aria-label="${it.d ? 'Uncheck' : 'Check off'}">${it.d ? '✓' : ''}</button><span class="nl-t" data-act="nlEdit" data-id="${it.id}">${esc(it.t)}</span><button class="nl-x" data-act="nlDel" data-id="${it.id}" aria-label="Delete">✕</button></div>`).join('')
+      || `<p class="mute nl-empty">${/groc/i.test(L.name) ? 'Nothing on the list yet — add what you need below.' : 'Empty — jot something down below.'}</p>`}</div>
+    <div class="nl-add"><input id="nlIn" placeholder="${/groc/i.test(L.name) ? 'Add an item (e.g. eggs)' : 'Add a note…'}" enterkeyhint="enter" autocomplete="off"><button class="btn sm" data-act="nlAdd" aria-label="Add">Add</button></div>
+    <div class="row between nl-foot">${done ? `<button class="btn ghost xs" data-act="nlClear">Clear ${done} checked</button>` : '<span></span>'}<span class="row gap" style="align-items:center">${L.items.length > 1 ? '<small class="mute" style="font-size:11px">Hold to move</small>' : ''}<button class="btn ghost xs" data-act="nlListEdit">Edit list</button></span></div></div>`;
+}
+function refreshNotes(focus){ // redraw just this card so the keyboard stays up while adding items
+  const el = $('#notesCard'); if (!el) return render();
+  el.outerHTML = notesCard();
+  if (focus === 'add'){ const i = $('#nlIn'); if (i) i.focus(); }
+  else if (focus === 'edit'){ const i = $('.nl-edit'); if (i){ i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
+}
+function nlAdd(){
+  const inp = $('#nlIn'); if (!inp) return; const L = nlCur();
+  const lines = inp.value.split(/\n/).map(t => t.trim()).filter(Boolean); if (!lines.length) return;
+  lines.forEach(t => L.items.push({id:uid(), t:t.slice(0, 140), d:false}));
+  save(); refreshNotes('add');
+}
+function nlCommit(id, v){
+  const L = nlCur(), it = L.items.find(i => i.id === id); ui.nlEdit = null; if (!it) return refreshNotes();
+  const t = (v || '').trim(); if (t) it.t = t.slice(0, 140); else L.items.splice(L.items.indexOf(it), 1);
+  save(); refreshNotes();
+}
+function openListEdit(isNew){
+  const L = isNew ? null : nlCur();
+  openSheet(`<div class="row between"><h3 style="margin:0">${isNew ? 'New list' : 'Edit list'}</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    <label class="lbl">Name</label><input id="nlName" maxlength="24" value="${esc(L ? L.name : '')}" placeholder="e.g. Costco run, Meal prep, Ideas">
+    <button class="btn gold block" style="margin-top:14px" data-act="nlSaveList" data-new="${isNew ? 1 : ''}">${isNew ? 'Create list' : 'Save'}</button>
+    ${L ? `${L.items.length ? `<button class="btn ghost block" style="margin-top:8px" data-act="nlUncheckAll">Uncheck everything</button>` : ''}${state.notes.lists.length > 1 ? `<button class="btn danger block" style="margin-top:8px" data-act="nlDelList">Delete this list</button>` : ''}` : ''}`);
+  setTimeout(() => { const i = $('#nlName'); if (i) i.focus(); }, 250);
 }
 function openHabitTrack(){
   const nxId = (habitNext() || {}).id, t = muscleTotals();
@@ -2710,7 +2763,7 @@ document.addEventListener('mousemove', e => { if (hd) hdMove(e.clientX, e.client
 document.addEventListener('mouseup', hdUp);
 document.addEventListener('change', e => { if (!['hRepN','hRepDate','hRepStart'].includes(e.target.id)) return; readRep();
   const r = ui.hForm && ui.hForm.r, el = $('.h-rep-sum'); if (r && el) el.textContent = schedLabel(r.mode === 'daily' && (!r.start || r.start <= todayKey()) ? null : r) || 'Shows up every day'; });
-document.addEventListener('contextmenu', e => { if (e.target.closest('.h-task, .item-row.sx, .sday-grip, .h-cust, .split-hd, .frow.meal')) e.preventDefault(); });
+document.addEventListener('contextmenu', e => { if (e.target.closest('.h-task, .item-row.sx, .sday-grip, .h-cust, .split-hd, .frow.meal, .nl-row')) e.preventDefault(); });
 
 /* ---- Hold-and-drag reordering (split editor, split list, habit editor, saved meals) ---- */
 let wd = null;
@@ -2730,6 +2783,7 @@ const RD = [
   {sel:'.split-card', grip:'.split-hd', fold:true, gap:14, drop:(el, f, t) => { moveIn(state.splits, f, t); save(); }},
   {sel:'.h-cust', gap:6, drop:(el, f, t, items) => { const arr = habitList(), m = arr.find(x => x.id === el.dataset.id), nb = arr.find(x => x.id === items[t].dataset.id);
       arr.splice(arr.indexOf(m), 1); const ni = arr.indexOf(nb); arr.splice(t > f ? ni + 1 : ni, 0, m); save(); }, redraw:() => openHabitEdit(true)},
+  {sel:'.nl-row:not(.editing)', gap:6, drop:(el, f, t) => { moveIn(nlCur().items, f, t); save(); }, redraw:() => refreshNotes()},
   {sel:'.frow.meal', gap:0, drop:(el, f, t) => { moveIn(state.savedMeals, f, t); save(); }, redraw:() => savedMealsUI()},
 ];
 function rdFind(e){
@@ -2791,7 +2845,8 @@ function openSheet(html){ $('#sheet').innerHTML = html; $('#sheetWrap').classLis
 function closeSheet(){ $('#sheetWrap').classList.remove('open'); ui.pick = null; stopScan(); }
 $('#sheetWrap').addEventListener('click', e => { if (e.target.id === 'sheetWrap') closeSheet(); });
 let toastT;
-function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200); }
+function toastUndo(m, act){ const t = $('#toast'); t.innerHTML = `${esc(m)} <button class="toast-undo" data-act="${act}">Undo</button>`; t.classList.add('show', 'act'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 4000); }
+function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.remove('act'); t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200); }
 // Custom confirm (iOS home-screen mode blocks window.confirm)
 function confirmBox(msg, ok='Confirm'){
   return new Promise(res => {
@@ -3401,6 +3456,22 @@ const ACT = {
     const got = claimHabitRewards(); save(); render();
     if (got.length) showHabitReward(got);
     else if (i < 0 && dueActive(k).every(t => habitDay(k).includes(t.id))) toast(k === todayKey() ? `All done for today 🌱 ${habitStreak()}-day streak` : `All done for ${shortDate(k)} 🌱`); },
+  nlList: d => { state.notes.cur = d.id; ui.nlEdit = null; save(); refreshNotes(); },
+  nlTog: d => { const it = nlCur().items.find(i => i.id === d.id); if (!it) return; it.d = !it.d; if (it.d && navigator.vibrate) navigator.vibrate(10); save(); refreshNotes(); },
+  nlEdit: d => { ui.nlEdit = d.id; refreshNotes('edit'); },
+  nlDel: d => { const L = nlCur(), i = L.items.findIndex(x => x.id === d.id); if (i < 0) return; const [gone] = L.items.splice(i, 1); ui.nlUndo = {l:L.id, i, it:gone}; save(); refreshNotes(); toastUndo('Deleted', 'nlUndo'); },
+  nlUndo: () => { const u = ui.nlUndo; if (!u) return; const L = state.notes.lists.find(l => l.id === u.l); if (L){ L.items.splice(u.i, 0, u.it); save(); refreshNotes(); } ui.nlUndo = null; $('#toast').classList.remove('show'); },
+  nlAdd: () => nlAdd(),
+  nlClear: () => { const L = nlCur(), gone = L.items.filter(i => i.d); L.items = L.items.filter(i => !i.d); ui.nlUndo = {l:L.id, all:gone}; save(); refreshNotes(); toastUndo(`Cleared ${gone.length} checked`, 'nlUndoClear'); },
+  nlUndoClear: () => { const u = ui.nlUndo; if (!u || !u.all) return; const L = state.notes.lists.find(l => l.id === u.l); if (L){ L.items.push(...u.all); save(); refreshNotes(); } ui.nlUndo = null; $('#toast').classList.remove('show'); },
+  nlNewList: () => openListEdit(true),
+  nlListEdit: () => openListEdit(false),
+  nlSaveList: d => { const nm = ($('#nlName').value || '').trim(); if (!nm) return toast('Give the list a name');
+    if (d.new){ const l = {id:uid(), name:nm, items:[]}; state.notes.lists.push(l); state.notes.cur = l.id; } else nlCur().name = nm;
+    save(); closeSheet(); render(); },
+  nlUncheckAll: () => { nlCur().items.forEach(i => i.d = false); save(); closeSheet(); render(); },
+  nlDelList: async () => { const L = nlCur(); if (L.items.length && !(await confirmBox(`Delete "${L.name}" and its ${L.items.length} item${L.items.length === 1 ? '' : 's'}?`, 'Delete'))) return;
+    state.notes.lists = state.notes.lists.filter(l => l !== L); state.notes.cur = state.notes.lists[0].id; save(); closeSheet(); render(); },
   hDay: d => { ui.hDay = d.v === todayKey() ? null : d.v; render(); },
   hEdit: openHabitEdit,
   hTrack: () => openHabitTrack(),
@@ -3451,7 +3522,7 @@ const ACT = {
 };
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
-  if (Date.now() - (ui.dragEnd || 0) < 400 && b.closest('.h-cust, .split-card, .frow.meal, .sday')) return; // the tap that ends a drag
+  if (Date.now() - (ui.dragEnd || 0) < 400 && b.closest('.h-cust, .split-card, .frow.meal, .sday, .nl-row')) return; // the tap that ends a drag
   const f = ACT[b.dataset.act]; if (f){ e.preventDefault(); f(b.dataset, b, e); }
 });
 document.addEventListener('input', e => {
@@ -3468,6 +3539,13 @@ document.addEventListener('input', e => {
   else if (t.id === 'pickq' && ui.pick){ ui.pick.q = t.value; ui.pick.n = PAGE; renderPickList(); }
   else if (t.id === 'repq' && ui.rep){ ui.rep.q = t.value.trim(); ui.rep.n = 25; renderRepList(); }
 });
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.isComposing) return;
+  if (e.target.id === 'nlIn'){ e.preventDefault(); nlAdd(); }
+  else if (e.target.classList.contains('nl-edit')){ e.preventDefault(); e.target.dataset.done = 1; nlCommit(e.target.dataset.id, e.target.value); }
+  else if (e.target.id === 'nlName'){ e.preventDefault(); const b = $('[data-act="nlSaveList"]'); if (b) b.click(); }
+});
+document.addEventListener('focusout', e => { const t = e.target; if (t.classList && t.classList.contains('nl-edit') && !t.dataset.done && ui.nlEdit === t.dataset.id){ t.dataset.done = 1; nlCommit(t.dataset.id, t.value); } });
 document.addEventListener('change', e => { const t = e.target; if (t.id === 'scanFile' && t.files[0]) scanPhoto(t.files[0]); else if ((t.id === 'labelFile' || t.id === 'labelFile2') && t.files[0]) readLabel(t.files[0]); else if (t.id === 'amtU' && ui.amt){ ui.amt.unit = t.value; amtPreview(); } });
 $('#importFile').addEventListener('change', async e => {
   const f = e.target.files[0]; if (!f) return;
