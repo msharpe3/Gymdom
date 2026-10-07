@@ -463,12 +463,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.07.10"></script>
+<script src="exercises.js?v=2026.10.07.11"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.07.10';
+const APP_VERSION = '2026.10.07.11';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1191,12 +1191,28 @@ const BUMPER = {fill:'#18191d', edge:'#2b2d33', text:'#c3c7ce'};
 const PLATE_SKINS = {iron:{name:'Iron', fill:'#5b616d', edge:'#3d424b', text:'#e8ebf0'},
   sp_white:{name:'White Speckle', ...BUMPER, fleck:'#ececec', lift:135}, sp_yellow:{name:'Yellow Speckle', ...BUMPER, fleck:'#f2c94c', lift:185},
   sp_blue:{name:'Blue Speckle', ...BUMPER, fleck:'#3f8ff0', lift:225}, sp_green:{name:'Green Speckle', ...BUMPER, fleck:'#6fd27a', lift:275},
-  sp_orange:{name:'Orange Speckle', ...BUMPER, fleck:'#f08a3a', lift:315}, sp_red:{name:'Red Speckle', ...BUMPER, fleck:'#e4573d', lift:405}};
-const plateOwned = id => !!PLATE_SKINS[id] && (!PLATE_SKINS[id].lift || state.cosmetics.owned.includes('plate:' + id));
+  sp_orange:{name:'Orange Speckle', ...BUMPER, fleck:'#f08a3a', lift:315}, sp_red:{name:'Red Speckle', ...BUMPER, fleck:'#e4573d', lift:405},
+  // recycled rubber "granite": packed multicolour granules, earned by total weight lifted
+  rec_light:{name:'Recycled', fill:'#bdb2a1', edge:'#8f8577', text:'#191715', vol:100000,
+    grain:[['#6b5f52',5],['#2a2622',4],['#efe9df',4],['#8e8172',4],['#a8382f',1],['#3c5a8a',1],['#c9a24a',1],['#5b6b55',1]]},
+  rec_dark:{name:'Recycled Dark', fill:'#55524f', edge:'#3a3836', text:'#f1ede6', vol:250000,
+    grain:[['#2a2826',5],['#1a1918',4],['#d9d4cc',3],['#8a847c',4],['#a8382f',1],['#3c5a8a',1],['#c9a24a',1]]}};
+const liftVolume = () => { let t = 0; for (const w of state.workouts) for (const e of w.entries) for (const s of e.sets) t += (+s.w || 0) * (+s.r || 0); return t; };
+const plateGoal = k => k.lift ? `${k.lift} lb barbell` : k.vol ? `${fmt(k.vol)} lb lifted` : '';
+let grainN = 0; const grainCache = {};
+function grainPat(k, sc = 1){ // a small tile of granules, repeated across the plate (sc shrinks it for small drawings)
+  const id = 'gr' + (++grainN);
+  if (!grainCache[k.name]){ const R = prng(k.name.length * 7919 + k.fill.charCodeAt(1)), tot = k.grain.reduce((a, g) => a + g[1], 0); let o = '';
+    for (let i = 0; i < 120; i++){ let r = R() * tot, c = k.grain[0][0]; for (const [col, w] of k.grain){ if ((r -= w) < 0){ c = col; break; } }
+      o += `<circle cx="${(R() * 24).toFixed(1)}" cy="${(R() * 24).toFixed(1)}" r="${(.35 + R() * .75).toFixed(2)}" fill="${c}"/>`; }
+    grainCache[k.name] = o; }
+  return [id, `<defs><pattern id="${id}" width="24" height="24" patternUnits="userSpaceOnUse"${sc !== 1 ? ` patternTransform="scale(${sc})"` : ''}><rect width="24" height="24" fill="${k.fill}"/>${grainCache[k.name]}</pattern></defs>`];
+}
+const plateOwned = id => !!PLATE_SKINS[id] && ((!PLATE_SKINS[id].lift && !PLATE_SKINS[id].vol) || state.cosmetics.owned.includes('plate:' + id));
 const bbBest = () => { let m = 0; for (const w of state.workouts) for (const e of w.entries) if (EX[e.ex] && EX[e.ex].eq === 'bb') for (const s of e.sets) if (+s.r > 0 && +s.w > m) m = +s.w; return m; };
 function claimPlates(){ // retroactive: any barbell set ever logged counts
-  const m = bbBest(), got = [];
-  for (const id in PLATE_SKINS){ const k = PLATE_SKINS[id]; if (k.lift && m >= k.lift && !plateOwned(id)){ state.cosmetics.owned.push('plate:' + id); got.push(id); } }
+  const m = bbBest(), vol = liftVolume(), got = [];
+  for (const id in PLATE_SKINS){ const k = PLATE_SKINS[id]; if (((k.lift && m >= k.lift) || (k.vol && vol >= k.vol)) && !plateOwned(id)){ state.cosmetics.owned.push('plate:' + id); got.push(id); } }
   return got;
 }
 const prng = seed => () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = (t + Math.imul(t ^ t >>> 7, 61 | t)) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
@@ -1208,7 +1224,8 @@ function flecks(inside, n, col, seed, r0 = .5, r1 = 1.2){ // scattered specks, s
 }
 function plateDisc(v, k = plateSkin()){ // a plate face: the tappable plate buttons + Armory previews
   const c = k.fleck, inside = (a, b) => { const x = a * 100, y = b * 100, d = Math.hypot(x - 50, y - 50); return d < 47 && d > 12 && Math.abs(d - 33) > 2.2 ? [x, y] : null; };
-  return `<svg viewBox="0 0 100 100" class="pl-face"><circle cx="50" cy="50" r="49" fill="${k.fill}" stroke="${k.edge}" stroke-width="2"/><circle cx="50" cy="50" r="33" fill="none" stroke="#2f3137" stroke-width="2.5"/>
+  const [gid, gdef] = k.grain ? grainPat(k, .75) : ['', ''];
+  return `<svg viewBox="0 0 100 100" class="pl-face">${gdef}<circle cx="50" cy="50" r="49" fill="${gid ? `url(#${gid})` : k.fill}" stroke="${k.edge}" stroke-width="2"/><circle cx="50" cy="50" r="33" fill="none" stroke="${k.grain ? '#0003' : '#2f3137'}" stroke-width="2.5"/>
     ${c ? flecks(inside, 190, c, v * 97 + 3, .55, 1.35) : ''}<circle cx="50" cy="50" r="11" fill="#c8ccd3"/><circle cx="50" cy="50" r="7.5" fill="#0b0c0f"/>
     <text x="50" y="${v === 2.5 ? 29 : 28}" text-anchor="middle" font-family="Chakra Petch,Arial" font-weight="800" font-size="${v === 2.5 ? 15 : 17}" fill="${k.text}" stroke="${k.fill}" stroke-width="4" paint-order="stroke">${v}</text></svg>`;
 }
@@ -1216,9 +1233,9 @@ const plateSkin = () => plateOwned(state.plateSkin) ? PLATE_SKINS[state.plateSki
 function plateMath(total, bar){ let side = (total - bar) / 2; const out = []; if (side < 0) return {out, rem:0, under:true}; for (const [p] of PLATES) while (side >= p - 1e-9){ out.push(p); side -= p; } return {out, rem: Math.round(side * 2 * 100) / 100}; }
 function plateSvg(out){ // one sleeve, plates stacked out from the collar
   let x = 62, svg = '';
-  const k = plateSkin();
+  const k = plateSkin(), [gid, gdef] = k.grain ? grainPat(k, .38) : ['', '']; svg += gdef;
   out.forEach((p, j) => { const [, , h] = PLATES.find(q => q[0] === p), y0 = 60 - h / 2;
-    svg += `<rect x="${x}" y="${y0}" width="13" height="${h}" rx="3" fill="${k.fill}" stroke="${k.edge}" stroke-width="1.5"/>`;
+    svg += `<rect x="${x}" y="${y0}" width="13" height="${h}" rx="3" fill="${gid ? `url(#${gid})` : k.fill}" stroke="${k.edge}" stroke-width="1.5"/>`;
     if (k.fleck) svg += flecks((a, b) => [x + 1.5 + a * 10, y0 + 2 + b * (h - 4)], Math.round(h / 1.4), k.fleck, p * 31 + j * 7, .3, .7);
     x += 15; });
   return `<svg viewBox="0 0 300 120" class="pl-svg"><rect x="4" y="55" width="292" height="10" rx="4" fill="#8b919b"/><rect x="50" y="44" width="9" height="32" rx="2" fill="#b8c4d6"/>${svg}</svg>`;
@@ -2536,7 +2553,7 @@ function openArmory(){
         ${items.map(([id, n, , u, ok]) => `<button class="arm-tile z-${ARM_ZOOM[slot] || 'full'}${sk[slot] === id ? ' on' : ''}${ok ? '' : ' locked'}" data-act="eqSkin" data-s="${slot}" data-v="${id}"><div class="hmini">${figMini({id, slot}, t, true)}</div><b>${esc(n)}</b><small>${sk[slot] === id ? 'Equipped' : ok ? 'Unlocked' : '🔒 ' + unlockLabel(u)}</small></button>`).join('')}</div>`; }).join('')}
     <div class="arm-hd"><label class="lbl">Plates</label><small class="mute">${Object.keys(PLATE_SKINS).filter(plateOwned).length}/${Object.keys(PLATE_SKINS).length}</small></div><div class="arm-row" data-slot="plates">
       ${Object.entries(PLATE_SKINS).map(([id, k]) => { const ok = plateOwned(id), on = plateSkin() === k;
-        return `<button class="arm-tile${on ? ' on' : ''}${ok ? '' : ' locked'}" data-act="eqPlate" data-v="${id}"><div class="arm-plate">${plateDisc(45, k)}</div><b>${esc(k.name)}</b><small>${on ? 'Equipped' : ok ? 'Unlocked' : `🔒 ${k.lift} lb barbell`}</small></button>`; }).join('')}</div>
+        return `<button class="arm-tile${on ? ' on' : ''}${ok ? '' : ' locked'}" data-act="eqPlate" data-v="${id}"><div class="arm-plate">${plateDisc(45, k)}</div><b>${esc(k.name)}</b><small>${on ? 'Equipped' : ok ? 'Unlocked' : `🔒 ${plateGoal(k)}`}</small></button>`; }).join('')}</div>
     <details class="icon-more"${ui.iconOpen ? ' open' : ''}><summary><img src="icons/${iconId()}-180.png" alt=""><span>App icon</span><small>${APP_ICONS.find(x => x[0] === iconId())[1]}</small></summary>
       <div class="icons-grid">${APP_ICONS.map(([id, n]) => `<button class="icon-tile${iconId() === id ? ' on' : ''}" data-act="eqIcon" data-v="${id}"><img src="icons/${id}-180.png" alt="" loading="lazy"><small>${n}</small></button>`).join('')}</div>
       <button class="btn ghost sm block" style="margin-top:8px" data-act="iconHelp">Update Home Screen icon</button></details>`);
@@ -3078,7 +3095,7 @@ async function finishWorkout(){
     ${quests.length ? `<div class="pr-box q"><h4>📜 QUEST${quests.length > 1 ? 'S' : ''} COMPLETE</h4>${quests.map(q => `<div class="mini-row"><span>${q.title}</span><span class="xp">+${q.xp}</span></div>`).join('')}</div>` : ''}
     ${achs.length ? `<div class="pr-box"><h4>TROPHY UNLOCKED</h4>${achs.map(id => { const x = achById(id); return `<div class="mini-row"><span>${x[1]} <b>${x[2]}</b> <small class="mute">${x[3]}</small></span><span class="xp">+100</span></div>`; }).join('')}</div>` : ''}
     ${seasonal.length ? `<div class="pr-box season-box" data-act="seasonTrack"><h4>${seasonal[0].se.icon} DOOR ${seasonal.map(x => x.n).join(' + ')} OPENED</h4>${seasonal.map(x => `<div class="mini-row"><span>${x.icon} <b>${esc(x.name)}</b> <small class="mute">${x.kind}</small></span><span class="xp">NEW</span></div>`).join('')}<small class="mute">${seasonal.some(x => x.slot) ? 'Equip it in the Armory' : 'Tap to see the calendar'}</small></div>` : ''}
-    ${newPlates.length ? `<div class="pr-box"><h4>🏋 NEW PLATES UNLOCKED</h4>${newPlates.map(id => `<div class="mini-row plate-new"><span class="arm-plate sm">${plateDisc(45, PLATE_SKINS[id])}</span><span style="flex:1"><b>${PLATE_SKINS[id].name}</b> <small class="mute">${PLATE_SKINS[id].lift} lb barbell</small></span><button class="btn ghost xs" data-act="eqPlateNew" data-v="${id}">Equip</button></div>`).join('')}</div>` : ''}
+    ${newPlates.length ? `<div class="pr-box"><h4>🏋 NEW PLATES UNLOCKED</h4>${newPlates.map(id => `<div class="mini-row plate-new"><span class="arm-plate sm">${plateDisc(45, PLATE_SKINS[id])}</span><span style="flex:1"><b>${PLATE_SKINS[id].name}</b> <small class="mute">${plateGoal(PLATE_SKINS[id])}</small></span><button class="btn ghost xs" data-act="eqPlateNew" data-v="${id}">Equip</button></div>`).join('')}</div>` : ''}
     ${comeback.length ? `<div class="hint">🕸️ Comeback bonus +50% on ${comeback.map(m => MUSCLES[m]).join(', ')}</div>` : ''}
     <div style="max-width:320px;margin:0 auto">${bodySVG(m => w.xp[m] ? (rankOf(lvl(after[m]))[2] === UNTR ? TEAL : rankOf(lvl(after[m]))[2]) : UNTR, {labels:false})}</div>
     ${gained.map(m => { const lb = lvl(before[m]), la = lvl(after[m]);
@@ -3595,7 +3612,7 @@ const ACT = {
   iconHelp: openIconHelp,
   eqTheme: d => { const th = THEMES.find(t => t[0] === d.v); if (!isUnlocked(d.v, th[2])) return toast(`Unlocks with ${unlockLabel(th[2])}`); state.cosmetics.theme = d.v; save(); applyTheme(); render(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; publishStats(true); },
   eqPlateNew: (d, b) => { state.plateSkin = d.v; save(); b.textContent = 'Equipped'; b.disabled = true; },
-  eqPlate: d => { const k = PLATE_SKINS[d.v]; if (!k) return; if (!plateOwned(d.v)) return toast(`Lift ${k.lift} lb on any barbell exercise to unlock`);
+  eqPlate: d => { const k = PLATE_SKINS[d.v]; if (!k) return; if (!plateOwned(d.v)) return toast(k.lift ? `Lift ${k.lift} lb on any barbell exercise to unlock` : `Unlocks at ${fmt(k.vol)} lb lifted in total (you're at ${fmt(Math.round(liftVolume()))})`);
     state.plateSkin = d.v; save(); const y = $('#sheet').scrollTop, xs = Object.fromEntries([...document.querySelectorAll('.arm-row')].map(r => [r.dataset.slot, r.scrollLeft])); openArmory(); $('#sheet').scrollTop = y; document.querySelectorAll('.arm-row').forEach(r => r.scrollLeft = xs[r.dataset.slot] || 0); toast(`${k.name} plates equipped`); },
   eqSkin: d => { const it = SKINS.find(s => s[0] === d.v); if (it && !isUnlocked(d.v, it[3])) return toast(`Unlocks with ${unlockLabel(it[3])}`); state.cosmetics[d.s] = d.v; save(); render(); const y = $('#sheet').scrollTop, xs = Object.fromEntries([...document.querySelectorAll('.arm-row')].map(r => [r.dataset.slot, r.scrollLeft])); openArmory(); $('#sheet').scrollTop = y; document.querySelectorAll('.arm-row').forEach(r => r.scrollLeft = xs[r.dataset.slot] || 0); publishStats(true); },
   closeLvlUp: () => { const d = document.getElementById('lvlUp'); if (d){ d.classList.add('out'); setTimeout(() => d.remove(), 300); } },
