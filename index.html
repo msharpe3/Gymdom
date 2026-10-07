@@ -107,6 +107,13 @@ svg.body text{fill:var(--mute);font:600 11px 'Chakra Petch';letter-spacing:.25em
 @keyframes up{from{transform:translateY(40px);opacity:0}}
 .prow-pick{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);cursor:pointer}
 .prow-pick .thumb{width:58px}
+.prow-pick.on{background:color-mix(in srgb,var(--teal) 10%,transparent);margin:0 -8px;padding-left:8px;padding-right:8px;border-radius:12px}
+.pick-ck{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font:700 13px Inter;color:#06231f}
+.prow-pick.on .pick-ck{background:var(--teal);border-color:var(--teal);animation:pop .3s cubic-bezier(.2,1.6,.4,1)}
+.pick-have{font:600 10px Inter;color:var(--mute);border:1px solid var(--line);border-radius:5px;padding:1px 5px;margin-left:4px;white-space:nowrap}
+.pick-foot{position:sticky;bottom:calc(-20px - env(safe-area-inset-bottom));margin:10px -16px calc(-20px - env(safe-area-inset-bottom));padding:12px 16px calc(14px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line);box-shadow:0 -10px 24px #0007}
+.pick-sel{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}.pick-sel::-webkit-scrollbar{display:none}
+.pick-sel span{flex:none;font-size:12px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:4px 10px;white-space:nowrap}
 .reward{text-align:center}
 .reward .big{font:700 46px 'Chakra Petch';color:var(--gold);text-shadow:0 0 24px rgba(242,201,76,.45);animation:pop .6s cubic-bezier(.2,1.6,.4,1)}
 @keyframes pop{from{transform:scale(.4);opacity:0}}
@@ -402,12 +409,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.06.8"></script>
+<script src="exercises.js?v=2026.10.07.1"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.06.8';
+const APP_VERSION = '2026.10.07.1';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -2877,16 +2884,29 @@ function exInfo(id){
     ${ex.bw ? `<p class="mute" style="font-size:12px">Bodyweight move: XP uses ${Math.round(ex.bw*100)}% of your bodyweight plus any added weight.</p>` : ''}
     ${state.active ? `<button class="btn block" style="margin-top:12px" data-act="addToWorkout" data-id="${id}">Add to current workout</button>` : ''}`);
 }
-function openPicker(cb){
-  ui.pick = {cb, q:'', m:'', n:PAGE};
-  openSheet(`<div class="row between"><h3 style="margin:0">Add exercise</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
-    <input id="pickq" placeholder="Search exercises" style="margin-top:12px"><div class="chips" id="pickChips" style="margin:10px 0">${chipsHtml('pickM','')}</div><div id="pickList"></div>`);
-  renderPickList();
+// multi: tap several exercises, then add them all at once (in the order tapped). have: ids already in the day
+function openPicker(cb, multi = false, have = []){
+  ui.pick = {cb, q:'', m:'', n:PAGE, multi, sel:[], have:new Set(have)};
+  openSheet(`<div class="row between"><h3 style="margin:0">${multi ? 'Add exercises' : 'Add exercise'}</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    ${multi ? '<small class="mute">Tap as many as you like, then add them all at once</small>' : ''}
+    <input id="pickq" placeholder="Search exercises" style="margin-top:12px"><div class="chips" id="pickChips" style="margin:10px 0">${chipsHtml('pickM','')}</div><div id="pickList"></div>
+    ${multi ? '<div class="pick-foot" id="pickFoot"></div>' : ''}`);
+  renderPickList(); renderPickFoot();
+}
+function markPicks(){ // update ticks in place so the photos don't reload
+  const p = ui.pick; document.querySelectorAll('#pickList .prow-pick').forEach(r => { const k = p.sel.indexOf(r.dataset.id) + 1; r.classList.toggle('on', !!k); const c = r.querySelector('.pick-ck'); if (c) c.textContent = k || ''; });
+  renderPickFoot();
+}
+function renderPickFoot(){
+  const p = ui.pick, el = $('#pickFoot'); if (!p || !el) return; const n = p.sel.length;
+  el.innerHTML = n ? `<div class="pick-sel">${p.sel.map(id => `<span>${esc(EX[id].name)}</span>`).join('')}</div><div class="row gap"><button class="btn ghost" data-act="pickClear">Clear</button><button class="btn gold" style="flex:1" data-act="pickAdd">Add ${n} exercise${n === 1 ? '' : 's'}</button></div>`
+    : `<button class="btn ghost block" disabled>Pick exercises to add</button>`;
 }
 function renderPickList(){
   const p = ui.pick; if (!p) return;
   const list = filterEx(p.q, p.m);
-  $('#pickList').innerHTML = list.slice(0, p.n).map(e => `<div class="prow-pick" data-act="pick" data-id="${e.id}">${thumb(e)}<div><b>${e.name}</b><br><small class="mute">${EQN[e.eq]} · ${e.p.map(m => MUSCLES[m]).join(', ')}</small></div></div>`).join('')
+  $('#pickList').innerHTML = list.slice(0, p.n).map(e => { const k = p.multi ? p.sel.indexOf(e.id) + 1 : 0;
+      return `<div class="prow-pick${k ? ' on' : ''}" data-act="pick" data-id="${e.id}">${thumb(e)}<div style="flex:1;min-width:0"><b>${e.name}</b>${p.have.has(e.id) ? ' <span class="pick-have">In this day</span>' : ''}<br><small class="mute">${EQN[e.eq]} · ${e.p.map(m => MUSCLES[m]).join(', ')}</small></div>${p.multi ? `<span class="pick-ck">${k || ''}</span>` : ''}</div>`; }).join('')
     + (list.length > p.n ? `<button class="btn ghost block" style="margin-top:10px" data-act="pickMore">Show more (${list.length - p.n} left)</button>` : '');
 }
 
@@ -3104,7 +3124,8 @@ const ACT = {
   delSplit: async d => { if (await confirmBox('Delete this split?', 'Delete')){ state.splits = state.splits.filter(s => s.id !== d.id); save(); render(); } },
   addDay: () => { ui.edit.days.push({id:uid(), name:'Day ' + (ui.edit.days.length+1), items:[]}); render(); },
   rmDay: d => { ui.edit.days.splice(+d.d, 1); render(); },
-  addDayEx: d => openPicker(id => { ui.edit.days[+d.d].items.push({ex:id, sets:3, reps:'8-12'}); render(); }),
+  addDayEx: d => { const day = ui.edit.days[+d.d];
+    openPicker(ids => { day.items.push(...ids.map(id => ({ex:id, sets:3, reps:'8-12'}))); render(); toast(`Added ${ids.length} to ${day.name || 'this day'}`); }, true, day.items.map(it => it.ex)); },
   rmDayEx: d => { ui.edit.days[+d.d].items.splice(+d.i, 1); render(); },
   cancelSplit: () => { ui.edit = null; render(); },
   saveSplit: () => { const e = ui.edit; if (!e.name.trim()) return toast('Give your split a name');
@@ -3116,7 +3137,11 @@ const ACT = {
   libMore: () => { ui.libN = (ui.libN || PAGE) + PAGE; renderLibList(); },
   pickMore: () => { ui.pick.n += PAGE; renderPickList(); },
   pickM: (d, b) => { ui.pick.m = d.m; ui.pick.n = PAGE; document.querySelectorAll('#pickChips .chip').forEach(c => c.classList.toggle('on', c === b)); renderPickList(); },
-  pick: d => { const cb = ui.pick.cb; closeSheet(); cb(d.id); },
+  pick: d => { const p = ui.pick;
+    if (p.multi){ const i = p.sel.indexOf(d.id); if (i >= 0) p.sel.splice(i, 1); else { p.sel.push(d.id); if (navigator.vibrate) navigator.vibrate(10); } markPicks(); return; }
+    const cb = p.cb; closeSheet(); cb(d.id); },
+  pickClear: () => { ui.pick.sel = []; markPicks(); },
+  pickAdd: () => { const {cb, sel} = ui.pick; closeSheet(); cb(sel); },
   coachOpt: d => { ui.coach[d.k] = /^\d+$/.test(d.v) ? +d.v : d.v; render(); },
   coachFocus: d => { const f = ui.coach.focus, i = f.indexOf(d.m); i >= 0 ? f.splice(i,1) : f.push(d.m); render(); },
   coachWeak: () => { ui.coach.weak = !ui.coach.weak; render(); },
