@@ -294,6 +294,14 @@ body.resting main{padding-bottom:170px}
 .h-dd.tk b{color:var(--teal)}.h-dd.on{background:var(--teal)}.h-dd.on small,.h-dd.on b{color:#06231f}.h-dd.on i.full,.h-dd.on i.some{background:#06231f}.h-dd.on i.due{box-shadow:0 0 0 1.5px #06231f88 inset}
 .h-task b small,.h-cust b small{display:block;font-size:11px;font-weight:500;color:var(--mute);margin-top:1px;text-decoration:none}
 .h-task.future{opacity:.75}.h-task.future .ck{border-style:dashed}
+.h-sec-body{position:relative}
+.h-swipe{position:absolute;left:0;right:0;border-radius:14px;background:color-mix(in srgb,var(--mute) 22%,var(--panel));display:flex;align-items:center;justify-content:flex-end;padding-right:16px;font-weight:700;font-size:13px;color:var(--mute);transition:background .15s,color .15s}
+.h-swipe.arm{background:#8a93a6;color:#11151c}.h-swipe.un.arm{background:var(--teal);color:#06231f}
+.h-task.swiping{position:relative;z-index:2;transition:none}.h-task.skipped.swiping{background:var(--panel2);opacity:1}
+.h-task.skipped{opacity:.5;border-style:dashed;background:transparent}.h-task.skipped b{color:var(--mute)}
+.h-task.skipped .ck{border-color:var(--mute);color:var(--mute);background:transparent}
+.h-dd i.skip{box-shadow:0 0 0 1.5px var(--mute) inset;background:repeating-linear-gradient(45deg,var(--mute) 0 1px,transparent 1px 3px)}
+.h-alldone.skip{color:var(--mute)}
 .h-dows{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:10px}
 .h-dows button{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:7px 0;font:700 14px Inter;cursor:pointer;display:flex;flex-direction:column;align-items:center}
 .h-dows button small{font-size:9px;font-weight:500;color:var(--mute)}.h-dows button.on{background:var(--teal);border-color:var(--teal);color:#06231f}.h-dows button.on small{color:#06231fb0}
@@ -390,12 +398,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.06.5"></script>
+<script src="exercises.js?v=2026.10.06.6"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.06.5';
+const APP_VERSION = '2026.10.06.6';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -942,7 +950,7 @@ function migrate(s){
   s.bwLog = s.bwLog || []; s.achievements = s.achievements || {}; s.questsDone = s.questsDone || {};
   s.bonusXP = s.bonusXP || 0; s.prCount = s.prCount || 0;
   s.cosmetics = Object.assign({theme:'classic', head:'', face:'', back:'', aura:'', title:'', owned:[]}, s.cosmetics || {});
-  s.habits = Object.assign({tasks:null, log:{}}, s.habits || {});
+  s.habits = Object.assign({tasks:null, log:{}, skip:{}}, s.habits || {});
   if (!s.habits.tasks) s.habits.tasks = HABIT_DEFAULT.map(id => { const p = HABIT_PRESETS.find(x => x[0] === id); return {id, i:p[1], n:p[2], g:presetSec(id)}; });
   s.habits.tasks.forEach(t => { if (!t.i){ const p = HABIT_PRESETS.find(x => x[0] === t.id); t.i = p ? p[1] : EMOJI_ICON[t.e] || 'star'; } delete t.e; if (!t.g) t.g = t.id.startsWith('p:') ? presetSec(t.id) : 'anytime'; });
   s.restSec = s.restSec || 90;
@@ -2348,11 +2356,23 @@ function schedLabel(r){
     return [lbl + ((r.n || 1) > 1 ? ` · every ${r.n} weeks` : ''), from].filter(Boolean).join(' · '); }
   return from ? `Daily ${from}` : '';
 }
+// Skipped tasks: {dkey:[ids]} — they drop out of that day's count without breaking anything
+const habitSkips = k => (state.habits.skip || {})[k] || [];
+const isSkip = (id, k) => habitSkips(k).includes(id);
+const dueActive = k => habitList().filter(t => isDue(t, k) && !isSkip(t.id, k));
+// A day where everything left was skipped keeps the streak going (but doesn't add to it)
+const dayKept = k => habitDay(k).length > 0 || (habitSkips(k).length > 0 && dueActive(k).every(t => habitDay(k).includes(t.id)));
+function toggleSkip(id, k){
+  const sk = (state.habits.skip = state.habits.skip || {}), L = (sk[k] = sk[k] || []), i = L.indexOf(id);
+  if (i >= 0) L.splice(i, 1); else L.push(id);
+  if (!L.length) delete sk[k];
+  return i < 0;
+}
 function habitTotal(){ let t = 0; for (const k in state.habits.log) t += state.habits.log[k].length; return t; }
 function habitStreak(){
   let n = 0, d = new Date(); d.setHours(12, 0, 0, 0);
-  if (!habitDay(dkey(d)).length) d.setDate(d.getDate() - 1);
-  while (habitDay(dkey(d)).length){ n++; d.setDate(d.getDate() - 1); }
+  if (!dayKept(dkey(d))) d.setDate(d.getDate() - 1);
+  while (dayKept(dkey(d))){ if (habitDay(dkey(d)).length) n++; d.setDate(d.getDate() - 1); }
   return n;
 }
 const trackItem = i => { const id = HABIT_TRACK[i], s = SKINS.find(x => x[0] === id); return s && {i, id, name:s[1], slot:s[2], goal:s[3].habit}; };
@@ -2381,11 +2401,11 @@ function showHabitReward(items){
 }
 function renderHabits(){
   const tk = todayKey(), sel = ui.hDay || tk, isToday = sel === tk, future = sel > tk;
-  const today = habitDay(sel), all = habitList(), tasks = all.filter(t => isDue(t, sel)), done = tasks.filter(t => today.includes(t.id)).length;
+  const today = habitDay(sel), all = habitList(), tasks = all.filter(t => isDue(t, sel)), skips = habitSkips(sel), act = tasks.filter(t => !skips.includes(t.id)), done = act.filter(t => today.includes(t.id)).length;
   const tot = habitTotal(), nx = habitNext(), streak = habitStreak();
   const prevGoal = nx && nx.i ? trackItem(nx.i - 1).goal : 0;
   let h = `<div class="row between"><h2 style="margin:0">Habits</h2><button class="btn ghost xs" data-act="hEdit">Edit tasks</button></div>
-    <div class="stats" style="margin-top:12px"><div class="stat"><b>${done}/${tasks.length}</b><small>${isToday ? 'Today' : shortDate(sel)}</small></div><div class="stat"><b>${streak}🔥</b><small>Day streak</small></div><div class="stat"><b>${fmt(tot)}</b><small>Tasks done</small></div></div>`;
+    <div class="stats" style="margin-top:12px"><div class="stat"><b>${done}/${act.length}</b><small>${isToday ? 'Today' : shortDate(sel)}</small></div><div class="stat"><b>${streak}🔥</b><small>Day streak</small></div><div class="stat"><b>${fmt(tot)}</b><small>Tasks done</small></div></div>`;
   // Next reward
   if (nx){
     const pct = Math.min(100, (tot - prevGoal) / (nx.goal - prevGoal) * 100);
@@ -2396,21 +2416,21 @@ function renderHabits(){
   // Today's tasks
   const dn0 = dnum(sel) - dowOf(sel), title = isToday ? 'Today' : sel === dkOf(dnum(tk) + 1) ? 'Tomorrow' : sel === dkOf(dnum(tk) - 1) ? 'Yesterday' : kDate(sel, {weekday:'long'});
   h += `<div class="card"><div class="row between"><h3 style="margin:0">${title}</h3>${isToday ? `<small class="mute">${kDate(sel, {weekday:'long', month:'short', day:'numeric'})}</small>` : `<span class="row gap" style="align-items:center"><small class="mute">${kDate(sel, {month:'short', day:'numeric'})}</small><button class="chip" style="padding:4px 10px;font-size:12px" data-act="hDay" data-v="${tk}">Back to today</button></span>`}</div>
-    <div class="h-days"><button class="h-wk" data-act="hDay" data-v="${dkOf(dnum(sel) - 7)}" aria-label="Previous week">‹</button>${[0, 1, 2, 3, 4, 5, 6].map(i => { const k = dkOf(dn0 + i), due = all.filter(t => isDue(t, k)), got = habitDay(k).filter(id => due.some(t => t.id === id)).length;
-      return `<button class="h-dd${k === sel ? ' on' : ''}${k === tk ? ' tk' : ''}" data-act="hDay" data-v="${k}"><small>${DOW[dowOf(k)][0]}</small><b>${+k.slice(8)}</b><i class="${!due.length ? '' : got >= due.length ? 'full' : got ? 'some' : 'due'}"></i></button>`; }).join('')}<button class="h-wk" data-act="hDay" data-v="${dkOf(dnum(sel) + 7)}" aria-label="Next week">›</button></div><div style="margin-top:6px">`;
+    <div class="h-days"><button class="h-wk" data-act="hDay" data-v="${dkOf(dnum(sel) - 7)}" aria-label="Previous week">‹</button>${[0, 1, 2, 3, 4, 5, 6].map(i => { const k = dkOf(dn0 + i), due = dueActive(k), got = habitDay(k).filter(id => due.some(t => t.id === id)).length, sk = !due.length && habitSkips(k).length;
+      return `<button class="h-dd${k === sel ? ' on' : ''}${k === tk ? ' tk' : ''}" data-act="hDay" data-v="${k}"><small>${DOW[dowOf(k)][0]}</small><b>${+k.slice(8)}</b><i class="${sk ? 'skip' : !due.length ? '' : got >= due.length ? 'full' : got ? 'some' : 'due'}"></i></button>`; }).join('')}<button class="h-wk" data-act="hDay" data-v="${dkOf(dnum(sel) + 7)}" aria-label="Next week">›</button></div><div style="margin-top:6px">`;
   const now = nowSection(), shut = (ui.hShut = ui.hShut || {}), shutK = isToday ? shut : {};
   h += tasks.length ? HABIT_SECTIONS.map(([g, gn, gi]) => { const L = tasks.filter(t => (t.g || 'anytime') === g); if (!L.length) return '';
-    const dn = L.filter(t => today.includes(t.id)).length, closed = shutK[g] != null ? shutK[g] : isToday && dn === L.length && g !== now;
+    const LA = L.filter(t => !skips.includes(t.id)), dn = LA.filter(t => today.includes(t.id)).length, closed = shutK[g] != null ? shutK[g] : isToday && dn === LA.length && g !== now;
     const sorted = L;
-    return `<div class="h-sec${closed ? ' shut' : ''}${dn === L.length ? ' all' : ''}" data-g="${g}"><button class="h-sec-hd" data-act="hSec" data-g="${g}" data-closed="${closed ? 1 : ''}">${hIcon({i:gi}, ' sm')}<b>${gn}</b>${isToday && g === now ? '<span class="now">NOW</span>' : ''}<small>${dn === L.length ? '✓ ' : ''}${dn}/${L.length}</small><i>›</i></button>
-      ${closed ? '' : `<div class="h-sec-body">${sorted.map(t => { const on = today.includes(t.id);
-        const lbl = schedLabel(t.r);
-        return `<button class="h-task${on ? ' done' : ''}${future ? ' future' : ''}" data-act="hToggle" data-id="${esc(t.id)}">${hIcon(t)}<b>${esc(t.n)}${lbl ? `<small>${esc(lbl)}</small>` : ''}</b><span class="ck">${on ? '✓' : ''}</span></button>`; }).join('')}</div>`}</div>`; }).join('') + `<small class="mute h-hint">${future ? 'Coming up — you can check these off on the day' : 'Hold a task to drag it up or down'}</small>`
+    return `<div class="h-sec${closed ? ' shut' : ''}${dn === LA.length ? ' all' : ''}" data-g="${g}"><button class="h-sec-hd" data-act="hSec" data-g="${g}" data-closed="${closed ? 1 : ''}">${hIcon({i:gi}, ' sm')}<b>${gn}</b>${isToday && g === now ? '<span class="now">NOW</span>' : ''}<small>${!LA.length ? 'Skipped' : `${dn === LA.length ? '✓ ' : ''}${dn}/${LA.length}`}</small><i>›</i></button>
+      ${closed ? '' : `<div class="h-sec-body">${sorted.map(t => { const on = today.includes(t.id), sk = !on && skips.includes(t.id);
+        const lbl = sk ? 'Skipped · tap to bring back' : schedLabel(t.r);
+        return `<button class="h-task${on ? ' done' : ''}${sk ? ' skipped' : ''}${future ? ' future' : ''}" data-act="hToggle" data-id="${esc(t.id)}">${hIcon(t)}<b>${esc(t.n)}${lbl ? `<small>${esc(lbl)}</small>` : ''}</b><span class="ck">${on ? '✓' : sk ? '<svg viewBox="0 0 24 24" width="13" height="13"><path d="M5 5l8 7-8 7zM14 5l8 7-8 7z" fill="currentColor"/></svg>' : ''}</span></button>`; }).join('')}</div>`}</div>`; }).join('') + `<small class="mute h-hint">${future ? 'Coming up — swipe left to skip one ahead of time' : 'Hold to move · swipe left to skip'}</small>`
     : `<p class="mute" style="margin:10px 0 4px;text-align:center">${all.length ? 'Nothing scheduled for this day 🌤️' : 'No tasks yet — tap Edit tasks to pick some.'}</p>`;
-  h += `</div>${tasks.length && done === tasks.length && !future ? `<div class="h-alldone">🌱 All done for ${isToday ? 'today' : 'the day'}!</div>` : ''}</div>`;
+  h += `</div>${act.length && done === act.length && !future ? `<div class="h-alldone">🌱 All done for ${isToday ? 'today' : 'the day'}!</div>` : tasks.length && !act.length ? `<div class="h-alldone skip">😌 Everything skipped — your streak is safe</div>` : ''}</div>`;
   // Week
   const days = []; for (let i = 6; i >= 0; i--){ const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - i); days.push(d); }
-  h += `<div class="card"><h3>This week</h3><div class="h-week">${days.map((d, i) => { const k = dkey(d), n = habitDay(k).length, most = Math.max(1, all.filter(t => isDue(t, k)).length);
+  h += `<div class="card"><h3>This week</h3><div class="h-week">${days.map((d, i) => { const k = dkey(d), n = habitDay(k).length, most = Math.max(1, dueActive(k).length);
     return `<div class="${i === 6 ? 'today' : ''}"><span class="dot" style="--p:${Math.min(100, n / most * 100)}%"><b>${n || ''}</b></span><small>${d.toLocaleDateString(undefined, {weekday:'narrow'})}</small></div>`; }).join('')}</div></div>`;
   // Upcoming rewards
   const t = muscleTotals(), up = []; if (nx) for (let i = nx.i + 1; i < HABIT_TRACK.length && up.length < 4; i++) up.push(trackItem(i));
@@ -2477,9 +2497,38 @@ function hdBegin(y){
 }
 function hdMove(x, y, e){
   if (!hd) return;
-  if (!hd.on){ if (Math.abs(x - hd.x0) > 8 || Math.abs(y - hd.y0) > 8){ clearTimeout(hd.timer); hd = null; } return; }
+  const dx = x - hd.x0, dy = y - hd.y0;
+  if (hd.sw){ if (e && e.cancelable) e.preventDefault(); hdSwipe(dx); return; }
+  if (!hd.on){
+    if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.2){ clearTimeout(hd.timer); hd.sw = true; hdSwipeStart(); if (e && e.cancelable) e.preventDefault(); hdSwipe(dx); }
+    else if (Math.abs(dx) > 8 || Math.abs(dy) > 8){ clearTimeout(hd.timer); hd = null; }
+    return;
+  }
   if (e && e.cancelable) e.preventDefault();
   hd.lastY = y; hdLayout();
+}
+/* Swipe left to skip (or bring back) a task */
+const SKIP_AT = 72;
+function hdSwipeStart(){
+  const el = hd.el, body = el.parentElement, k = ui.hDay || todayKey(), sk = isSkip(el.dataset.id, k);
+  const bg = document.createElement('div'); bg.className = 'h-swipe' + (sk ? ' un' : '');
+  bg.style.top = el.offsetTop + 'px'; bg.style.height = el.offsetHeight + 'px';
+  bg.innerHTML = `<span>${sk ? '↩ Bring back' : '⏭ Skip'}</span>`;
+  body.insertBefore(bg, el); hd.bg = bg; el.classList.add('swiping');
+}
+function hdSwipe(dx){
+  const d = dx > 0 ? 0 : dx < -SKIP_AT ? -SKIP_AT - (-dx - SKIP_AT) * .35 : dx; // rubber-band past the trigger point
+  hd.dx = dx; hd.el.style.transform = `translateX(${d}px)`;
+  const arm = dx <= -SKIP_AT; if (arm !== !!hd.arm){ hd.arm = arm; hd.bg.classList.toggle('arm', arm); if (arm && navigator.vibrate) navigator.vibrate(12); }
+}
+function hdSwipeEnd(){
+  const {el, bg, arm} = hd, id = el.dataset.id, k = ui.hDay || todayKey();
+  hd = null; ui.dragEnd = Date.now();
+  if (!arm){ el.style.transition = 'transform .2s'; el.style.transform = ''; setTimeout(() => { bg.remove(); el.classList.remove('swiping'); el.style.transition = ''; }, 220); return; }
+  if (habitDay(k).includes(id)){ el.style.transition = 'transform .2s'; el.style.transform = ''; setTimeout(() => bg.remove(), 220); return toast('Already done — tap it to uncheck first'); }
+  const nowSkip = toggleSkip(id, k), t = habitList().find(x => x.id === id);
+  el.style.transition = 'transform .18s'; el.style.transform = 'translateX(-110%)';
+  setTimeout(() => { save(); render(); toast(nowSkip ? `Skipped ${t ? t.n : 'task'}${k === todayKey() ? ' for today' : ` on ${shortDate(k)}`}` : 'Back on the list'); }, 170);
 }
 function hdLayout(){
   const {el, items, from, rects, gap} = hd, dy = pageY(hd.lastY) - hd.startPY, cy = rects[from].top + rects[from].h / 2 + dy;
@@ -2501,6 +2550,7 @@ function hdTick(){ // auto-scroll when the dragged task nears the top or bottom 
 }
 function hdUp(){
   if (!hd) return; clearTimeout(hd.timer);
+  if (hd.sw) return hdSwipeEnd();
   if (!hd.on){ hd = null; return; }
   const {items, from, to, other, rects} = hd, arr = habitList(), moved = arr.find(t => t.id === items[from].dataset.id);
   if (moved && other){ // drop into another section, at the spot under the finger
@@ -3110,12 +3160,14 @@ const ACT = {
     state.friendsRemoved = [...new Set([...(state.friendsRemoved || []), d.id])];
     state.friends = state.friends.filter(f => f !== d.id); ui.lb = (ui.lb || []).filter(p => p.id !== d.id); save(); openFriends(); render(); },
   armory: openArmory,
-  hToggle: d => { if (Date.now() - (ui.dragEnd || 0) < 450) return; const k = ui.hDay || todayKey(); if (k > todayKey()) return toast(`That's for ${shortDate(k)} — check it off on the day`); const day = (state.habits.log[k] = state.habits.log[k] || []), i = day.indexOf(d.id);
+  hToggle: d => { if (Date.now() - (ui.dragEnd || 0) < 450) return; const k = ui.hDay || todayKey();
+    if (isSkip(d.id, k) && !habitDay(k).includes(d.id)){ toggleSkip(d.id, k); save(); render(); return toast('Back on the list'); }
+    if (k > todayKey()) return toast(`That's for ${shortDate(k)} — check it off on the day`); const day = (state.habits.log[k] = state.habits.log[k] || []), i = day.indexOf(d.id);
     if (i >= 0) day.splice(i, 1); else { day.push(d.id); if (navigator.vibrate) navigator.vibrate(15); }
     if (!day.length) delete state.habits.log[k];
     const got = claimHabitRewards(); save(); render();
     if (got.length) showHabitReward(got);
-    else if (i < 0 && habitList().filter(t => isDue(t, k)).every(t => habitDay(k).includes(t.id))) toast(k === todayKey() ? `All done for today 🌱 ${habitStreak()}-day streak` : `All done for ${shortDate(k)} 🌱`); },
+    else if (i < 0 && dueActive(k).every(t => habitDay(k).includes(t.id))) toast(k === todayKey() ? `All done for today 🌱 ${habitStreak()}-day streak` : `All done for ${shortDate(k)} 🌱`); },
   hDay: d => { ui.hDay = d.v === todayKey() ? null : d.v; render(); },
   hEdit: openHabitEdit,
   hTrack: () => openHabitTrack(),
