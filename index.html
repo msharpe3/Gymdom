@@ -102,6 +102,12 @@ svg.body text{fill:var(--mute);font:600 11px 'Chakra Petch';letter-spacing:.25em
 .sp-days.collapse .sday>:not(.sday-hd){display:none}.sp-days.collapse .sday-hd{margin-bottom:0}.sp-days.collapse .sday-n{display:block}
 .sp-days .sday{transition:transform .2s cubic-bezier(.2,.8,.3,1)}
 .sday.lift{position:relative;z-index:20;transition:none;box-shadow:0 14px 34px #000a;border-color:var(--teal)}
+.h-cust,.split-hd,.frow.meal{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.h-cust-g .h-cust,.sp-list .split-card,#foodArea .frow.meal{transition:transform .2s cubic-bezier(.2,.8,.3,1)}
+.h-cust.lift,.split-card.lift,.frow.meal.lift{position:relative;z-index:20;transition:none;box-shadow:0 14px 34px #000a;border-color:var(--teal)}
+.frow.meal.lift{background:var(--panel2);border-radius:12px;padding-left:10px;padding-right:10px;margin:0 -10px}
+.split-hd h3{cursor:grab}
+.sp-list.collapse .split-card>:not(.split-hd){display:none}
 .item-row.sx.lift{position:relative;z-index:20;transition:none;box-shadow:0 12px 30px #000a;outline:1px solid var(--teal)}
 .prow{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;cursor:pointer}.prow:last-child{border-bottom:0}
 .prow .sr{font:600 13px 'Chakra Petch';color:var(--teal);white-space:nowrap}
@@ -415,12 +421,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.07.2"></script>
+<script src="exercises.js?v=2026.10.07.3"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.07.2';
+const APP_VERSION = '2026.10.07.3';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1771,8 +1777,8 @@ function readTp(){ const fp = ui.tp; fp.age = $('#tpAge').value; fp.lb = $('#tpL
 function savedMealsUI(){
   const ms = state.savedMeals;
   $('#foodArea').innerHTML = ms.length ? ms.map((m, i) => { const t = sumEntries(m.items);
-    return `<div class="frow" data-act="mealUse" data-i="${i}"><span><b>${esc(m.name)}</b><br><small class="mute">${m.items.length} item${m.items.length === 1 ? '' : 's'} · ${fmt(t.k)} Cal · ${Math.round(t.p)}P ${Math.round(t.c)}C ${Math.round(t.f)}F</small></span>
-      <span class="row gap"><span class="sr">+</span><button class="icon-btn sm" data-act="mealDel" data-i="${i}" aria-label="Delete saved meal">✕</button></span></div>`; }).join('')
+    return `<div class="frow meal" data-act="mealUse" data-i="${i}"><span><b>${esc(m.name)}</b><br><small class="mute">${m.items.length} item${m.items.length === 1 ? '' : 's'} · ${fmt(t.k)} Cal · ${Math.round(t.p)}P ${Math.round(t.c)}C ${Math.round(t.f)}F</small></span>
+      <span class="row gap"><span class="sr">+</span><button class="icon-btn sm" data-act="mealDel" data-i="${i}" aria-label="Delete saved meal">✕</button></span></div>`; }).join('') + (ms.length > 1 ? '<small class="mute h-hint">Hold a meal to move it</small>' : '')
     : '<p class="mute">No saved meals yet. Log a meal, then tap <b>Save meal</b> on it to reuse it here with one tap.</p>';
 }
 function openSaveMeal(m){
@@ -2476,8 +2482,8 @@ function openHabitEdit(keep){
   if (!f.g) f.g = 'anytime';
   const r = f.r = f.r || {mode:'daily'}, tk = todayKey();
   openSheet(`<div class="row between"><h2 style="margin:0">Edit tasks</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
-    <label class="lbl">Your tasks</label><small class="mute">Tap a task to change its name, icon or time of day</small>
-    ${mine.length ? HABIT_SECTIONS.map(([g, gn, gi]) => { const L = mine.filter(t => (t.g || 'anytime') === g); return L.length ? `<div class="h-sub">${hIcon({i:gi}, ' sm')}${gn}</div>` + L.map(t => `<div class="h-cust${ed && ed.id === t.id ? ' on' : ''}" data-act="hEditC" data-id="${esc(t.id)}">${hIcon(t)}<b>${esc(t.n)}${schedLabel(t.r) ? `<small>${esc(schedLabel(t.r))}</small>` : ''}</b><button class="icon-btn sm" data-act="hDel" data-id="${esc(t.id)}">✕</button></div>`).join('') : ''; }).join('') : `<p class="mute">None yet — add some below</p>`}
+    <label class="lbl">Your tasks</label><small class="mute">Tap a task to change its name, icon or time of day · hold to move it</small>
+    ${mine.length ? HABIT_SECTIONS.map(([g, gn, gi]) => { const L = mine.filter(t => (t.g || 'anytime') === g); return L.length ? `<div class="h-sub">${hIcon({i:gi}, ' sm')}${gn}</div><div class="h-cust-g">` + L.map(t => `<div class="h-cust${ed && ed.id === t.id ? ' on' : ''}" data-act="hEditC" data-id="${esc(t.id)}">${hIcon(t)}<b>${esc(t.n)}${schedLabel(t.r) ? `<small>${esc(schedLabel(t.r))}</small>` : ''}</b><button class="icon-btn sm" data-act="hDel" data-id="${esc(t.id)}">✕</button></div>`).join('') + '</div>' : ''; }).join('') : `<p class="mute">None yet — add some below</p>`}
     <label class="lbl">Self-care ideas</label>${HABIT_SECTIONS.map(([g, gn, gi]) => `<div class="h-sub">${hIcon({i:gi}, ' sm')}${gn}</div><div class="chips wrap">${HABIT_PRESETS.filter(([id]) => presetSec(id) === g).map(([id, i, n]) => `<button class="chip h-chip${on.has(id) ? ' on' : ''}" data-act="hPreset" data-id="${id}">${hIcon({i}, ' sm')}${esc(n)}</button>`).join('')}</div>`).join('')}
     <div class="h-form"><small class="kick">${ed ? 'EDIT TASK' : 'NEW TASK'}</small>
       <div class="h-add">${hIcon(f, ' lg')}<input id="hName" placeholder="e.g. Practice guitar" maxlength="40" value="${esc(nm)}"><button class="btn gold sm" data-act="hAdd">${ed ? 'Save' : 'Add'}</button></div>
@@ -2595,9 +2601,9 @@ document.addEventListener('mousemove', e => { if (hd) hdMove(e.clientX, e.client
 document.addEventListener('mouseup', hdUp);
 document.addEventListener('change', e => { if (!['hRepN','hRepDate','hRepStart'].includes(e.target.id)) return; readRep();
   const r = ui.hForm && ui.hForm.r, el = $('.h-rep-sum'); if (r && el) el.textContent = schedLabel(r.mode === 'daily' && (!r.start || r.start <= todayKey()) ? null : r) || 'Shows up every day'; });
-document.addEventListener('contextmenu', e => { if (e.target.closest('.h-task, .item-row.sx, .sday-grip')) e.preventDefault(); });
+document.addEventListener('contextmenu', e => { if (e.target.closest('.h-task, .item-row.sx, .sday-grip, .h-cust, .split-hd, .frow.meal')) e.preventDefault(); });
 
-/* ---- Split editor: hold an exercise and drag to reorder it within its day ---- */
+/* ---- Hold-and-drag reordering (split editor, split list, habit editor, saved meals) ---- */
 let wd = null;
 // Moving an exercise pulls it out of its superset (the rest stay linked); dropping it between two linked exercises joins that superset
 function moveEntry(L, from, to){
@@ -2607,17 +2613,30 @@ function moveEntry(L, from, to){
   L.forEach((x, i) => { x.ss = !!(lab[i] && lab[i] === lab[i + 1]); });
   return join ? (join === l ? '' : 'Added to the superset') : l ? 'Moved out of its superset' : '';
 }
-function wdDown(el, x, y, day){ if (wd) return; wd = {el, x0:x, y0:y, day, timer:setTimeout(() => wdBegin(y), 300)}; }
+const moveIn = (L, from, to) => { const [m] = L.splice(from, 1); L.splice(to, 0, m); };
+// Each kind: what can be dragged (sel), optional handle to hold (grip), fold = shrink siblings to their headers while dragging
+const RD = [
+  {sel:'.sday', grip:'.sday-grip', fold:true, gap:14, drop:(el, f, t) => moveIn(ui.edit.days, f, t)},
+  {sel:'.item-row.sx', gap:8, drop:(el, f, t) => moveEntry(ui.edit.days[+el.dataset.d].items, f, t)},
+  {sel:'.split-card', grip:'.split-hd', fold:true, gap:14, drop:(el, f, t) => { moveIn(state.splits, f, t); save(); }},
+  {sel:'.h-cust', gap:6, drop:(el, f, t, items) => { const arr = habitList(), m = arr.find(x => x.id === el.dataset.id), nb = arr.find(x => x.id === items[t].dataset.id);
+      arr.splice(arr.indexOf(m), 1); const ni = arr.indexOf(nb); arr.splice(t > f ? ni + 1 : ni, 0, m); save(); }, redraw:() => openHabitEdit(true)},
+  {sel:'.frow.meal', gap:0, drop:(el, f, t) => { moveIn(state.savedMeals, f, t); save(); }, redraw:() => savedMealsUI()},
+];
+function rdFind(e){
+  if (e.target.closest('input, button, textarea, select')) return null;
+  for (const k of RD){ const el = e.target.closest(k.sel); if (el && (!k.grip || e.target.closest(k.grip))) return [el, k]; }
+  return null;
+}
+function wdDown(el, k, x, y){ if (wd) return; wd = {el, k, x0:x, y0:y, timer:setTimeout(() => wdBegin(y), 300)}; }
 function wdBegin(y){
   if (!wd) return;
-  if (wd.day){ // fold every day down to its name so they're easy to shuffle, keeping the held one under the finger
-    wd.el.parentElement.classList.add('collapse');
-    const r = wd.el.getBoundingClientRect(); scEl().scrollTop += r.top + r.height / 2 - y;
-  }
-  const items = [...wd.el.parentElement.querySelectorAll(wd.day ? '.sday' : '.item-row.sx')], from = items.indexOf(wd.el), sy = scY();
-  const rects = items.map(i => { const r = i.getBoundingClientRect(); return {top:r.top + sy, h:r.height}; });
-  Object.assign(wd, {on:true, items, from, to:from, rects, startPY:pageY(y), lastY:y});
-  wd.el.classList.add('lift'); document.body.classList.add('h-dragging');
+  const {el, k} = wd, sc = wd.sc = el.closest('.sheet') || scEl();
+  const items = [...el.parentElement.children].filter(c => c.matches(k.sel)); if (items.length < 2){ wd = null; return; }
+  if (k.fold){ el.parentElement.classList.add('collapse'); const r = el.getBoundingClientRect(); sc.scrollTop += r.top + r.height / 2 - y; }
+  const sy = sc.scrollTop, rects = items.map(i => { const r = i.getBoundingClientRect(); return {top:r.top + sy, h:r.height}; });
+  Object.assign(wd, {on:true, items, from:items.indexOf(el), to:items.indexOf(el), rects, startPY:y + sy, lastY:y});
+  el.classList.add('lift'); document.body.classList.add('h-dragging');
   if (navigator.vibrate) navigator.vibrate(25);
   wdTick();
 }
@@ -2628,36 +2647,34 @@ function wdMove(x, y, e){
   wd.lastY = y; wdLayout();
 }
 function wdLayout(){
-  const {el, items, from, rects} = wd, dy = pageY(wd.lastY) - wd.startPY, cy = rects[from].top + rects[from].h / 2 + dy;
+  const {el, items, from, rects, sc, k} = wd, dy = wd.lastY + sc.scrollTop - wd.startPY, cy = rects[from].top + rects[from].h / 2 + dy;
   el.style.transform = `translateY(${dy}px) scale(1.03)`;
-  const to = wd.to = items.filter((_, j) => j !== from && rects[j].top + rects[j].h / 2 < cy).length, H = rects[from].h + (wd.day ? 12 : 8);
+  const to = wd.to = items.filter((_, j) => j !== from && rects[j].top + rects[j].h / 2 < cy).length, H = rects[from].h + k.gap;
   items.forEach((it, j) => { if (j === from) return; it.style.transform = j < from && j >= to ? `translateY(${H}px)` : j > from && j <= to ? `translateY(${-H}px)` : ''; });
 }
-function wdTick(){
+function wdTick(){ // auto-scroll near the top/bottom edge of whatever is scrolling (page or sheet)
   if (!wd || !wd.on) return;
-  const y = wd.lastY, edge = 110, sp = y < edge ? -Math.ceil((edge - y) / 10) : y > innerHeight - edge - 70 ? Math.ceil((y - (innerHeight - edge - 70)) / 10) : 0;
-  if (sp){ scEl().scrollTop += sp; wdLayout(); }
+  const y = wd.lastY, sheet = wd.sc !== scEl(), b = sheet ? wd.sc.getBoundingClientRect() : {top:0, bottom:innerHeight - 70};
+  const lo = b.top + (sheet ? 70 : 110), hi = b.bottom - (sheet ? 70 : 110), sp = y < lo ? -Math.ceil((lo - y) / 10) : y > hi ? Math.ceil((y - hi) / 10) : 0;
+  if (sp){ wd.sc.scrollTop += sp; wdLayout(); }
   requestAnimationFrame(wdTick);
 }
 function wdUp(){
   if (!wd) return; clearTimeout(wd.timer);
-  const {on, from, to, el} = wd; wd = null; document.body.classList.remove('h-dragging');
+  const {on, from, to, el, k, sc, items} = wd; wd = null; document.body.classList.remove('h-dragging');
   if (!on) return;
   ui.dragEnd = Date.now();
-  const day = el.classList.contains('sday');
-  if (to !== from && ui.edit){
-    if (day){ const D = ui.edit.days, [m] = D.splice(from, 1); D.splice(to, 0, m); }
-    else { const msg = moveEntry(ui.edit.days[+el.dataset.d].items, from, to); if (msg) toast(msg); }
-  }
-  const y = scY(), top = day && el.getBoundingClientRect().top; render();
-  if (day){ const nd = document.querySelectorAll('.sday')[to]; scEl().scrollTop = nd ? nd.getBoundingClientRect().top + scY() - Math.max(80, top) : y; } else scEl().scrollTop = y;
+  const msg = to !== from ? k.drop(el, from, to, items) : '';
+  const y = sc.scrollTop, top = el.getBoundingClientRect().top;
+  if (k.redraw) k.redraw(); else render();
+  if (k.redraw) return;
+  if (k.fold){ const nd = document.querySelectorAll(k.sel)[to]; sc.scrollTop = nd ? nd.getBoundingClientRect().top + sc.scrollTop - Math.max(80, top) : y; } else sc.scrollTop = y;
+  if (msg) toast(msg);
 }
-const wdTarget = e => !e.target.closest('input, button') && e.target.closest('.item-row.sx');
-const ddTarget = e => e.target.closest('.sday-grip') && e.target.closest('.sday');
-document.addEventListener('touchstart', e => { if (e.touches.length !== 1) return; const t = e.touches[0], dd = ddTarget(e), el = dd || wdTarget(e); if (el) wdDown(el, t.clientX, t.clientY, !!dd); }, {passive:true});
+document.addEventListener('touchstart', e => { if (e.touches.length !== 1) return; const f = rdFind(e); if (f) wdDown(f[0], f[1], e.touches[0].clientX, e.touches[0].clientY); }, {passive:true});
 document.addEventListener('touchmove', e => { if (wd) wdMove(e.touches[0].clientX, e.touches[0].clientY, e); }, {passive:false});
 document.addEventListener('touchend', wdUp); document.addEventListener('touchcancel', wdUp);
-document.addEventListener('mousedown', e => { if (e.button !== 0) return; const dd = ddTarget(e), el = dd || wdTarget(e); if (el) wdDown(el, e.clientX, e.clientY, !!dd); });
+document.addEventListener('mousedown', e => { if (e.button !== 0) return; const f = rdFind(e); if (f) wdDown(f[0], f[1], e.clientX, e.clientY); });
 document.addEventListener('mousemove', e => { if (wd) wdMove(e.clientX, e.clientY, e); });
 document.addEventListener('mouseup', wdUp);
 /* ============ UI HELPERS ============ */
@@ -2853,8 +2870,10 @@ function renderSplits(){
   }
   let h = `<div class="row between" style="margin-bottom:10px"><h3 style="margin:0">Your splits</h3><button class="btn sm" data-act="newSplit">+ New split</button></div>`;
   if (!state.splits.length) h += `<div class="card empty"><p class="mute">No saved splits yet.</p><button class="btn gold" data-act="tab" data-tab="coach">Let Coach build one</button></div>`;
-  for (const s of state.splits) h += `<div class="card"><div class="row between"><h3 style="margin:0">${esc(s.name)}</h3><div class="row gap"><button class="btn ghost sm" data-act="editSplit" data-id="${s.id}">Edit</button><button class="icon-btn sm" data-act="delSplit" data-id="${s.id}">🗑</button></div></div>
+  const many = state.splits.length > 1; h += '<div class="sp-list">';
+  for (const s of state.splits) h += `<div class="card split-card"><div class="row between split-hd"><h3 style="margin:0">${many ? '<i class="sx-grip sday-grip">⋮⋮</i>' : ''}${esc(s.name)}</h3><div class="row gap"><button class="btn ghost sm" data-act="editSplit" data-id="${s.id}">Edit</button><button class="icon-btn sm" data-act="delSplit" data-id="${s.id}">🗑</button></div></div>
     ${s.days.map(d => `<div class="prow" data-act="startDay" data-s="${s.id}" data-d="${d.id}"><span><b>${esc(d.name)}</b><br><small class="mute">${d.items.map(it => EX[it.ex]?.name).join(' · ')}</small></span><span class="sr">START ▸</span></div>`).join('')}</div>`;
+  h += '</div>'; if (many) h += '<small class="mute h-hint">Hold a split\'s name to move it</small>';
   return h;
 }
 
@@ -3317,6 +3336,7 @@ const ACT = {
 };
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
+  if (Date.now() - (ui.dragEnd || 0) < 400 && b.closest('.h-cust, .split-card, .frow.meal, .sday')) return; // the tap that ends a drag
   const f = ACT[b.dataset.act]; if (f){ e.preventDefault(); f(b.dataset, b, e); }
 });
 document.addEventListener('input', e => {
