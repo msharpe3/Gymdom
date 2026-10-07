@@ -354,6 +354,14 @@ body.resting main{padding-bottom:170px}
 .h-seg button.on{color:#06231f}.h-seg button i{font-style:normal;font-size:10px;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:grid;place-items:center;padding:0 4px;background:var(--panel2);color:var(--text)}
 .h-seg button.on i{background:#06231f33;color:#06231f}
 .h-seg-ind{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:9px;background:var(--teal);transform:translateX(calc(var(--i, 0) * 100%));transition:transform .22s cubic-bezier(.3,.8,.3,1)}
+.pl-total{display:flex;align-items:baseline;justify-content:center;gap:8px;margin:16px 0 0}.pl-total b{font:700 44px 'Chakra Petch';line-height:1}.pl-total span{color:var(--mute);font-size:14px}
+.pl-svg{width:100%;display:block;margin-top:4px}.pl-sum{text-align:center;margin:2px 0 12px;font-size:14px}
+.pl-discs{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.pl-disc{aspect-ratio:1;border-radius:50%;border:0;padding:0;background:radial-gradient(circle,var(--c) 0 54%,#0002 55% 59%,var(--c) 60% 100%);color:#0b0e13;font:800 15px 'Chakra Petch';cursor:pointer;box-shadow:inset 0 0 0 3px #0003,0 3px 8px #0006;display:grid;place-items:center;-webkit-tap-highlight-color:transparent}
+.pl-disc:active{transform:scale(.92)}
+.pl-custom{display:inline-flex;align-items:center;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:0 10px 0 4px;flex:none}.pl-custom.on{border-color:var(--teal)}
+.pl-custom input{width:62px;border:0;background:none;padding:6px 4px;text-align:center}.pl-custom small{color:var(--mute);font-size:12px}
+.pl-target{margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}.pl-target .row{margin-top:6px}.pl-target input{flex:1;min-width:0}
 .reward-card.in{background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 10%,var(--panel2)),var(--panel2) 70%);border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:12px}
 .nl-tabs{margin:12px 0 10px}.nl-tabs .chip{display:inline-flex;align-items:center;gap:6px}.nl-new{font-weight:700;padding-left:14px;padding-right:14px}
 .nl-dot{font-style:normal;font-size:10px;font-weight:700;min-width:17px;height:17px;border-radius:9px;background:var(--panel2);color:var(--mute);display:grid;place-items:center;padding:0 4px}
@@ -453,12 +461,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.07.7"></script>
+<script src="exercises.js?v=2026.10.07.8"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.07.7';
+const APP_VERSION = '2026.10.07.8';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1176,23 +1184,43 @@ function openTrophies(){
 /* ---- Plate calculator ---- */
 const PLATES = [[45,'#f2667a',92],[35,'#f2c94c',82],[25,'#4fd1c5',72],[10,'#a78bfa',56],[5,'#b8c4d6',44],[2.5,'#c98a5b',36]];
 function plateMath(total, bar){ let side = (total - bar) / 2; const out = []; if (side < 0) return {out, rem:0, under:true}; for (const [p] of PLATES) while (side >= p - 1e-9){ out.push(p); side -= p; } return {out, rem: Math.round(side * 2 * 100) / 100}; }
-function plateViz(total, bar){
-  if (!total) return '<p class="mute">Enter a weight.</p>';
-  const {out, rem, under} = plateMath(total, bar);
-  if (under) return `<p class="mute">That's lighter than the ${bar} lb bar.</p>`;
+function plateSvg(out){ // one sleeve, plates stacked out from the collar
   let x = 62, svg = '';
   for (const p of out){ const [, c, h] = PLATES.find(q => q[0] === p); svg += `<rect x="${x}" y="${60 - h/2}" width="13" height="${h}" rx="3" fill="${c}"/>`; x += 15; }
-  return `<svg viewBox="0 0 300 120" style="width:100%;display:block"><rect x="4" y="55" width="292" height="10" rx="4" fill="#8e8aa8"/><rect x="50" y="44" width="9" height="32" rx="2" fill="#b8c4d6"/>${svg}</svg>
-    <p style="margin:6px 0 0;text-align:center"><b>Each side:</b> ${out.length ? out.join(' + ') : 'just the bar'}${rem ? `<br><small class="mute">${rem} lb left over — can't be made with standard plates</small>` : ''}</p>`;
+  return `<svg viewBox="0 0 300 120" class="pl-svg"><rect x="4" y="55" width="292" height="10" rx="4" fill="#8e8aa8"/><rect x="50" y="44" width="9" height="32" rx="2" fill="#b8c4d6"/>${svg}</svg>`;
 }
-function openPlates(w){
-  ui.plateBar = ui.plateBar || 45;
-  openSheet(`<div class="row between"><h3 style="margin:0">Plate calculator</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
-    <label class="lbl">Total weight (lb)</label><input id="plateW" type="number" inputmode="decimal" value="${w || ''}">
-    <label class="lbl">Bar</label><div class="chips" id="barChips">${[45,35,15].map(b => `<button class="chip${ui.plateBar === b ? ' on' : ''}" data-act="plateBar" data-v="${b}">${b} lb</button>`).join('')}</div>
-    <div id="plateViz" style="margin-top:14px">${plateViz(+w || 0, ui.plateBar)}</div>`);
+const PL_STARTS = [[45,'45 lb bar'],[35,'35'],[25,'25'],[15,'15'],[0,'None']];
+const plDefault = ex => ex.eq === 'bb' ? 45 : ex.eq === 'ez' ? 25 : 0;
+const plTotal = P => P.start + P.plates.reduce((a, b) => a + b, 0) * P.sides;
+// i = the live-workout exercise to fill in (or null for a standalone calculator)
+function openPlates(i){
+  const a = state.active, e = i != null && a ? a.entries[i] : null, ex = e ? EX[e.ex] : null, mem = (state.plateStart || {})[e ? e.ex : ''] || {};
+  const start = mem.s != null ? mem.s : ex ? plDefault(ex) : 45, sides = mem.n || 2;
+  const cur = e ? +([...e.sets].reverse().find(s => +s.w)?.w || 0) : 0;
+  const P = ui.pl = {i, ex:e ? e.ex : null, start, sides, plates:[]};
+  if (cur > start){ const m = plateMath(start + (cur - start) * (2 / sides), start); if (!m.rem) P.plates = m.out; } // show what's on the bar now
+  renderPlates();
 }
-
+function renderPlates(){
+  const P = ui.pl, ex = P.ex && EX[P.ex], tot = plTotal(P), custom = !PL_STARTS.some(([v]) => v === P.start);
+  const left = P.i != null && state.active ? state.active.entries[P.i].sets.map((s, j) => +s.r > 0 ? null : j + 1).filter(Boolean) : [];
+  const y = document.querySelector('#sheet .pl-total') ? $('#sheet').scrollTop : 0; // keep place when redrawing
+  openSheet(`<div class="row between"><h3 style="margin:0">Plate math</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    ${ex ? `<small class="mute">${esc(ex.name)}</small>` : ''}
+    <label class="lbl">Starting weight <span class="mute" style="font-weight:400;text-transform:none;letter-spacing:0">· bar or empty machine</span></label>
+    <div class="chips wrap">${PL_STARTS.map(([v, l]) => `<button class="chip${P.start === v ? ' on' : ''}" data-act="plStart" data-v="${v}">${l}</button>`).join('')}
+      <span class="pl-custom${custom ? ' on' : ''}"><input id="plStart" type="number" inputmode="decimal" placeholder="Other" value="${custom ? P.start : ''}"><small>lb</small></span></div>
+    <label class="lbl">Plates go on</label><div class="chips">${[[2,'Both sides'],[1,'One side']].map(([v, l]) => `<button class="chip${P.sides === v ? ' on' : ''}" data-act="plSides" data-v="${v}">${l}</button>`).join('')}</div>
+    <div class="pl-total"><b>${r1(tot)}</b><span>lb total</span></div>
+    ${plateSvg(P.plates)}
+    <p class="pl-sum">${P.plates.length ? `${P.sides === 2 ? 'Each side' : 'Loaded'}: ${P.plates.join(' + ')}` : 'Tap plates below to load them'}${P.start ? ` <span class="mute">· ${r1(P.start)} lb start</span>` : ''}</p>
+    <div class="pl-discs">${PLATES.map(([v, c]) => `<button class="pl-disc" style="--c:${c}" data-act="plAdd" data-v="${v}">${v}</button>`).join('')}</div>
+    <div class="row gap" style="margin-top:10px"><button class="btn ghost sm" style="flex:1" data-act="plUndo"${P.plates.length ? '' : ' disabled'}>↶ Remove last</button><button class="btn ghost sm" style="flex:1" data-act="plClear"${P.plates.length ? '' : ' disabled'}>Clear</button></div>
+    ${left.length ? `<button class="btn gold block" style="margin-top:12px" data-act="plUse">Use ${r1(tot)} lb for set${left.length === 1 ? ' ' + left[0] : `s ${left[0]}–${left[left.length - 1]}`}</button>` : ''}
+    <div class="pl-target"><small class="mute">Working backwards?</small><div class="row gap"><input id="plTarget" type="number" inputmode="decimal" placeholder="Target total (lb)"><button class="btn sm" data-act="plLoad">Load it</button></div><small id="plTMsg" class="mute"></small></div>`);
+  if (y) $('#sheet').scrollTop = y;
+}
+function plRemember(){ const P = ui.pl; if (!P.ex) return; state.plateStart = state.plateStart || {}; state.plateStart[P.ex] = {s:P.start, n:P.sides}; save(); }
 /* ---- Bodyweight ---- */
 function bwChart(log){
   if (log.length < 2) return log.length ? '<p class="mute" style="font-size:13px">Log another weigh-in to see your trend.</p>' : '';
@@ -2966,7 +2994,7 @@ function renderTrain(){
         <input type="number" inputmode="numeric" data-e="${i}" data-s="${j}" data-f="r" value="${esc(s.r)}" placeholder="${p ? p.r : ''}">
         <button class="icon-btn sm" data-act="rmSet" data-i="${i}" data-s="${j}">−</button></div>`; }).join('')}
       <div class="ex-actions"><button class="btn ghost sm" data-act="addSet" data-i="${i}">+ Add set</button><button class="btn ghost sm" data-act="replaceEx" data-i="${i}">⇄ Replace</button>
-      ${ex.eq === 'bb' || ex.eq === 'ez' ? `<button class="btn ghost sm" data-act="plates" data-w="${esc(lastW)}">Plates</button>` : ''}
+      ${ex.eq === 'bb' || ex.eq === 'ez' || ex.eq === 'mc' ? `<button class="btn ghost sm" data-act="plates" data-i="${i}">🏋 Plates</button>` : ''}
       ${i < a.entries.length - 1 ? `<button class="btn ghost sm" data-act="ssToggle" data-i="${i}">${e.ss ? 'Unlink superset' : '⛓ Superset with next'}</button>` : ''}</div></div>`;
   });
   h += `<button class="btn ghost block" data-act="addEx">+ Add exercise</button>
@@ -3357,8 +3385,18 @@ const ACT = {
   savePlan: () => { const p = ui.plan; state.splits.push({id:uid(), name:'Coach: ' + p.name, days:p.days.map(d => ({id:uid(), name:d.name, items:d.items.map(({ex,sets,reps,ss}) => ({ex,sets,reps,ss:!!ss}))}))});
     save(); ui.plan = null; ui.tab = 'train'; render(); toast('Plan saved to your splits'); },
   trophies: openTrophies,
-  plates: d => openPlates(d.w),
-  plateBar: (d, b) => { ui.plateBar = +d.v; document.querySelectorAll('#barChips .chip').forEach(c => c.classList.toggle('on', c === b)); $('#plateViz').innerHTML = plateViz(+$('#plateW').value || 0, ui.plateBar); },
+  plates: d => openPlates(d.i != null && d.i !== '' ? +d.i : null),
+  plStart: d => { ui.pl.start = +d.v; plRemember(); renderPlates(); },
+  plSides: d => { ui.pl.sides = +d.v; plRemember(); renderPlates(); },
+  plAdd: d => { ui.pl.plates.push(+d.v); ui.pl.plates.sort((a, b) => b - a); if (navigator.vibrate) navigator.vibrate(8); renderPlates(); },
+  plUndo: () => { const L = ui.pl.plates; L.splice(L.lastIndexOf(Math.min(...L)), 1); renderPlates(); },
+  plClear: () => { ui.pl.plates = []; renderPlates(); },
+  plLoad: () => { const P = ui.pl, t = +($('#plTarget').value || 0); if (!t) return;
+    if (t < P.start) { $('#plTMsg').textContent = `That's less than the ${r1(P.start)} lb start.`; return; }
+    const m = plateMath(P.start + (t - P.start) * (2 / P.sides), P.start); P.plates = m.out; renderPlates();
+    if (m.rem) toast(`Closest is ${r1(plTotal(P))} lb with standard plates`); },
+  plUse: () => { const P = ui.pl, a = state.active, e = a && a.entries[P.i]; if (!e) return; const w = String(r1(plTotal(P)));
+    let n = 0; e.sets.forEach(s => { if (!(+s.r > 0)){ s.w = w; n++; } }); plRemember(); save(); closeSheet(); render(); toast(`${w} lb → ${n} set${n === 1 ? '' : 's'}`); },
   ssToggle: d => { const e = state.active.entries[+d.i]; e.ss = !e.ss; save(); render(); },
   ssItem: d => { const it = ui.edit.days[+d.d].items[+d.i]; it.ss = !it.ss; render(); },
   bwLog: () => { const v = +$('#bwIn').value; if (!v || v < 50 || v > 700) return toast('Enter your weight in lb');
@@ -3538,7 +3576,7 @@ document.addEventListener('click', e => {
 document.addEventListener('input', e => {
   const t = e.target, d = t.dataset;
   if (d.f && state.active){ state.active.entries[+d.e].sets[+d.s][d.f] = t.value; save(); livePR(+d.e, +d.s); }
-  else if (t.id === 'plateW'){ $('#plateViz').innerHTML = plateViz(+t.value || 0, ui.plateBar); }
+
   else if (t.id === 'wname' && state.active){ state.active.name = t.value; save(); }
   else if (d.sf && ui.edit){ const day = ui.edit.days[+d.d]; if (d.sf === 'dayName') day.name = t.value; else day.items[+d.i][d.sf] = d.sf === 'sets' ? +t.value || '' : t.value; }
   else if (t.id === 'splitName' && ui.edit){ ui.edit.name = t.value; }
@@ -3553,10 +3591,13 @@ document.addEventListener('keydown', e => {
   if (e.key !== 'Enter' || e.isComposing) return;
   if (e.target.id === 'nlIn'){ e.preventDefault(); nlAdd(); }
   else if (e.target.classList.contains('nl-edit')){ e.preventDefault(); e.target.dataset.done = 1; nlCommit(e.target.dataset.id, e.target.value); }
+  else if (e.target.id === 'plTarget'){ e.preventDefault(); ACT.plLoad(); }
+  else if (e.target.id === 'plStart'){ e.preventDefault(); e.target.blur(); }
   else if (e.target.id === 'nlName'){ e.preventDefault(); const b = $('[data-act="nlSaveList"]'); if (b) b.click(); }
 });
 document.addEventListener('focusout', e => { const t = e.target; if (t.classList && t.classList.contains('nl-edit') && !t.dataset.done && ui.nlEdit === t.dataset.id){ t.dataset.done = 1; nlCommit(t.dataset.id, t.value); } });
-document.addEventListener('change', e => { const t = e.target; if (t.id === 'scanFile' && t.files[0]) scanPhoto(t.files[0]); else if ((t.id === 'labelFile' || t.id === 'labelFile2') && t.files[0]) readLabel(t.files[0]); else if (t.id === 'amtU' && ui.amt){ ui.amt.unit = t.value; amtPreview(); } });
+document.addEventListener('change', e => { const t = e.target;
+  if (t.id === 'plStart' && ui.pl){ const v = +t.value; if (t.value !== '' && v >= 0){ ui.pl.start = v; plRemember(); renderPlates(); } return; } if (t.id === 'scanFile' && t.files[0]) scanPhoto(t.files[0]); else if ((t.id === 'labelFile' || t.id === 'labelFile2') && t.files[0]) readLabel(t.files[0]); else if (t.id === 'amtU' && ui.amt){ ui.amt.unit = t.value; amtPreview(); } });
 $('#importFile').addEventListener('change', async e => {
   const f = e.target.files[0]; if (!f) return;
   try { const s = migrate(JSON.parse(await f.text())); const code = state.profile.syncCode; state = s; state.profile.syncCode = state.profile.syncCode || code; save(); closeSheet(); render(); toast('Backup imported'); }
