@@ -357,7 +357,7 @@ body.resting main{padding-bottom:170px}
 .pl-total{display:flex;align-items:baseline;justify-content:center;gap:8px;margin:16px 0 0}.pl-total b{font:700 44px 'Chakra Petch';line-height:1}.pl-total span{color:var(--mute);font-size:14px}
 .pl-svg{width:100%;display:block;margin-top:4px}.pl-sum{text-align:center;margin:2px 0 12px;font-size:14px}
 .pl-discs{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
-.pl-disc{aspect-ratio:1;border-radius:50%;border:0;padding:0;background:radial-gradient(circle,var(--c) 0 54%,#0002 55% 59%,var(--c) 60% 100%);color:#0b0e13;font:800 15px 'Chakra Petch';cursor:pointer;box-shadow:inset 0 0 0 3px #0003,0 3px 8px #0006;display:grid;place-items:center;-webkit-tap-highlight-color:transparent}
+.pl-disc{aspect-ratio:1;border-radius:50%;border:0;padding:0;background:radial-gradient(circle,var(--c) 0 54%,var(--e) 55% 59%,var(--c) 60% 100%);color:var(--t);font:800 15px 'Chakra Petch';cursor:pointer;box-shadow:inset 0 0 0 3px #0003,0 3px 8px #0006;display:grid;place-items:center;-webkit-tap-highlight-color:transparent}
 .pl-disc:active{transform:scale(.92)}
 .pl-custom{display:inline-flex;align-items:center;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:0 10px 0 4px;flex:none}.pl-custom.on{border-color:var(--teal)}
 .pl-custom input{width:62px;border:0;background:none;padding:6px 4px;text-align:center}.pl-custom small{color:var(--mute);font-size:12px}
@@ -461,12 +461,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.07.8"></script>
+<script src="exercises.js?v=2026.10.07.9"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.07.8';
+const APP_VERSION = '2026.10.07.9';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1182,12 +1182,16 @@ function openTrophies(){
 }
 
 /* ---- Plate calculator ---- */
-const PLATES = [[45,'#f2667a',92],[35,'#f2c94c',82],[25,'#4fd1c5',72],[10,'#a78bfa',56],[5,'#b8c4d6',44],[2.5,'#c98a5b',36]];
+const PLATES = [[45,'',92],[35,'',82],[25,'',72],[10,'',56],[5,'',44],[2.5,'',36]];
+// Plate look in one place, so plate styles can be unlocked as rewards later; default is plain iron grey
+const PLATE_SKINS = {iron:{fill:'#5b616d', edge:'#3d424b', text:'#e8ebf0'}};
+const plateSkin = () => PLATE_SKINS[state.plateSkin] || PLATE_SKINS.iron;
 function plateMath(total, bar){ let side = (total - bar) / 2; const out = []; if (side < 0) return {out, rem:0, under:true}; for (const [p] of PLATES) while (side >= p - 1e-9){ out.push(p); side -= p; } return {out, rem: Math.round(side * 2 * 100) / 100}; }
 function plateSvg(out){ // one sleeve, plates stacked out from the collar
   let x = 62, svg = '';
-  for (const p of out){ const [, c, h] = PLATES.find(q => q[0] === p); svg += `<rect x="${x}" y="${60 - h/2}" width="13" height="${h}" rx="3" fill="${c}"/>`; x += 15; }
-  return `<svg viewBox="0 0 300 120" class="pl-svg"><rect x="4" y="55" width="292" height="10" rx="4" fill="#8e8aa8"/><rect x="50" y="44" width="9" height="32" rx="2" fill="#b8c4d6"/>${svg}</svg>`;
+  const k = plateSkin();
+  for (const p of out){ const [, , h] = PLATES.find(q => q[0] === p); svg += `<rect x="${x}" y="${60 - h/2}" width="13" height="${h}" rx="3" fill="${k.fill}" stroke="${k.edge}" stroke-width="1.5"/>`; x += 15; }
+  return `<svg viewBox="0 0 300 120" class="pl-svg"><rect x="4" y="55" width="292" height="10" rx="4" fill="#8b919b"/><rect x="50" y="44" width="9" height="32" rx="2" fill="#b8c4d6"/>${svg}</svg>`;
 }
 const PL_STARTS = [[45,'45 lb bar'],[35,'35'],[25,'25'],[15,'15'],[0,'None']];
 const plDefault = ex => ex.eq === 'bb' ? 45 : ex.eq === 'ez' ? 25 : 0;
@@ -1214,7 +1218,7 @@ function renderPlates(){
     <div class="pl-total"><b>${r1(tot)}</b><span>lb total</span></div>
     ${plateSvg(P.plates)}
     <p class="pl-sum">${P.plates.length ? `${P.sides === 2 ? 'Each side' : 'Loaded'}: ${P.plates.join(' + ')}` : 'Tap plates below to load them'}${P.start ? ` <span class="mute">· ${r1(P.start)} lb start</span>` : ''}</p>
-    <div class="pl-discs">${PLATES.map(([v, c]) => `<button class="pl-disc" style="--c:${c}" data-act="plAdd" data-v="${v}">${v}</button>`).join('')}</div>
+    <div class="pl-discs" style="--c:${plateSkin().fill};--e:${plateSkin().edge};--t:${plateSkin().text}">${PLATES.map(([v]) => `<button class="pl-disc" data-act="plAdd" data-v="${v}">${v}</button>`).join('')}</div>
     <div class="row gap" style="margin-top:10px"><button class="btn ghost sm" style="flex:1" data-act="plUndo"${P.plates.length ? '' : ' disabled'}>↶ Remove last</button><button class="btn ghost sm" style="flex:1" data-act="plClear"${P.plates.length ? '' : ' disabled'}>Clear</button></div>
     ${left.length ? `<button class="btn gold block" style="margin-top:12px" data-act="plUse">Use ${r1(tot)} lb for set${left.length === 1 ? ' ' + left[0] : `s ${left[0]}–${left[left.length - 1]}`}</button>` : ''}
     <div class="pl-target"><small class="mute">Working backwards?</small><div class="row gap"><input id="plTarget" type="number" inputmode="decimal" placeholder="Target total (lb)"><button class="btn sm" data-act="plLoad">Load it</button></div><small id="plTMsg" class="mute"></small></div>`);
