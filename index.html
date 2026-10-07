@@ -180,6 +180,18 @@ details.steps{margin:0 0 12px}details.steps summary{cursor:pointer;color:var(--t
 .frow:last-of-type{border-bottom:0}
 .fk{text-align:right;white-space:nowrap;font:700 15px 'Chakra Petch'}.fk small{font:500 11px Inter}
 .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.lbl-cta{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:14px 10px 16px}.lbl-cta b{font-size:16px}.lbl-cta small{font-size:13px;max-width:300px}
+.lbl-ico{width:72px;height:72px;border-radius:20px;display:grid;place-items:center;background:var(--panel2);border:1px solid var(--line);margin-bottom:4px}
+.lbl-btn{text-align:center;box-sizing:border-box;margin-top:8px}
+.lbl-shot{position:relative;display:block;border-radius:14px;overflow:hidden;background:#000;max-height:46vh;padding:0;border:0}.lbl-shot img{display:block;width:100%;max-height:46vh;object-fit:contain}
+.lbl-scan{position:absolute;left:0;right:0;height:3px;background:var(--teal);box-shadow:0 0 14px var(--teal);animation:lblscan 1.6s ease-in-out infinite alternate}
+@keyframes lblscan{from{top:4%}to{top:94%}}
+.lbl-review{display:flex;gap:12px;align-items:center;padding:10px;border:1px solid color-mix(in srgb,var(--teal) 45%,transparent);background:color-mix(in srgb,var(--teal) 8%,transparent);border-radius:14px}
+.lbl-review span{flex:1;min-width:0}.lbl-review b{display:block;font-size:14px}.lbl-review small{font-size:12px}
+.lbl-shot.small{width:64px;height:64px;flex:none;cursor:zoom-in;transition:width .25s,height .25s}.lbl-shot.small img{width:100%;height:100%;object-fit:cover}
+.lbl-shot.small.big{width:100%;height:auto;cursor:zoom-out}.lbl-shot.small.big img{object-fit:contain;height:auto;max-height:60vh}
+.lbl-review:has(.big){flex-direction:column;align-items:stretch}
+input.lbl-miss{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 8%,var(--panel2))}input.lbl-miss::placeholder{color:var(--gold);opacity:.8;font-size:12px}
 .mrow3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;text-align:center}
 .mrow3 div{background:var(--panel2);border-radius:10px;padding:8px}.mrow3 small{display:block}.mrow3 b{font:700 16px 'Chakra Petch'}
 select{font:16px Inter;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;width:100%}
@@ -421,12 +433,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.07.3"></script>
+<script src="exercises.js?v=2026.10.07.4"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.07.3';
+const APP_VERSION = '2026.10.07.4';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1609,9 +1621,9 @@ function openAddFood(meal, mode){
   ui.foodMeal = meal; ui.foodMode = mode || ui.foodMode || 'search'; ui.foodEditRef = null;
   const mn = MEALS.find(x => x[0] === meal)[1];
   openSheet(`<div class="row between"><h3 style="margin:0">Add to ${mn}</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
-    <div class="chips" style="margin:12px 0">${[['search','Search'],['scan','Scan barcode'],['meals','Saved meals'],['recent','Recent'],['manual','Manual']].map(([k, v]) => `<button class="chip${ui.foodMode === k ? ' on' : ''}" data-act="foodMode" data-v="${k}">${v}</button>`).join('')}</div>
+    <div class="chips" style="margin:12px 0">${[['search','Search'],['scan','Scan barcode'],['label','Scan label'],['meals','Saved meals'],['recent','Recent'],['manual','Manual']].map(([k, v]) => `<button class="chip${ui.foodMode === k ? ' on' : ''}" data-act="foodMode" data-v="${k}">${v}</button>`).join('')}</div>
     <div id="foodArea"></div>`);
-  ({search:foodSearchUI, scan:startScan, meals:savedMealsUI, manual:() => manualUI(), recent:recentUI})[ui.foodMode]();
+  ({search:foodSearchUI, scan:startScan, label:labelUI, meals:savedMealsUI, manual:() => manualUI(), recent:recentUI})[ui.foodMode]();
 }
 const SRC_TAG = {usda:['usda','USDA'], local:['quick','Macros only'], off:['off','Packaged']};
 const foodRow = (f, i, list) => `<div class="frow" data-act="foodPick" data-list="${list}" data-i="${i}"><span><b>${esc(f.name)}</b>${SRC_TAG[f.src] ? `<span class="fsrc ${SRC_TAG[f.src][0]}">${SRC_TAG[f.src][1]}</span>` : ''}<br><small class="mute">${f.sv && f.sv[0] ? esc(f.sv[0][0]) + ' · ' + Math.round(f.per.k * f.sv[0][1] / 100) + ' Cal' : Math.round(f.per.k) + ' Cal / 100 g'}</small></span><span class="sr">+</span></div>`;
@@ -1666,12 +1678,16 @@ function recentUI(){
     : foodRow(f, i, 'recent')).join('') : '<p class="mute">Foods you add will show up here for quick re-adding.</p>';
 }
 function manualUI(pre = {}){
-  $('#foodArea').innerHTML = `<label class="lbl">Food name</label><input id="mName" value="${esc(pre.name || '')}" placeholder="e.g. Chipotle burrito bowl">
-    <div class="mgrid"><div><label class="lbl">Calories</label><input id="mK" type="number" inputmode="decimal" value="${pre.k ?? ''}"></div><div><label class="lbl">Protein (g)</label><input id="mP" type="number" inputmode="decimal" value="${pre.p ?? ''}"></div>
-    <div><label class="lbl">Carbs (g)</label><input id="mC" type="number" inputmode="decimal" value="${pre.c ?? ''}"></div><div><label class="lbl">Fat (g)</label><input id="mF" type="number" inputmode="decimal" value="${pre.f ?? ''}"></div></div>
-    <label class="lbl">Amount (optional)</label><input id="mA" value="${esc(pre.a || '')}" placeholder="e.g. 1 bowl">
+  ui.manualLabel = !!pre.label;
+  const miss = v => pre.label && v == null ? ' class="lbl-miss" placeholder="Not found"' : '';
+  $('#foodArea').innerHTML = `${pre.label ? `<div class="lbl-review"><button class="lbl-shot small" data-act="lblZoom" aria-label="Enlarge photo"><img src="${pre.img}" alt=""></button><span><b>Read ${pre.found} values from your label</b><small class="mute">Check them against the photo (tap it to enlarge), name it, and fix anything that's off.</small></span></div>` : ''}
+    <label class="lbl">Food name</label><input id="mName" value="${esc(pre.name || '')}" placeholder="${pre.label ? 'e.g. Honey Nut Cheerios' : 'e.g. Chipotle burrito bowl'}">
+    <div class="mgrid"><div><label class="lbl">Calories</label><input id="mK" type="number" inputmode="decimal" value="${pre.k ?? ''}"${miss(pre.k)}></div><div><label class="lbl">Protein (g)</label><input id="mP" type="number" inputmode="decimal" value="${pre.p ?? ''}"${miss(pre.p)}></div>
+    <div><label class="lbl">Carbs (g)</label><input id="mC" type="number" inputmode="decimal" value="${pre.c ?? ''}"${miss(pre.c)}></div><div><label class="lbl">Fat (g)</label><input id="mF" type="number" inputmode="decimal" value="${pre.f ?? ''}"${miss(pre.f)}></div></div>
+    ${pre.label ? `<div class="mgrid"><div><label class="lbl">Servings eaten</label><input id="mS" type="number" inputmode="decimal" step="0.25" min="0" value="1"></div><div><label class="lbl">Per serving</label><input id="mA" value="${esc(pre.a || '')}"></div></div><small class="mute" style="font-size:12px">Numbers above are for one serving — they're multiplied by servings when you add it.</small>`
+      : `<label class="lbl">Amount (optional)</label><input id="mA" value="${esc(pre.a || '')}" placeholder="e.g. 1 bowl">`}
     <details class="mextra"${pre.x && Object.keys(pre.x).length ? ' open' : ''}><summary>More nutrition facts (optional)</summary><div class="mgrid">${MANUAL_EXTRA.map(([k, l, u]) => `<div><label class="lbl">${l} (${u})</label><input id="mx_${k}" type="number" inputmode="decimal" value="${pre.x && pre.x[k] != null ? pre.x[k] : ''}"></div>`).join('')}</div></details>
-    ${pre.note ? `<p class="mute" style="font-size:12px">${esc(pre.note)}</p>` : ''}
+    ${pre.note ? `<p class="mute" style="font-size:12px">${esc(pre.note)}</p>` : ''}${pre.labelBtn ? `<button class="btn ghost block" data-act="foodMode" data-v="label">📷 Read the Nutrition Facts label instead</button>` : ''}
     <button class="btn gold block" style="margin-top:14px" data-act="manualSave">${pre.edit ? 'Save changes' : 'Add food'}</button>
     ${pre.edit ? `<button class="btn danger block" style="margin-top:8px" data-act="foodDel">Delete</button>` : ''}`;
 }
@@ -1703,6 +1719,99 @@ function amtPreview(){
 function rememberFood(food){
   const key = f => f.name + '|' + (f.code || '');
   state.foodRecent = [food, ...state.foodRecent.filter(f => key(f) !== key(food))].slice(0, 30);
+}
+
+/* ---- Nutrition label photo → numbers (text from on-device OCR) ---- */
+const LABEL_DV = {f:78, sat:20, chol:300, na:2300, c:275, fib:28, asug:50, p:50, vd:20, ca:1300, fe:18, pot:4700};
+const LABEL_G = ['f','sat','trans','c','fib','sug','asug','p'];
+// Order matters: more specific names first (Saturated Fat before Fat, Added Sugars before Sugars)
+const LABEL_KEYS = [['k',/calor(?!.*(from fat|a day|diet))/],['sat',/satur|\bsat\b/],['trans',/trans/],['chol',/chol/],['na',/sod/],['fib',/fib(er|re)|dietary/],
+  ['asug',/added|incl/],['sug',/sugar/],['c',/carb/],['f',/\bfat/],['p',/prot/],['vd',/vit\w*\.?\s*d\b/],['ca',/calc/],['fe',/\b[il1|!]ron/],['pot',/potas/]];
+// Tidy common OCR slips around numbers: O→0, l/I/i→1, S→5, "2 5g"→2.5g, comma decimals, meg→mcg
+const LBL_FIX = [[/(\d)[oO]/g, '$10'], [/[oO](\d)/g, '0$1'], [/(\d)[oO]/g, '$10'],
+  [/\b[oOQD](?=\s?(?:mcg|meg|mg|g|%)(?![a-z]))/g, '0'], [/\b[iIl|!](?=\s?(?:mcg|meg|mg|g|%)(?![a-z]))/g, '1'], [/\b[sS](?=\s?(?:mcg|meg|mg|g)(?![a-z]))/g, '5'],
+  [/(\d),(\d{3})(?!\d)/g, '$1$2'], [/(\d)[lI|](?=\d)/g, '$11'], [/\b[lI|](?=\d)/g, '1'], [/(\d),(\d)(?!\d\d)/g, '$1.$2'], [/(\d) 5(?=\s?g\b)/g, '$1.5'], [/(\d?)\s?meg\b/g, '$1mcg']];
+const labelNum = s => LBL_FIX.reduce((t, [re, to]) => t.replace(re, to), s);
+function labelTokens(line){
+  const out = [], re = /(<\s*)?(\d+(?:\.\d+)?)\s*(mcg|µg|ug|mg|g|%|iu)?/gi; let m;
+  while ((m = re.exec(line))) out.push({raw:m[2], v:+m[2], u:(m[3] || '').toLowerCase(), lt:!!m[1]});
+  return out;
+}
+function parseLabel(text){
+  const lines = text.split(/\n/).map(l => labelNum(l.trim())).filter(Boolean), got = {}, pct = {}, raw = {};
+  let serving = '', grams = 0, per = 0;
+  lines.forEach((ln, i) => {
+    const lo = ln.toLowerCase();
+    if (/serv\w*\s*size/.test(lo)){ serving = ln.replace(/^.*?serv\w*\s*size\s*[:.]?\s*/i, '').replace(/\s{2,}/g, ' ').trim();
+      const g = /\((\d+(?:\.\d+)?)\s*g\)/i.exec(ln) || /(\d+(?:\.\d+)?)\s*g\b/i.exec(ln); if (g) grams = +g[1]; return; }
+    if (/servings?\s*per/.test(lo)){ const n = /(\d+(?:\.\d+)?)/.exec(ln.replace(/about|approx\.?/i, '')); if (n) per = +n[1]; return; }
+    const hit = LABEL_KEYS.find(([k, re]) => re.test(lo) && !(k in got)); if (!hit) return;
+    const k = hit[0]; let toks = labelTokens(ln);
+    if (k === 'k'){ // calories: the big number can land on the next line
+      toks = toks.filter(t => t.u !== '%' && t.v !== 2000 && t.v !== 2500);
+      if (!toks.length && lines[i + 1] && !LABEL_KEYS.some(([, re]) => re.test(lines[i + 1].toLowerCase()))) toks = labelTokens(lines[i + 1]).filter(t => t.u !== '%');
+      if (toks.length) got.k = toks[0].v; return;
+    }
+    const val = toks.find(t => t.u !== '%'), pc = toks.find(t => t.u === '%');
+    if (pc) pct[k] = pc.v;
+    if (val){ got[k] = val.lt ? 0 : val.v; raw[k] = val; }
+  });
+  // "8g" often reads as "89": when a gram amount has no unit and ends in 9, weigh both readings
+  const alt = {};
+  LABEL_G.forEach(k => { const t = raw[k]; if (t && !t.u && /\d9$|\.\d*9$/.test(t.raw) && t.raw.length > 1) alt[k] = +t.raw.slice(0, -1); });
+  for (const k in alt) if (/\.\d9$/.test(raw[k].raw)){ got[k] = alt[k]; delete alt[k]; } // "2.59" can only be 2.5g
+  const fitDV = (k, v) => pct[k] != null && LABEL_DV[k] ? Math.abs(v - pct[k] * LABEL_DV[k] / 100) / Math.max(1, LABEL_DV[k] / 100 * 2) : null;
+  for (const k in alt){ const a = fitDV(k, got[k]), b = fitDV(k, alt[k]); if (a != null && b != null){ if (b < a) got[k] = alt[k]; delete alt[k]; } }
+  const fix = (k, cap) => { if (k in alt && got[cap] != null && got[k] > got[cap] && alt[k] <= got[cap]){ got[k] = alt[k]; delete alt[k]; } };
+  fix('sat', 'f'); fix('trans', 'f'); fix('fib', 'c'); fix('sug', 'c'); fix('asug', 'sug'); fix('asug', 'c');
+  if (got.k != null && ['f','c','p'].some(k => k in alt)){ // pick the fat/carb/protein readings that best match the calories
+    let best = null; const opts = k => k in alt ? [got[k], alt[k]] : [got[k] ?? 0];
+    for (const f of opts('f')) for (const c of opts('c')) for (const p of opts('p')){ const d = Math.abs(9 * f + 4 * c + 4 * p - got.k); if (!best || d < best.d) best = {d, f, c, p}; }
+    ['f','c','p'].forEach(k => { if (k in got) got[k] = best[k]; });
+  }
+  // A %DV with no readable amount still tells us the amount
+  for (const k in pct) if (got[k] == null && LABEL_DV[k]){ const v = pct[k] * LABEL_DV[k] / 100;
+    got[k] = k === 'vd' || k === 'fe' ? Math.round(v * 10) / 10 : v < 5 ? Math.round(v * 2) / 2 : Math.round(v); }
+  if (raw.vd && raw.vd.u === 'iu') got.vd = Math.round(got.vd / 40 * 10) / 10;
+  if (got.k == null && (got.f != null || got.c != null || got.p != null)) got.k = Math.round(9 * (got.f || 0) + 4 * (got.c || 0) + 4 * (got.p || 0));
+  const x = {}; ['sat','trans','chol','na','fib','sug','asug','vd','ca','fe','pot'].forEach(k => { if (got[k] != null) x[k] = got[k]; });
+  return {k:got.k, f:got.f, c:got.c, p:got.p, x, serving, grams, per, found:Object.keys(got).length};
+}
+
+/* ---- Label photo: on-device OCR (Tesseract, loaded only when needed) ---- */
+function labelUI(){
+  $('#foodArea').innerHTML = `<div class="lbl-cta"><div class="lbl-ico">${LABEL_ICON}</div><b>Snap the Nutrition Facts</b>
+    <small class="mute">Fill the frame with just the label, hold it flat and avoid glare. You'll check the numbers before anything is added.</small></div>
+    <label class="btn gold block lbl-btn">📷 Take a photo<input type="file" accept="image/*" capture="environment" id="labelFile" hidden></label>
+    <label class="btn ghost block lbl-btn">Choose from photos<input type="file" accept="image/*" id="labelFile2" hidden></label>
+    <small class="mute" style="display:block;margin-top:10px;font-size:11px;text-align:center">Read right on your phone — the photo isn't uploaded. The first scan downloads the reader, so it takes a little longer.</small>`;
+}
+const LABEL_ICON = '<svg viewBox="0 0 48 48" width="44" height="44"><rect x="10" y="4" width="28" height="40" rx="3" fill="#fff" stroke="#111" stroke-width="2"/><rect x="14" y="9" width="20" height="4" fill="#111"/><path d="M14 17h20M14 21h20M14 25h14M14 29h20M14 33h12M14 37h17" stroke="#111" stroke-width="2"/><rect x="14" y="14.5" width="20" height="1.6" fill="#111"/></svg>';
+function labelCanvas(url){ // shrink big phone photos so reading stays quick
+  return new Promise((res, rej) => { const im = new Image(); im.onload = () => { const s = Math.min(1, 2000 / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas');
+    c.width = Math.round(im.naturalWidth * s); c.height = Math.round(im.naturalHeight * s); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); res(c); }; im.onerror = rej; im.src = url; });
+}
+async function readLabel(file){
+  const area = $('#foodArea'); if (!area) return;
+  if (ui.labelImg) URL.revokeObjectURL(ui.labelImg);
+  const url = ui.labelImg = URL.createObjectURL(file), set = (msg, pc) => { const m = $('#lblMsg'), b = $('#lblBar'); if (m) m.textContent = msg; if (b && pc != null) b.style.width = Math.round(pc * 100) + '%'; };
+  area.innerHTML = `<div class="lbl-shot"><img src="${url}" alt="Your label photo"><div class="lbl-scan"></div></div><div class="bar" style="margin:12px 0 6px"><i id="lblBar" style="width:3%"></i></div><p id="lblMsg" class="mute" style="font-size:13px;margin:0">Getting the reader ready…</p>`;
+  let worker;
+  try {
+    const cv = await labelCanvas(url);
+    if (!window.Tesseract) await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js');
+    worker = await Tesseract.createWorker('eng', 1, {logger: m => { if (m.status === 'recognizing text') set('Reading the label…', .25 + m.progress * .75); else if (m.progress != null) set(m.status && /load|init/i.test(m.status) ? 'Getting the reader ready…' : 'Working…', .03 + m.progress * .2); }});
+    await worker.setParameters({tessedit_pageseg_mode:Tesseract.PSM.SINGLE_BLOCK});
+    const {data} = await worker.recognize(cv);
+    if (ui.foodMode !== 'label' || !$('#lblMsg')) return; // they moved on
+    const r = parseLabel(data.text || '');
+    if (r.found < 3){ area.innerHTML = `<div class="lbl-shot small"><img src="${url}" alt=""></div><p class="mute" style="font-size:13px">Couldn't make out the numbers in that photo. Try again closer, straight on and without glare — or type them in.</p>
+      <label class="btn gold block lbl-btn">📷 Try again<input type="file" accept="image/*" capture="environment" id="labelFile" hidden></label><button class="btn ghost block" style="margin-top:8px" data-act="lblManual">Type it in</button>`; return; }
+    ui.foodMode = 'manual';
+    manualUI({k:r.k, p:r.p, c:r.c, f:r.f, x:r.x, a:r.serving || '1 serving', label:true, img:url, found:r.found});
+  } catch(e){
+    area.innerHTML = `<p class="mute" style="font-size:13px">Couldn't load the label reader — check your connection and try again.</p><button class="btn ghost block" data-act="foodMode" data-v="label">Try again</button>`;
+  } finally { if (worker) worker.terminate().catch(() => {}); }
 }
 
 /* ---- Barcode scanning (ZXing, loaded only when needed) ---- */
@@ -1739,7 +1848,7 @@ async function lookupBarcode(code){
     const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=code,product_name,product_name_en,brands,serving_size,serving_quantity,nutriments`);
     const j = await r.json(), food = j && j.status === 1 && j.product ? offToFood({...j.product, code}) : null;
     if (food) return openAmount(food);
-    ui.foodMode = 'manual'; manualUI({note:`Barcode ${code} isn't in the database (or has no nutrition info). Enter it from the label instead.`});
+    ui.foodMode = 'manual'; manualUI({note:`Barcode ${code} isn't in the database (or has no nutrition info). Snap the label or enter it by hand.`, labelBtn:true});
   } catch(e){ area.innerHTML = `<p class="mute">Couldn't reach the food database. Check your connection and try again.</p><button class="btn ghost sm" data-act="foodMode" data-v="scan">Try again</button>`; }
 }
 
@@ -3197,6 +3306,8 @@ const ACT = {
   bwDel: d => { state.bwLog = state.bwLog.filter(l => l.date !== +d.d); const last = state.bwLog[state.bwLog.length - 1]; if (last) state.profile.bw = last.w; save(); render(); openBwHistory(); },
   foodDay: d => { const base = ui.foodDate || Date.now(), n = new Date(base); n.setDate(n.getDate() + (+d.v)); if (dkey(n) > dkey(Date.now())) return; ui.foodDate = n.getTime(); render(); },
   foodAdd: d => { ui.foodQ = ''; ui.foodN = 30; openAddFood(d.m, ui.foodMode === 'scan' ? 'scan' : 'search'); },
+  lblManual: () => { ui.foodMode = 'manual'; manualUI(); },
+  lblZoom: (d, b) => b.classList.toggle('big'),
   foodMode: d => { stopScan(); ui.foodMode = d.v; openAddFood(ui.foodMeal, d.v); },
   offSearch: () => offSearch(),
   foodMore: () => { ui.foodN = (ui.foodN || 30) + 30; renderFoodRes(); },
@@ -3211,7 +3322,11 @@ const ACT = {
   manualSave: () => { const name = $('#mName').value.trim(); const v = id => r1(+$(id).value || 0);
     if (!name) return toast('Give the food a name'); const fixed = {k:v('#mK'), p:v('#mP'), c:v('#mC'), f:v('#mF')}; if (!fixed.k && !fixed.p && !fixed.c && !fixed.f) return toast('Enter at least the calories');
     const x = {}; MANUAL_EXTRA.forEach(([k]) => { const el = $('#mx_' + k), v = el && el.value.trim(); if (v !== '' && v != null && isFinite(+v)) x[k] = +v; });
-    const e = {n:name, a:$('#mA').value.trim(), ...fixed, ...(Object.keys(x).length ? {x} : {}), m:1}, day = foodDay(), ed = ui.foodEditRef;
+    let amt = $('#mA').value.trim(); const sv = ui.manualLabel ? +$('#mS').value : 1;
+    if (ui.manualLabel){ if (!(sv > 0)) return toast('Enter how many servings you had'); // label scan: scale one serving up to what was eaten
+      for (const k in fixed) fixed[k] = r1(fixed[k] * sv); for (const k in x) x[k] = r1(x[k] * sv);
+      amt = sv === 1 ? amt : !amt || amt === '1 serving' ? `${sv} servings` : `${sv} × ${amt}`; }
+    const e = {n:name, a:amt, ...fixed, ...(Object.keys(x).length ? {x} : {}), m:1}, day = foodDay(), ed = ui.foodEditRef;
     if (ed) day[ed.m][ed.i] = e; else (day[ui.foodMeal] = day[ui.foodMeal] || []).push(e);
     rememberFood({name, a:e.a, fixed, ...(e.x ? {x:e.x} : {})}); ui.foodEditRef = null; save(); closeSheet(); render(); toast(ed ? 'Updated' : 'Added'); },
   foodEdit: d => { const e = foodDay()[d.m][+d.i]; ui.foodMeal = d.m;
@@ -3353,7 +3468,7 @@ document.addEventListener('input', e => {
   else if (t.id === 'pickq' && ui.pick){ ui.pick.q = t.value; ui.pick.n = PAGE; renderPickList(); }
   else if (t.id === 'repq' && ui.rep){ ui.rep.q = t.value.trim(); ui.rep.n = 25; renderRepList(); }
 });
-document.addEventListener('change', e => { const t = e.target; if (t.id === 'scanFile' && t.files[0]) scanPhoto(t.files[0]); else if (t.id === 'amtU' && ui.amt){ ui.amt.unit = t.value; amtPreview(); } });
+document.addEventListener('change', e => { const t = e.target; if (t.id === 'scanFile' && t.files[0]) scanPhoto(t.files[0]); else if ((t.id === 'labelFile' || t.id === 'labelFile2') && t.files[0]) readLabel(t.files[0]); else if (t.id === 'amtU' && ui.amt){ ui.amt.unit = t.value; amtPreview(); } });
 $('#importFile').addEventListener('change', async e => {
   const f = e.target.files[0]; if (!f) return;
   try { const s = migrate(JSON.parse(await f.text())); const code = state.profile.syncCode; state = s; state.profile.syncCode = state.profile.syncCode || code; save(); closeSheet(); render(); toast('Backup imported'); }
