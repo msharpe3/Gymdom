@@ -463,12 +463,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.07.11"></script>
+<script src="exercises.js?v=2026.10.07.12"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.07.11';
+const APP_VERSION = '2026.10.07.12';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1203,8 +1203,8 @@ let grainN = 0; const grainCache = {};
 function grainPat(k, sc = 1){ // a small tile of granules, repeated across the plate (sc shrinks it for small drawings)
   const id = 'gr' + (++grainN);
   if (!grainCache[k.name]){ const R = prng(k.name.length * 7919 + k.fill.charCodeAt(1)), tot = k.grain.reduce((a, g) => a + g[1], 0); let o = '';
-    for (let i = 0; i < 120; i++){ let r = R() * tot, c = k.grain[0][0]; for (const [col, w] of k.grain){ if ((r -= w) < 0){ c = col; break; } }
-      o += `<circle cx="${(R() * 24).toFixed(1)}" cy="${(R() * 24).toFixed(1)}" r="${(.35 + R() * .75).toFixed(2)}" fill="${c}"/>`; }
+    for (let i = 0; i < 38; i++){ let r = R() * tot, c = k.grain[0][0]; for (const [col, w] of k.grain){ if ((r -= w) < 0){ c = col; break; } }
+      o += `<circle cx="${(R() * 24).toFixed(1)}" cy="${(R() * 24).toFixed(1)}" r="${(.55 + R() * .8).toFixed(2)}" fill="${c}"/>`; }
     grainCache[k.name] = o; }
   return [id, `<defs><pattern id="${id}" width="24" height="24" patternUnits="userSpaceOnUse"${sc !== 1 ? ` patternTransform="scale(${sc})"` : ''}><rect width="24" height="24" fill="${k.fill}"/>${grainCache[k.name]}</pattern></defs>`];
 }
@@ -1224,7 +1224,7 @@ function flecks(inside, n, col, seed, r0 = .5, r1 = 1.2){ // scattered specks, s
 }
 function plateDisc(v, k = plateSkin()){ // a plate face: the tappable plate buttons + Armory previews
   const c = k.fleck, inside = (a, b) => { const x = a * 100, y = b * 100, d = Math.hypot(x - 50, y - 50); return d < 47 && d > 12 && Math.abs(d - 33) > 2.2 ? [x, y] : null; };
-  const [gid, gdef] = k.grain ? grainPat(k, .75) : ['', ''];
+  const [gid, gdef] = k.grain ? grainPat(k, 1) : ['', ''];
   return `<svg viewBox="0 0 100 100" class="pl-face">${gdef}<circle cx="50" cy="50" r="49" fill="${gid ? `url(#${gid})` : k.fill}" stroke="${k.edge}" stroke-width="2"/><circle cx="50" cy="50" r="33" fill="none" stroke="${k.grain ? '#0003' : '#2f3137'}" stroke-width="2.5"/>
     ${c ? flecks(inside, 190, c, v * 97 + 3, .55, 1.35) : ''}<circle cx="50" cy="50" r="11" fill="#c8ccd3"/><circle cx="50" cy="50" r="7.5" fill="#0b0c0f"/>
     <text x="50" y="${v === 2.5 ? 29 : 28}" text-anchor="middle" font-family="Chakra Petch,Arial" font-weight="800" font-size="${v === 2.5 ? 15 : 17}" fill="${k.text}" stroke="${k.fill}" stroke-width="4" paint-order="stroke">${v}</text></svg>`;
@@ -1233,7 +1233,7 @@ const plateSkin = () => plateOwned(state.plateSkin) ? PLATE_SKINS[state.plateSki
 function plateMath(total, bar){ let side = (total - bar) / 2; const out = []; if (side < 0) return {out, rem:0, under:true}; for (const [p] of PLATES) while (side >= p - 1e-9){ out.push(p); side -= p; } return {out, rem: Math.round(side * 2 * 100) / 100}; }
 function plateSvg(out){ // one sleeve, plates stacked out from the collar
   let x = 62, svg = '';
-  const k = plateSkin(), [gid, gdef] = k.grain ? grainPat(k, .38) : ['', '']; svg += gdef;
+  const k = plateSkin(), [gid, gdef] = k.grain ? grainPat(k, .55) : ['', '']; svg += gdef;
   out.forEach((p, j) => { const [, , h] = PLATES.find(q => q[0] === p), y0 = 60 - h / 2;
     svg += `<rect x="${x}" y="${y0}" width="13" height="${h}" rx="3" fill="${gid ? `url(#${gid})` : k.fill}" stroke="${k.edge}" stroke-width="1.5"/>`;
     if (k.fleck) svg += flecks((a, b) => [x + 1.5 + a * 10, y0 + 2 + b * (h - 4)], Math.round(h / 1.4), k.fleck, p * 31 + j * 7, .3, .7);
