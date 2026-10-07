@@ -358,7 +358,7 @@ body.resting main{padding-bottom:170px}
 .pl-svg{width:100%;display:block;margin-top:4px}.pl-sum{text-align:center;margin:2px 0 12px;font-size:14px}
 .pl-discs{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
 .pl-disc{aspect-ratio:1;border-radius:50%;border:0;padding:0;background:radial-gradient(circle,var(--c) 0 54%,var(--e) 55% 59%,var(--c) 60% 100%);color:var(--t);font:800 15px 'Chakra Petch';cursor:pointer;box-shadow:inset 0 0 0 3px #0003,0 3px 8px #0006;display:grid;place-items:center;-webkit-tap-highlight-color:transparent}
-.pl-disc:active{transform:scale(.92)}
+.pl-disc:active{transform:scale(.92)}.pl-disc.face{background:none;box-shadow:0 3px 8px #0007}.pl-face{width:100%;height:100%;display:block}
 .pl-custom{display:inline-flex;align-items:center;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:0 10px 0 4px;flex:none}.pl-custom.on{border-color:var(--teal)}
 .pl-custom input{width:62px;border:0;background:none;padding:6px 4px;text-align:center}.pl-custom small{color:var(--mute);font-size:12px}
 .pl-target{margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}.pl-target .row{margin-top:6px}.pl-target input{flex:1;min-width:0}
@@ -1184,13 +1184,33 @@ function openTrophies(){
 /* ---- Plate calculator ---- */
 const PLATES = [[45,'',92],[35,'',82],[25,'',72],[10,'',56],[5,'',44],[2.5,'',36]];
 // Plate look in one place, so plate styles can be unlocked as rewards later; default is plain iron grey
-const PLATE_SKINS = {iron:{fill:'#5b616d', edge:'#3d424b', text:'#e8ebf0'}};
+const PLATE_SKINS = {iron:{name:'Iron', fill:'#5b616d', edge:'#3d424b', text:'#e8ebf0'},
+  // speckled rubber bumpers: black with coloured flecks, colour by weight
+  fleck:{name:'Speckled Bumpers', fill:'#18191d', edge:'#2b2d33', text:'#c3c7ce', fleck:{45:'#e4573d', 35:'#3f8ff0', 25:'#f2c94c', 10:'#ececec', 5:'#f08a3a', 2.5:'#6fd27a'}}};
+const prng = seed => () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = (t + Math.imul(t ^ t >>> 7, 61 | t)) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+function flecks(inside, n, col, seed, r0 = .5, r1 = 1.2){ // scattered specks, same pattern every time
+  const R = prng(seed); let o = '';
+  for (let i = 0, t = 0; i < n && t < n * 6; t++){ const p = inside(R(), R()); if (!p) continue; i++;
+    o += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${(r0 + R() * (r1 - r0)).toFixed(2)}" fill="${R() < .14 ? '#9a9da5' : col}" opacity="${(.65 + R() * .35).toFixed(2)}"/>`; }
+  return o;
+}
+function plateDisc(v){ // the tappable plate button, drawn as a plate face
+  const k = plateSkin();
+  if (!k.fleck) return `${v}`;
+  const c = k.fleck[v] || '#ccc', inside = (a, b) => { const x = a * 100, y = b * 100, d = Math.hypot(x - 50, y - 50); return d < 47 && d > 12 && Math.abs(d - 33) > 2.2 ? [x, y] : null; };
+  return `<svg viewBox="0 0 100 100" class="pl-face"><circle cx="50" cy="50" r="49" fill="${k.fill}" stroke="${k.edge}" stroke-width="2"/><circle cx="50" cy="50" r="33" fill="none" stroke="#2f3137" stroke-width="2.5"/>
+    ${flecks(inside, 190, c, v * 97 + 3, .55, 1.35)}<circle cx="50" cy="50" r="11" fill="#c8ccd3"/><circle cx="50" cy="50" r="7.5" fill="#0b0c0f"/>
+    <text x="50" y="${v === 2.5 ? 29 : 28}" text-anchor="middle" font-family="Chakra Petch,Arial" font-weight="800" font-size="${v === 2.5 ? 15 : 17}" fill="${k.text}" stroke="${k.fill}" stroke-width="4" paint-order="stroke">${v}</text></svg>`;
+}
 const plateSkin = () => PLATE_SKINS[state.plateSkin] || PLATE_SKINS.iron;
 function plateMath(total, bar){ let side = (total - bar) / 2; const out = []; if (side < 0) return {out, rem:0, under:true}; for (const [p] of PLATES) while (side >= p - 1e-9){ out.push(p); side -= p; } return {out, rem: Math.round(side * 2 * 100) / 100}; }
 function plateSvg(out){ // one sleeve, plates stacked out from the collar
   let x = 62, svg = '';
   const k = plateSkin();
-  for (const p of out){ const [, , h] = PLATES.find(q => q[0] === p); svg += `<rect x="${x}" y="${60 - h/2}" width="13" height="${h}" rx="3" fill="${k.fill}" stroke="${k.edge}" stroke-width="1.5"/>`; x += 15; }
+  out.forEach((p, j) => { const [, , h] = PLATES.find(q => q[0] === p), y0 = 60 - h / 2;
+    svg += `<rect x="${x}" y="${y0}" width="13" height="${h}" rx="3" fill="${k.fill}" stroke="${k.edge}" stroke-width="1.5"/>`;
+    if (k.fleck) svg += flecks((a, b) => [x + 1.5 + a * 10, y0 + 2 + b * (h - 4)], Math.round(h / 1.4), k.fleck[p] || '#ccc', p * 31 + j * 7, .3, .7);
+    x += 15; });
   return `<svg viewBox="0 0 300 120" class="pl-svg"><rect x="4" y="55" width="292" height="10" rx="4" fill="#8b919b"/><rect x="50" y="44" width="9" height="32" rx="2" fill="#b8c4d6"/>${svg}</svg>`;
 }
 const PL_STARTS = [[45,'45 lb bar'],[35,'35'],[25,'25'],[15,'15'],[0,'None']];
@@ -1218,7 +1238,7 @@ function renderPlates(){
     <div class="pl-total"><b>${r1(tot)}</b><span>lb total</span></div>
     ${plateSvg(P.plates)}
     <p class="pl-sum">${P.plates.length ? `${P.sides === 2 ? 'Each side' : 'Loaded'}: ${P.plates.join(' + ')}` : 'Tap plates below to load them'}${P.start ? ` <span class="mute">· ${r1(P.start)} lb start</span>` : ''}</p>
-    <div class="pl-discs" style="--c:${plateSkin().fill};--e:${plateSkin().edge};--t:${plateSkin().text}">${PLATES.map(([v]) => `<button class="pl-disc" data-act="plAdd" data-v="${v}">${v}</button>`).join('')}</div>
+    <div class="pl-discs" style="--c:${plateSkin().fill};--e:${plateSkin().edge};--t:${plateSkin().text}">${PLATES.map(([v]) => `<button class="pl-disc${plateSkin().fleck ? ' face' : ''}" data-act="plAdd" data-v="${v}" aria-label="${v} lb plate">${plateDisc(v)}</button>`).join('')}</div>
     <div class="row gap" style="margin-top:10px"><button class="btn ghost sm" style="flex:1" data-act="plUndo"${P.plates.length ? '' : ' disabled'}>↶ Remove last</button><button class="btn ghost sm" style="flex:1" data-act="plClear"${P.plates.length ? '' : ' disabled'}>Clear</button></div>
     ${left.length ? `<button class="btn gold block" style="margin-top:12px" data-act="plUse">Use ${r1(tot)} lb for set${left.length === 1 ? ' ' + left[0] : `s ${left[0]}–${left[left.length - 1]}`}</button>` : ''}
     <div class="pl-target"><small class="mute">Working backwards?</small><div class="row gap"><input id="plTarget" type="number" inputmode="decimal" placeholder="Target total (lb)"><button class="btn sm" data-act="plLoad">Load it</button></div><small id="plTMsg" class="mute"></small></div>`);
