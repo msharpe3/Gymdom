@@ -2165,6 +2165,7 @@ const SKINS = [
   ['shades','Shades','face',{lvl:5}], ['aviators','Aviators','face',{}], ['visor','Sport Visor','face',{}],
   // body paint
   ['eyeblack','Eye Black','paint',{}], ['warpaint','War Paint','paint',{}], ['tribal','Tribal Tattoo','paint',{}], ['neon','Neon Lines','paint',{}],
+  ['camo_wood','Woodland Camo','paint',{}], ['camo_desert','Desert Camo','paint',{}], ['camo_night','Night Ops','paint',{}], ['camo_urban','Urban Camo','paint',{}], ['camo_tiger','Tiger Stripe','paint',{}],
   // tops (drawn under the muscle colors)
   ['tank_red','Red Tank','top',{}], ['tank_black','Black Tank','top',{}], ['stringer','White Stringer','top',{}], ['comp_blue','Blue Compression','top',{}], ['singlet_gold','Gold Singlet','top',{}],
   // bottoms
@@ -2273,6 +2274,7 @@ const AURA_C = {toxic:'#84cc16', bloodmoon:'#dc2626', ghostfire:'#4ade80', glow:
 const SKIN_DEFS = `<defs><filter id="gdBlur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5"/></filter>
   <filter id="gdSoft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.6"/></filter>
   <clipPath id="gdBody"><path d="${OUTLINE}"/></clipPath>
+  <clipPath id="gdFace"><rect x="76" y="-4" width="48" height="51.5"/></clipPath>
   <linearGradient id="gdCape" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c0263f"/><stop offset="1" stop-color="#6e1222"/></linearGradient>
   <linearGradient id="gdRoyal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6d28d9"/><stop offset="1" stop-color="#3b1478"/></linearGradient>
   <linearGradient id="gdShadow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1b4a"/><stop offset="1" stop-color="#0b0716"/></linearGradient>
@@ -2308,11 +2310,40 @@ function skinUnder(sk){
     if (b[0] !== 'board') s += `<g clip-path="url(#gdBody)">${both(b[0] === 'joggers' ? 'M70,200 L66,262 L61,300 L60,360' : 'M71,200 L69,262', 'fill="none" stroke="#f4f4f8" stroke-opacity=".7" stroke-width="1.6"')}</g>`; }
   return s;
 }
+/* ---- Camo face paint: base coat + ragged blotches + smears over the eyes, clipped to the head ---- */
+const CAMO = {camo_wood:{base:'#56683a', cols:['#2f3d22','#6b5134','#1a1c14','#7f8f4c'], band:'#1a1c14'},
+  camo_desert:{base:'#c4ab7c', cols:['#8c6b45','#e0cfa4','#5c4a32','#a88d5e'], band:'#4a3c28'},
+  camo_night:{base:'#191b13', cols:['#2c3a22','#0c0d09','#33432a','#222c1b'], band:'#050604'},
+  camo_urban:{base:'#8f9298', cols:['#4b4e56','#d6d8dd','#1d1e22','#6c6f76'], band:'#1d1e22'},
+  camo_tiger:{base:'#6f7a3e', cols:['#8a9150'], stripes:'#15160f', band:'#15160f'}};
+function raggedBlob(cx, cy, rx, ry, R, n = 9){ // irregular closed shape through jittered points, smoothed
+  const pts = []; for (let i = 0; i < n; i++){ const a = i / n * Math.PI * 2 + R() * .4, k = .55 + R() * .6; pts.push([cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k]); }
+  let d = `M${((pts[0][0] + pts[1][0]) / 2).toFixed(1)},${((pts[0][1] + pts[1][1]) / 2).toFixed(1)}`;
+  for (let i = 1; i <= n; i++){ const p = pts[i % n], q = pts[(i + 1) % n]; d += ` Q${p[0].toFixed(1)},${p[1].toFixed(1)} ${((p[0] + q[0]) / 2).toFixed(1)},${((p[1] + q[1]) / 2).toFixed(1)}`; }
+  return d + 'Z';
+}
+const camoCache = {};
+function camoFace(id){
+  const c = CAMO[id]; if (!c) return '';
+  if (!camoCache[id]){ const R = prng(id.length * 131 + id.charCodeAt(5) * 7); let g = `<rect x="76" y="-4" width="48" height="52" fill="${c.base}"/>`;
+    if (!c.stripes){ // two passes of overlapping blotches across forehead, cheeks, nose and chin
+      for (let pass = 0; pass < 2; pass++) for (let i = 0; i < 13; i++){ const cx = 80 + R() * 40, cy = -1 + R() * 48;
+        g += `<path d="${raggedBlob(cx, cy, 3.5 + R() * 4.5, 2.4 + R() * 3.2, R)}" fill="${c.cols[(i + pass * 2) % c.cols.length]}"/>`; } }
+    else { g += [0, 1, 2].map(() => `<path d="${raggedBlob(84 + R() * 32, 4 + R() * 40, 6, 4, R)}" fill="${c.cols[0]}" opacity=".6"/>`).join('');
+      for (let i = 0; i < 9; i++){ const y = 1 + i * 5.4 + R() * 2, left = i % 2 === 0, x0 = left ? 76 : 124, len = 13 + R() * 13, dir = left ? 1 : -1, w = 1.6 + R() * 1.4; // tapered brush strokes from the sides
+        const x1 = x0 + dir * len, wob = R() * 3 - 1.5;
+        g += `<path d="M${x0},${(y - w).toFixed(1)} Q${(x0 + dir * len * .5).toFixed(1)},${(y - w * .6 + wob).toFixed(1)} ${x1.toFixed(1)},${(y + wob).toFixed(1)} Q${(x0 + dir * len * .5).toFixed(1)},${(y + w * .6 + wob).toFixed(1)} ${x0},${(y + w).toFixed(1)}Z" fill="${c.stripes}"/>`; } }
+    // ragged smears over each eye (the darkest paint goes where light hits)
+    g += [[90.5, 29], [109.5, 29]].map(([x, y]) => `<path d="${raggedBlob(x, y, 7.5, 3.4, R, 11)}" fill="${c.band}" opacity=".9"/>`).join('');
+    camoCache[id] = g; }
+  return `<g clip-path="url(#gdBody)"><g clip-path="url(#gdFace)" opacity=".95">${camoCache[id]}</g></g>`;
+}
 function skinFront(sk, front){
   let s = '';
   // body paint
   if (sk.paint === 'tribal') s += both('M58,72 C52,80 54,88 62,90 M50,84 C46,92 50,100 57,100 M60,96 C56,104 58,110 64,110 M46,140 C42,148 46,156 52,154 M50,160 C46,168 50,174 55,172', 'fill="none" stroke="#a7a2cf" stroke-width="2.2" stroke-linecap="round" opacity=".85"');
   if (sk.paint === 'neon') s += `<g filter="url(#gdSoft)" opacity=".9">${both('M76,70 C72,110 76,150 82,184 M50,90 L44,130 M42,140 L44,176', 'fill="none" stroke="#22d3ee" stroke-width="1.6"')}</g>` + both('M76,70 C72,110 76,150 82,184 M50,90 L44,130 M42,140 L44,176', 'fill="none" stroke="#a5f3fc" stroke-width=".7"');
+  if (front && CAMO[sk.paint]) s += camoFace(sk.paint);
   if (front && sk.paint === 'eyeblack') s += `<rect x="88" y="29" width="8" height="3" rx="1.2" fill="#0b0a12"/><rect x="104" y="29" width="8" height="3" rx="1.2" fill="#0b0a12"/>`;
   if (front && sk.paint === 'warpaint') s += `<path d="M88,26 l9,0 M87,30 l9,0 M103,26 l9,0 M104,30 l9,0" stroke="#e23b54" stroke-width="2" stroke-linecap="round"/><path d="M100,9 v12" stroke="#3b82f6" stroke-width="2.4" stroke-linecap="round"/>`;
   // neck
@@ -2563,7 +2594,7 @@ function openArmory(){
       const owned = items.filter(x => x[4]).length; items.sort((a, b) => b[4] - a[4]);
       return `<div class="arm-hd"><label class="lbl">${sn}</label><small class="mute">${owned}/${items.length}</small></div><div class="arm-row" data-slot="${slot}">
         <button class="arm-tile${!sk[slot] ? ' on' : ''}" data-act="eqSkin" data-s="${slot}" data-v=""><div class="arm-none">∅</div><b>None</b><small>${!sk[slot] ? 'Equipped' : '&nbsp;'}</small></button>
-        ${items.map(([id, n, , u, ok]) => `<button class="arm-tile z-${ARM_ZOOM[slot] || 'full'}${sk[slot] === id ? ' on' : ''}${ok ? '' : ' locked'}" data-act="eqSkin" data-s="${slot}" data-v="${id}"><div class="hmini">${figMini({id, slot}, t, true)}</div><b>${esc(n)}</b><small>${sk[slot] === id ? 'Equipped' : ok ? 'Unlocked' : '🔒 ' + unlockLabel(u)}</small></button>`).join('')}</div>`; }).join('')}
+        ${items.map(([id, n, , u, ok]) => `<button class="arm-tile z-${slot === 'paint' && (CAMO[id] || id === 'eyeblack' || id === 'warpaint') ? 'head' : ARM_ZOOM[slot] || 'full'}${sk[slot] === id ? ' on' : ''}${ok ? '' : ' locked'}" data-act="eqSkin" data-s="${slot}" data-v="${id}"><div class="hmini">${figMini({id, slot}, t, true)}</div><b>${esc(n)}</b><small>${sk[slot] === id ? 'Equipped' : ok ? 'Unlocked' : '🔒 ' + unlockLabel(u)}</small></button>`).join('')}</div>`; }).join('')}
     <div class="arm-hd"><label class="lbl">Plates</label><small class="mute">${Object.keys(PLATE_SKINS).filter(plateOwned).length}/${Object.keys(PLATE_SKINS).length}</small></div><div class="arm-row" data-slot="plates">
       ${Object.entries(PLATE_SKINS).map(([id, k]) => { const ok = plateOwned(id), on = plateSkin() === k;
         return `<button class="arm-tile${on ? ' on' : ''}${ok ? '' : ' locked'}" data-act="eqPlate" data-v="${id}"><div class="arm-plate">${plateDisc(45, k)}</div><b>${esc(k.name)}</b><small>${on ? 'Equipped' : ok ? 'Unlocked' : `🔒 ${plateGoal(k)}`}</small></button>`; }).join('')}</div>
