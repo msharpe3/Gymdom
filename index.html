@@ -166,6 +166,19 @@ svg.body text{fill:var(--mute);font:600 11px 'Chakra Petch';letter-spacing:.25em
 .thumb.photo,.mini.photo{padding:0;overflow:hidden;background:#fff}
 .thumb.photo img{display:block;width:100%;height:48px;object-fit:cover}
 .mini.photo img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
+.ex-open{position:relative;padding:0;border:0;background:none;flex:none;cursor:pointer}.ex-open i{position:absolute;right:3px;bottom:3px;font-style:normal;font-size:11px;line-height:1;background:rgba(11,10,18,.75);color:#fff;border-radius:5px;padding:2px 4px}
+.ex-head .info b[data-act]{cursor:pointer}
+.sheet.exf{max-height:96vh}
+.exf-top{display:flex;align-items:center;gap:6px;margin-bottom:10px}.exf-ttl{flex:1;min-width:0;text-align:center}.exf-ttl small{display:block;font-size:11px}.exf-ttl b{display:block;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exf-top .icon-btn[disabled]{opacity:.3}
+.exf-demo{position:relative;border-radius:16px;overflow:hidden;background:#fff;aspect-ratio:4/3;cursor:pointer}
+.exf-demo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity .35s}
+.exf-demo img:last-of-type{opacity:0}.exf-demo[data-pose="1"] img:last-of-type{opacity:1}.exf-demo[data-pose="1"] img:first-of-type{opacity:0}
+.exf-play{position:absolute;right:10px;bottom:10px;width:34px;height:34px;border-radius:50%;background:rgba(11,10,18,.7);color:#fff;display:grid;place-items:center;font-size:12px}
+.exf-seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0 10px}.exf-seg button{background:var(--panel2);border:1px solid var(--line);color:var(--mute);border-radius:10px;padding:7px;font:600 13px Inter;cursor:pointer}.exf-seg button.on{color:#06231f;background:var(--teal);border-color:var(--teal)}
+.exf-map{max-width:260px;margin:0 auto 8px}
+.exf-tags{margin:2px 0 4px}.exf-h{margin:16px 0 8px}
+.exf-cues{padding-left:22px;margin:0 0 6px;font-size:17px;line-height:1.5}.exf-cues li{margin-bottom:6px}
 .photos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 12px}
 .photos figure{margin:0;background:#fff;border-radius:12px;overflow:hidden;position:relative}
 .photos img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
@@ -463,12 +476,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.07.11"></script>
+<script src="exercises.js?v=2026.10.07.13"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.07.11';
+const APP_VERSION = '2026.10.07.13';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1303,10 +1316,10 @@ function openBwHistory(){
 
 function livePR(i, j){
   const e = state.active.entries[i], ex = EX[e.ex], s = e.sets[j], pb = bestBefore(e.ex);
-  const n = document.querySelector(`[data-row="${i}-${j}"] .n`); if (!n) return;
+  const ns = [...document.querySelectorAll(`[data-row="${i}-${j}"] .n`)]; if (!ns.length) return;
   const isPR = pb !== null && +s.r > 0 && e1rm(ex, s) > pb + .01;
-  if (isPR && n.textContent !== '🏆') toast('🏆 PR pace! Finish to lock it in');
-  n.textContent = isPR ? '🏆' : j + 1;
+  if (isPR && ns[0].textContent !== '🏆') toast('🏆 PR pace! Finish to lock it in');
+  ns.forEach(n => n.textContent = isPR ? '🏆' : j + 1);
 }
 
 /* ============ FOOD TRACKER ============ */
@@ -2931,8 +2944,9 @@ document.addEventListener('mousedown', e => { if (e.button !== 0) return; const 
 document.addEventListener('mousemove', e => { if (wd) wdMove(e.clientX, e.clientY, e); });
 document.addEventListener('mouseup', wdUp);
 /* ============ UI HELPERS ============ */
-function openSheet(html){ $('#sheet').innerHTML = html; $('#sheetWrap').classList.add('open'); $('#sheet').scrollTop = 0; }
-function closeSheet(){ $('#sheetWrap').classList.remove('open'); ui.pick = null; stopScan(); }
+function openSheet(html){ $('#sheet').classList.remove('exf'); $('#sheet').innerHTML = html; $('#sheetWrap').classList.add('open'); $('#sheet').scrollTop = 0; }
+function closeSheet(){ $('#sheetWrap').classList.remove('open'); ui.pick = null; stopScan();
+  if (ui.exf){ ui.exf = null; clearInterval(ui.exfT); $('#sheet').classList.remove('exf'); if (ui.tab === 'train') render(); } }
 $('#sheetWrap').addEventListener('click', e => { if (e.target.id === 'sheetWrap') closeSheet(); });
 let toastT;
 function toastUndo(m, act){ const t = $('#toast'); t.innerHTML = `${esc(m)} <button class="toast-undo" data-act="${act}">Undo</button>`; t.classList.add('show', 'act'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 4000); }
@@ -3039,7 +3053,7 @@ function renderTrain(){
   a.entries.forEach((e, i) => {
     const ex = EX[e.ex], prev = lastSets(e.ex) || [], pb = bestBefore(e.ex);
     const lastW = [...e.sets].reverse().find(s => +s.w)?.w || prev[0]?.w || '';
-    h += `<div class="card${ssl[i] ? ' ss' : ''}">${ssl[i] ? `<div class="ss-tag">SUPERSET ${ssl[i]}</div>` : ''}<div class="ex-head">${thumb(ex)}<div class="info"><b data-act="exInfo" data-id="${ex.id}">${ex.name}</b><small class="mute">${e.target ? 'Target ' + esc(e.target) + ' · ' : ''}${EQN[ex.eq]}</small></div><button class="icon-btn sm" data-act="rmEntry" data-i="${i}">✕</button></div>
+    h += `<div class="card${ssl[i] ? ' ss' : ''}">${ssl[i] ? `<div class="ss-tag">SUPERSET ${ssl[i]}</div>` : ''}<div class="ex-head"><button class="ex-open" data-act="exFocus" data-i="${i}" aria-label="Open ${esc(ex.name)}">${thumb(ex)}<i>⤢</i></button><div class="info"><b data-act="exFocus" data-i="${i}">${ex.name}</b><small class="mute">${e.target ? 'Target ' + esc(e.target) + ' · ' : ''}${EQN[ex.eq]}</small></div><button class="icon-btn sm" data-act="rmEntry" data-i="${i}">✕</button></div>
       <div class="hint">↑ ${esc(overloadHint(e))}</div>
       <div class="set-row hdr"><span>SET</span><span style="text-align:center">PREV</span><span style="text-align:center">${ex.bw?'+LB':'LB'}</span><span style="text-align:center">REPS</span><span></span></div>
       ${e.sets.map((s, j) => { const p = prev[j], isPR = pb !== null && +s.r > 0 && e1rm(ex, s) > pb + .01;
@@ -3155,6 +3169,35 @@ function renderLibList(){
   $('#libCount').textContent = `${list.length} exercise${list.length === 1 ? '' : 's'}`;
   el.innerHTML = list.length ? list.slice(0, n).map(e => `<div class="lcard" data-act="exInfo" data-id="${e.id}">${e.img ? `<div class="mini photo"><img loading="lazy" src="${photo(e)}" alt=""></div>` : `<div class="mini">${bodySVG(exColor(e), {labels:false})}</div>`}<b>${e.name}</b><small>${EQN[e.eq]}${e.nx ? ' · No XP' : ''}</small></div>`).join('') : `<p class="mute">No matches.</p>`;
   $('#libMore').innerHTML = list.length > n ? `<button class="btn ghost block" style="margin-top:12px" data-act="libMore">Show more (${list.length - n} left)</button>` : '';
+}
+/* ---- Live exercise view: big demo photos, form cues and the sets, one exercise at a time ---- */
+function exFocus(i){
+  const a = state.active; if (!a || !a.entries[i]) return;
+  clearInterval(ui.exfT); ui.exf = {i, pose:0, play:true};
+  renderExf(true);
+  ui.exfT = setInterval(() => { const f = ui.exf, el = $('.exf-demo'); if (!f || !el){ clearInterval(ui.exfT); return; } if (f.play){ f.pose = 1 - f.pose; el.dataset.pose = f.pose; exfSeg(); } }, 1300);
+}
+function exfSeg(){ document.querySelectorAll('.exf-seg button').forEach((b, j) => b.classList.toggle('on', j === ui.exf.pose)); }
+function renderExf(top){
+  const f = ui.exf, a = state.active, e = a.entries[f.i], ex = EX[e.ex], n = a.entries.length, prev = lastSets(e.ex) || [], ssl = ssLabels(a.entries);
+  const y = top ? 0 : $('#sheet').scrollTop;
+  openSheet(`<div class="exf-top"><button class="icon-btn" data-act="exfGo" data-v="-1"${f.i ? '' : ' disabled'} aria-label="Previous exercise">‹</button>
+      <div class="exf-ttl"><small class="mute">Exercise ${f.i + 1} of ${n}${ssl[f.i] ? ` · Superset ${ssl[f.i]}` : ''}</small><b>${esc(ex.name)}</b></div>
+      <button class="icon-btn" data-act="exfGo" data-v="1"${f.i < n - 1 ? '' : ' disabled'} aria-label="Next exercise">›</button><button class="icon-btn" data-act="closeSheet" aria-label="Close">✕</button></div>
+    ${ex.img ? `<div class="exf-demo" data-pose="${f.pose}" data-act="exfPlay"><img src="${photo(ex, 0)}" alt="Start position"><img src="${photo(ex, 1)}" alt="Finish position"><span class="exf-play">${f.play ? '❚❚' : '▶'}</span></div>
+      <div class="exf-seg"><button class="${f.pose ? '' : 'on'}" data-act="exfPose" data-v="0">Start</button><button class="${f.pose ? 'on' : ''}" data-act="exfPose" data-v="1">Finish</button></div>`
+      : `<div class="exf-map">${bodySVG(exColor(ex), {labels:false})}</div>`}
+    <div class="exf-tags">${ex.p.map(m => `<span class="tag p">${MUSCLES[m]}</span>`).join('')}${ex.s.map(m => `<span class="tag s">${MUSCLES[m]}</span>`).join('')}${e.target ? `<span class="tag">Target ${esc(e.target)}</span>` : ''}</div>
+    ${ex.cue ? `<h3 class="exf-h">Form</h3><ol class="exf-cues">${ex.cue.split('|').map(c => `<li>${esc(c)}</li>`).join('')}</ol>` : ''}
+    ${ex.steps && ex.steps.length ? `<details class="steps"${ex.cue ? '' : ' open'}><summary>Step-by-step instructions</summary><ol class="cues">${ex.steps.map(c => `<li>${esc(c)}</li>`).join('')}</ol></details>` : ''}
+    <h3 class="exf-h">Your sets</h3><div class="hint" style="margin-bottom:8px">↑ ${esc(overloadHint(e))}</div>
+    <div class="set-row hdr"><span>SET</span><span style="text-align:center">PREV</span><span style="text-align:center">${ex.bw ? '+LB' : 'LB'}</span><span style="text-align:center">REPS</span><span></span></div>
+    ${e.sets.map((s, j) => { const p = prev[j]; return `<div class="set-row" data-row="${f.i}-${j}"><span class="n">${j + 1}</span><span class="prev">${p ? (ex.bw && !p.w ? 'BW' : p.w) + '×' + p.r : '—'}</span>
+      <input type="number" inputmode="decimal" data-e="${f.i}" data-s="${j}" data-f="w" value="${esc(s.w)}" placeholder="${p ? p.w : ex.bw ? '0' : ''}">
+      <input type="number" inputmode="numeric" data-e="${f.i}" data-s="${j}" data-f="r" value="${esc(s.r)}" placeholder="${p ? p.r : ''}"><span></span></div>`; }).join('')}
+    <div class="row gap" style="margin-top:6px"><button class="btn ghost sm" data-act="exfAddSet">+ Add set</button>${ex.eq === 'bb' || ex.eq === 'ez' || ex.eq === 'mc' ? `<button class="btn ghost sm" data-act="plates" data-i="${f.i}">🏋 Plates</button>` : ''}<button class="btn ghost sm" data-act="exInfo" data-id="${ex.id}">Progress & details</button></div>
+    ${f.i < n - 1 ? `<button class="btn gold block" style="margin-top:14px" data-act="exfGo" data-v="1">Next: ${esc(EX[a.entries[f.i + 1].ex].name)} ›</button>` : `<button class="btn ghost block" style="margin-top:14px" data-act="closeSheet">Back to workout</button>`}`);
+  $('#sheet').classList.add('exf'); $('#sheet').scrollTop = y;
 }
 function exInfo(id){
   const ex = EX[id], st = exStats(id);
@@ -3380,6 +3423,11 @@ const ACT = {
   settings: openSettings,
   muscle: d => muscleInfo(d.m),
   exInfo: d => exInfo(d.id),
+  exFocus: d => exFocus(+d.i),
+  exfGo: d => { const f = ui.exf; if (!f) return; const j = f.i + +d.v; if (j < 0 || j >= state.active.entries.length) return; f.i = j; f.pose = 0; renderExf(true); },
+  exfPose: d => { const f = ui.exf; f.pose = +d.v; f.play = false; const el = $('.exf-demo'), pl = $('.exf-play'); if (el) el.dataset.pose = f.pose; if (pl) pl.textContent = '▶'; exfSeg(); },
+  exfPlay: () => { const f = ui.exf; f.play = !f.play; const el = $('.exf-play'); if (el) el.textContent = f.play ? '❚❚' : '▶'; },
+  exfAddSet: () => { const e = state.active.entries[ui.exf.i], l = e.sets[e.sets.length - 1]; e.sets.push({w:l ? l.w : '', r:''}); save(); renderExf(); },
   startEmpty: () => startWorkout('Workout', []),
   startDay: async d => {
     if (state.active && !(await confirmBox('Replace the workout in progress?', 'Replace'))) return;
