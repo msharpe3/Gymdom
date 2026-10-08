@@ -476,12 +476,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.07.13"></script>
+<script src="exercises.js?v=2026.10.08.1"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.07.13';
+const APP_VERSION = '2026.10.08.1';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1076,6 +1076,16 @@ function weekStreak(){
   if (!weeks.has(k)) k -= 7*864e5;
   while (weeks.has(k)) { n++; k = weekKey(k - 3*864e5); }
   return n;
+}
+// Boot camp: longest run ever of back-to-back weeks with 3+ workouts (never goes down)
+let bootMemo = [-1, 0];
+function bootBest(){
+  if (bootMemo[0] === state.workouts.length) return bootMemo[1];
+  const per = {}; state.workouts.forEach(w => { const k = weekKey(w.date); per[k] = (per[k] || 0) + 1; });
+  const ks = Object.keys(per).map(Number).filter(k => per[k] >= 3).sort((a, b) => a - b);
+  let best = 0, run = 0, prev = null;
+  for (const k of ks){ run = prev != null && weekKey(prev + 10 * 864e5) === k ? run + 1 : 1; best = Math.max(best, run); prev = k; }
+  bootMemo = [state.workouts.length, best]; return best;
 }
 function lastSets(exId){
   for (const w of state.workouts){ const e = w.entries.find(e => e.ex === exId); if (e) return e.sets; }
@@ -2165,7 +2175,7 @@ const SKINS = [
   ['shades','Shades','face',{lvl:5}], ['aviators','Aviators','face',{}], ['visor','Sport Visor','face',{}],
   // body paint
   ['eyeblack','Eye Black','paint',{}], ['warpaint','War Paint','paint',{}], ['tribal','Tribal Tattoo','paint',{}], ['neon','Neon Lines','paint',{}],
-  ['camo_wood','Woodland Camo','paint',{}], ['camo_desert','Desert Camo','paint',{}], ['camo_night','Night Ops','paint',{}], ['camo_urban','Urban Camo','paint',{}], ['camo_tiger','Tiger Stripe','paint',{}],
+  ['camo_wood','Woodland Camo','paint',{boot:2}], ['camo_desert','Desert Camo','paint',{boot:4}], ['camo_night','Night Ops','paint',{boot:6}], ['camo_urban','Urban Camo','paint',{boot:8}], ['camo_tiger','Tiger Stripe','paint',{boot:12}],
   // tops (drawn under the muscle colors)
   ['tank_red','Red Tank','top',{}], ['tank_black','Black Tank','top',{}], ['stringer','White Stringer','top',{}], ['comp_blue','Blue Compression','top',{}], ['singlet_gold','Gold Singlet','top',{}],
   // bottoms
@@ -2208,8 +2218,8 @@ const SEASONS = [
 ];
 SEASONS.forEach(se => se.doors.forEach((d, i) => { if (d.skin){ const it = SKINS.find(s => s[0] === d.skin); if (it) it[3] = {season:se.id, n:i + 1}; } }));
 const curLevel = () => playerLvl(sumObj(muscleTotals()) + state.bonusXP);
-const unlockLabel = u => u.season ? seasonLabel(u) : u.habit != null ? `${u.habit} tasks` : u.lvl != null ? `Lv ${u.lvl}` : u.loot ? `${u.loot[0].toUpperCase() + u.loot.slice(1)} loot` : 'Trophy';
-function isUnlocked(id, u, L = curLevel()){ return (u.lvl != null && L >= u.lvl) || (u.habit != null && typeof habitTotal === 'function' && habitTotal() >= u.habit) || state.cosmetics.owned.includes(id) || (u.trophy && state.achievements[u.trophy]); }
+const unlockLabel = u => u.season ? seasonLabel(u) : u.boot != null ? `${u.boot}-wk streak` : u.habit != null ? `${u.habit} tasks` : u.lvl != null ? `Lv ${u.lvl}` : u.loot ? `${u.loot[0].toUpperCase() + u.loot.slice(1)} loot` : 'Trophy';
+function isUnlocked(id, u, L = curLevel()){ return (u.lvl != null && L >= u.lvl) || (u.boot != null && bootBest() >= u.boot) || (u.habit != null && typeof habitTotal === 'function' && habitTotal() >= u.habit) || state.cosmetics.owned.includes(id) || (u.trophy && state.achievements[u.trophy]); }
 function titleList(L = curLevel()){
   const t = TITLES.map((n, i) => [n, i * 3, L >= i * 3]);
   ACH.forEach(a => t.push([a[2], 'trophy', !!state.achievements[a[0]]]));
@@ -2336,7 +2346,7 @@ function camoFace(id){
     // ragged smears over each eye (the darkest paint goes where light hits)
     g += [[90.5, 29], [109.5, 29]].map(([x, y]) => `<path d="${raggedBlob(x, y, 7.5, 3.4, R, 11)}" fill="${c.band}" opacity=".9"/>`).join('');
     camoCache[id] = g; }
-  return `<g clip-path="url(#gdBody)"><g clip-path="url(#gdFace)" opacity=".95">${camoCache[id]}</g></g>`;
+  return `<g clip-path="url(#gdBody)"><g clip-path="url(#gdFace)" opacity=".72">${camoCache[id]}</g></g>`;
 }
 function skinFront(sk, front){
   let s = '';
@@ -3106,7 +3116,7 @@ async function finishWorkout(){
   const a = state.active;
   const entries = a.entries.map(e => ({ex:e.ex, ss:!!e.ss, sets:e.sets.filter(s => +s.r > 0).map(s => ({w:+s.w||0, r:+s.r}))})).filter(e => e.sets.length);
   if (!entries.length) return toast('Log reps on at least one set first');
-  const now = Date.now(), before = muscleTotals(), hitB = lastHit(), plB = playerLvl(sumObj(before) + state.bonusXP);
+  const now = Date.now(), before = muscleTotals(), hitB = lastHit(), plB = playerLvl(sumObj(before) + state.bonusXP), bootB = bootBest();
   const w = {id:uid(), name:a.name || 'Workout', date:now, dur:workoutSecs(a) * 1000, entries};
   w.xp = workoutXP(w);
   // Comeback bonus: +50% XP for muscles that had gone rusty (14+ days)
@@ -3126,7 +3136,7 @@ async function finishWorkout(){
   const achs = checkAchievements(); bonus += achs.length * 100;
   state.bonusXP += bonus;
   const loot = rollLoot(state.workouts.length === 1); if (loot && loot.kind === 'xp') state.bonusXP += loot.xp; w.loot = loot;
-  const seasonal = claimSeason(), newPlates = claimPlates();
+  const seasonal = claimSeason(), newPlates = claimPlates(), newCamo = SKINS.filter(x => x[3].boot && bootB < x[3].boot && bootBest() >= x[3].boot);
   save();
   const after = muscleTotals(), plA = playerLvl(sumObj(after) + state.bonusXP);
   ui.tab = 'body'; render(); publishStats(true);
@@ -3140,6 +3150,7 @@ async function finishWorkout(){
     ${quests.length ? `<div class="pr-box q"><h4>📜 QUEST${quests.length > 1 ? 'S' : ''} COMPLETE</h4>${quests.map(q => `<div class="mini-row"><span>${q.title}</span><span class="xp">+${q.xp}</span></div>`).join('')}</div>` : ''}
     ${achs.length ? `<div class="pr-box"><h4>TROPHY UNLOCKED</h4>${achs.map(id => { const x = achById(id); return `<div class="mini-row"><span>${x[1]} <b>${x[2]}</b> <small class="mute">${x[3]}</small></span><span class="xp">+100</span></div>`; }).join('')}</div>` : ''}
     ${seasonal.length ? `<div class="pr-box season-box" data-act="seasonTrack"><h4>${seasonal[0].se.icon} DOOR ${seasonal.map(x => x.n).join(' + ')} OPENED</h4>${seasonal.map(x => `<div class="mini-row"><span>${x.icon} <b>${esc(x.name)}</b> <small class="mute">${x.kind}</small></span><span class="xp">NEW</span></div>`).join('')}<small class="mute">${seasonal.some(x => x.slot) ? 'Equip it in the Armory' : 'Tap to see the calendar'}</small></div>` : ''}
+    ${newCamo.length ? `<div class="pr-box"><h4>🪖 BOOT CAMP · ${bootBest()} WEEKS</h4>${newCamo.map(([id, n]) => `<div class="mini-row"><span style="flex:1"><b>${n}</b> <small class="mute">face paint unlocked</small></span><button class="btn ghost xs" data-act="eqCamoNew" data-v="${id}">Equip</button></div>`).join('')}</div>` : ''}
     ${newPlates.length ? `<div class="pr-box"><h4>🏋 NEW PLATES UNLOCKED</h4>${newPlates.map(id => `<div class="mini-row plate-new"><span class="arm-plate sm">${plateDisc(45, PLATE_SKINS[id])}</span><span style="flex:1"><b>${PLATE_SKINS[id].name}</b> <small class="mute">${plateGoal(PLATE_SKINS[id])}</small></span><button class="btn ghost xs" data-act="eqPlateNew" data-v="${id}">Equip</button></div>`).join('')}</div>` : ''}
     ${comeback.length ? `<div class="hint">🕸️ Comeback bonus +50% on ${comeback.map(m => MUSCLES[m]).join(', ')}</div>` : ''}
     <div style="max-width:320px;margin:0 auto">${bodySVG(m => w.xp[m] ? (rankOf(lvl(after[m]))[2] === UNTR ? TEAL : rankOf(lvl(after[m]))[2]) : UNTR, {labels:false})}</div>
@@ -3690,10 +3701,11 @@ const ACT = {
   eqIcon: d => { ui.iconOpen = true; state.cosmetics.icon = d.v; save(); applyIcon(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; toast('Icon picked: tap "Update Home Screen icon" to apply it'); },
   iconHelp: openIconHelp,
   eqTheme: d => { const th = THEMES.find(t => t[0] === d.v); if (!isUnlocked(d.v, th[2])) return toast(`Unlocks with ${unlockLabel(th[2])}`); state.cosmetics.theme = d.v; save(); applyTheme(); render(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; publishStats(true); },
+  eqCamoNew: (d, b) => { state.cosmetics.paint = d.v; save(); publishStats(true); b.textContent = 'Equipped'; b.disabled = true; },
   eqPlateNew: (d, b) => { state.plateSkin = d.v; save(); b.textContent = 'Equipped'; b.disabled = true; },
   eqPlate: d => { const k = PLATE_SKINS[d.v]; if (!k) return; if (!plateOwned(d.v)) return toast(k.lift ? `Lift ${k.lift} lb on any barbell exercise to unlock` : `Unlocks at ${fmt(k.vol)} lb lifted in total (you're at ${fmt(Math.round(liftVolume()))})`);
     state.plateSkin = d.v; save(); const y = $('#sheet').scrollTop, xs = Object.fromEntries([...document.querySelectorAll('.arm-row')].map(r => [r.dataset.slot, r.scrollLeft])); openArmory(); $('#sheet').scrollTop = y; document.querySelectorAll('.arm-row').forEach(r => r.scrollLeft = xs[r.dataset.slot] || 0); toast(`${k.name} plates equipped`); },
-  eqSkin: d => { const it = SKINS.find(s => s[0] === d.v); if (it && !isUnlocked(d.v, it[3])) return toast(`Unlocks with ${unlockLabel(it[3])}`); state.cosmetics[d.s] = d.v; save(); render(); const y = $('#sheet').scrollTop, xs = Object.fromEntries([...document.querySelectorAll('.arm-row')].map(r => [r.dataset.slot, r.scrollLeft])); openArmory(); $('#sheet').scrollTop = y; document.querySelectorAll('.arm-row').forEach(r => r.scrollLeft = xs[r.dataset.slot] || 0); publishStats(true); },
+  eqSkin: d => { const it = SKINS.find(s => s[0] === d.v); if (it && !isUnlocked(d.v, it[3])) return toast(it[3].boot ? `Boot camp: ${it[3].boot} weeks in a row with 3+ workouts (best so far: ${bootBest()})` : `Unlocks with ${unlockLabel(it[3])}`); state.cosmetics[d.s] = d.v; save(); render(); const y = $('#sheet').scrollTop, xs = Object.fromEntries([...document.querySelectorAll('.arm-row')].map(r => [r.dataset.slot, r.scrollLeft])); openArmory(); $('#sheet').scrollTop = y; document.querySelectorAll('.arm-row').forEach(r => r.scrollLeft = xs[r.dataset.slot] || 0); publishStats(true); },
   closeLvlUp: () => { const d = document.getElementById('lvlUp'); if (d){ d.classList.add('out'); setTimeout(() => d.remove(), 300); } },
   openLoot: (d, b) => { if (b.classList.contains('opening') || b.classList.contains('open')) return; b.classList.add('opening'); if (navigator.vibrate) navigator.vibrate([20, 40, 20, 40, 20]);
     setTimeout(() => { b.classList.remove('opening'); b.classList.add('open'); if (navigator.vibrate) navigator.vibrate(80); }, 900); },
