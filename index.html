@@ -57,6 +57,7 @@ svg.body text{fill:var(--mute);font:600 11px 'Chakra Petch';letter-spacing:.25em
 .lvl-badge small{font-size:10px;color:var(--gold);letter-spacing:.2em}.lvl-badge b{font-size:26px;line-height:1}
 .title-tag{font:600 11px 'Chakra Petch';letter-spacing:.12em;color:var(--gold);text-transform:uppercase}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.stats.s4{grid-template-columns:repeat(4,1fr);gap:8px}.stats.s4 .stat{padding-left:4px;padding-right:4px}.stats.s4 .stat b{font-size:17px}.stats.s4 .stat small{font-size:10px}
 .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center}
 .stat b{display:block;font:700 22px 'Chakra Petch'}.stat small{color:var(--mute)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:center;margin-top:8px}
@@ -476,12 +477,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.08.1"></script>
+<script src="exercises.js?v=2026.10.09.1"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.08.1';
+const APP_VERSION = '2026.10.09.1';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -2054,7 +2055,7 @@ function myStats(){
   const total = sumObj(muscleTotals()) + state.bonusXP;
   return {name: state.profile.name || 'Lifter', title: myTitle(playerLvl(total)), level: playerLvl(total), xp: Math.round(total), streak: weekStreak(),
     week: state.workouts.filter(w => w.date > Date.now() - 7 * DAY).length, workouts: state.workouts.length,
-    trophies: Object.keys(state.achievements).length, updatedAt: Date.now(),
+    trophies: Object.keys(state.achievements).length, lifted: Math.round(liftVolume()), updatedAt: Date.now(),
     // muscle map + gear so friends can see your figure
     ml: Object.fromEntries(Object.entries(muscleTotals()).map(([m, x]) => [m, lvl(x)])), gear: equippedSkin(), theme: state.cosmetics.theme || 'classic',
     gearCount: SKINS.filter(s => isUnlocked(s[0], s[3])).length, habits: habitTotal(), hstreak: habitStreak()};
@@ -2103,7 +2104,8 @@ async function loadLeaderboard(){
   ui.lbLoading = false; ui.lbAt = Date.now();
   if (ui.tab === 'progress') render();
 }
-const LB_METRICS = [['level','Level', p => p.level, p => `Lv ${p.level}`], ['streak','Week streak', p => p.streak, p => `${p.streak} 🔥`], ['week','This week', p => p.week, p => `${p.week} workout${p.week === 1 ? '' : 's'}`], ['xp','Total XP', p => p.xp, p => `${fmt(p.xp)} XP`]];
+const lbLb = x => x >= 1e6 ? `${(x / 1e6).toFixed(2)}M` : x >= 1e4 ? `${Math.round(x / 1e3)}k` : fmt(x);
+const LB_METRICS = [['level','Level', p => p.level, p => `Lv ${p.level}`], ['lifted','Total lifted', p => p.lifted || 0, p => p.lifted != null ? `${lbLb(p.lifted)} lb` : '—'], ['streak','Week streak', p => p.streak, p => `${p.streak} 🔥`], ['week','This week', p => p.week, p => `${p.week} workout${p.week === 1 ? '' : 's'}`], ['xp','Total XP', p => p.xp, p => `${fmt(p.xp)} XP`]];
 function leaderboardCard(){
   if (!FIREBASE_CONFIG) return '';
   if (!ui.lbAt || Date.now() - ui.lbAt > 60e3) setTimeout(loadLeaderboard, 0);
@@ -2130,7 +2132,7 @@ function openFriends(){
     <div class="row gap"><input id="friendIn" placeholder="Their friend code" autocapitalize="characters" maxlength="8"><button class="btn sm" data-act="addFriend">Add</button></div>
     <label class="lbl">Your friends</label>
     ${state.friends.length ? state.friends.map(id => `<div class="prow" data-act="viewPlayer" data-id="${id}" style="cursor:pointer"><span><b>${esc(byId[id]?.name || 'Friend')}</b> <small class="mute">${id}</small></span><button class="icon-btn sm" data-act="rmFriend" data-id="${id}" aria-label="Remove friend">✕</button></div>`).join('') : '<p class="mute" style="font-size:13px">None yet.</p>'}
-    <p class="mute" style="font-size:11px;margin-top:12px">Friends only see your name, level, XP, streaks, workout counts, trophies, muscle ranks and gear — never your workouts, food or weight.</p>`);
+    <p class="mute" style="font-size:11px;margin-top:12px">Friends only see your name, level, XP, streaks, workout counts, total weight lifted, trophies, muscle ranks and gear — never your workouts, food or weight.</p>`);
 }
 
 /* ---- Player profile: a friend's muscle map wearing their gear ---- */
@@ -2146,7 +2148,7 @@ function openPlayer(id){
     ${ml ? `<div class="pp-map">${bodySVG(m => rankOf(ml[m] || 0)[2], {labels:true, skin:Object.keys(gear).length ? gear : null})}</div>`
       : `<div class="card empty" style="margin:12px 0"><p class="mute" style="margin:0">${esc(p.name)}'s muscle map will show up here once they open the latest version of Gymdom.</p></div>`}
     <div class="stats"><div class="stat"><b>${p.streak ?? 0}🔥</b><small>Week streak</small></div><div class="stat"><b>${p.week ?? 0}</b><small>This week</small></div><div class="stat"><b>${p.workouts ?? 0}</b><small>Workouts</small></div></div>
-    <div class="stats" style="margin-top:8px"><div class="stat"><b>${p.trophies ?? 0}</b><small>Trophies</small></div><div class="stat"><b>${p.habits ?? '—'}</b><small>Habits done</small></div><div class="stat"><b>${p.hstreak != null ? p.hstreak + '🌱' : '—'}</b><small>Habit streak</small></div></div>
+    <div class="stats s4" style="margin-top:8px"><div class="stat"><b>${p.lifted != null ? lbLb(p.lifted) : '—'}</b><small>Lb lifted</small></div><div class="stat"><b>${p.trophies ?? 0}</b><small>Trophies</small></div><div class="stat"><b>${p.habits ?? '—'}</b><small>Habits done</small></div><div class="stat"><b>${p.hstreak != null ? p.hstreak + '🌱' : '—'}</b><small>Habit streak</small></div></div>
     ${gearNames.length ? `<label class="lbl">Wearing</label><div class="chips wrap">${gearNames.map(([sl, n]) => `<span class="chip pp-gear"><small>${esc(sl)}</small> ${esc(n)}</span>`).join('')}</div>` : ''}
     ${ml ? `<label class="lbl">Muscle ranks${isMe || !mm ? '' : ' <small class="mute" style="text-transform:none;letter-spacing:0">· you vs them</small>'}</label>
       <div class="pp-ranks">${muscles.map(m => { const L = ml[m] || 0, r = rankOf(L), y = mm ? mm[m] || 0 : null;
