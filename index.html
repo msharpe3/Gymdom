@@ -477,12 +477,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.09.1"></script>
+<script src="exercises.js?v=2026.10.09.2"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.09.1';
+const APP_VERSION = '2026.10.09.2';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1221,16 +1221,16 @@ const PLATE_SKINS = {iron:{name:'Iron', fill:'#5b616d', edge:'#3d424b', text:'#e
     grain:[['#6b5f52',5],['#2a2622',4],['#efe9df',4],['#8e8172',4],['#a8382f',1],['#3c5a8a',1],['#c9a24a',1],['#5b6b55',1]]},
   rec_dark:{name:'Recycled Dark', fill:'#55524f', edge:'#3a3836', text:'#f1ede6', vol:250000,
     grain:[['#2a2826',5],['#1a1918',4],['#d9d4cc',3],['#8a847c',4],['#a8382f',1],['#3c5a8a',1],['#c9a24a',1]]}};
-// Sketches: competition colours, camo bumpers, marbled. Not earnable until picked.
-const COMP = (name, fill, text = '#fff') => ({name, fill, edge:'#0005', text, comp:true, sketch:true});
+// Competition colours (workout count), camo bumpers (PR count), blue marble (total lifted)
+const COMP = (name, fill, wk, text = '#fff') => ({name, fill, edge:'#0005', text, comp:true, wk});
 Object.assign(PLATE_SKINS, {
-  comp_grey:COMP('Comp Grey', '#8e939b'), comp_blue:COMP('Comp Blue', '#2563c9'), comp_yellow:COMP('Comp Yellow', '#f2c230', '#1b1a14'),
-  comp_green:COMP('Comp Green', '#2fa24a'), comp_black:COMP('Comp Black', '#202126'), comp_red:COMP('Comp Red', '#d23a3a'),
-  camo_pink:{name:'Pink Camo', fill:'#e8508a', edge:'#0005', text:'#fff', camo:['#b01f57','#2a1a22','#f7a3c4'], sketch:true},
-  camo_sand:{name:'Desert Camo', fill:'#bba887', edge:'#0005', text:'#fff', camo:['#2e2b27','#7b6a52','#e6dcc6'], sketch:true},
-  camo_green:{name:'Jungle Camo', fill:'#3d9b45', edge:'#0005', text:'#fff', camo:['#1b2a1a','#7fc56f','#5d6a5c'], sketch:true},
-  camo_red:{name:'Red Camo', fill:'#cf2a2a', edge:'#0005', text:'#fff', camo:['#1a1313','#f1eded','#861414'], sketch:true},
-  marble_blue:{name:'Blue Marble', fill:'#1f4b88', edge:'#0005', text:'#fff', marble:['#3a78cc','#112d57','#5b93df','#163d73'], sketch:true}});
+  comp_grey:COMP('Comp Grey', '#8e939b', 10), comp_blue:COMP('Comp Blue', '#2563c9', 25), comp_yellow:COMP('Comp Yellow', '#f2c230', 50, '#1b1a14'),
+  comp_green:COMP('Comp Green', '#2fa24a', 75), comp_black:COMP('Comp Black', '#202126', 100), comp_red:COMP('Comp Red', '#d23a3a', 150),
+  camo_green:{name:'Jungle Camo', fill:'#3d9b45', edge:'#0005', text:'#fff', camo:['#1b2a1a','#7fc56f','#5d6a5c'], prs:5},
+  camo_sand:{name:'Desert Camo', fill:'#bba887', edge:'#0005', text:'#fff', camo:['#2e2b27','#7b6a52','#e6dcc6'], prs:15},
+  camo_red:{name:'Red Camo', fill:'#cf2a2a', edge:'#0005', text:'#fff', camo:['#1a1313','#f1eded','#861414'], prs:30},
+  camo_pink:{name:'Pink Camo', fill:'#e8508a', edge:'#0005', text:'#fff', camo:['#b01f57','#2a1a22','#f7a3c4'], prs:50},
+  marble_blue:{name:'Blue Marble', fill:'#1f4b88', edge:'#0005', text:'#fff', marble:['#3a78cc','#112d57','#5b93df','#163d73'], vol:500000}});
 let patN = 0; const patCache = {};
 // Repeating tile of blobs; each blob is drawn at its wrapped neighbours too so the tile has no seams
 function blobTile(key, T, make){
@@ -1256,7 +1256,7 @@ function skinPat(k, sc = 1){ // [fill, defs] for patterned skins, or the plain c
 }
 const isNewLook = k => k.comp || k.camo || k.marble;
 const liftVolume = () => { let t = 0; for (const w of state.workouts) for (const e of w.entries) for (const s of e.sets) t += (+s.w || 0) * (+s.r || 0); return t; };
-const plateGoal = k => k.lift ? `${k.lift} lb barbell` : k.vol ? `${fmt(k.vol)} lb lifted` : '';
+const plateGoal = k => k.lift ? `${k.lift} lb barbell` : k.vol ? `${fmt(k.vol)} lb lifted` : k.wk ? `${k.wk} workouts` : k.prs ? `${k.prs} PRs` : '';
 let grainN = 0; const grainCache = {};
 function grainPat(k, sc = 1){ // a small tile of granules, repeated across the plate (sc shrinks it for small drawings)
   const id = 'gr' + (++grainN);
@@ -1266,11 +1266,12 @@ function grainPat(k, sc = 1){ // a small tile of granules, repeated across the p
     grainCache[k.name] = o; }
   return [id, `<defs><pattern id="${id}" width="24" height="24" patternUnits="userSpaceOnUse"${sc !== 1 ? ` patternTransform="scale(${sc})"` : ''}><rect width="24" height="24" fill="${k.fill}"/>${grainCache[k.name]}</pattern></defs>`];
 }
-const plateOwned = id => !!PLATE_SKINS[id] && (PLATE_SKINS[id].sketch ? state.cosmetics.owned.includes('plate:' + id) : (!PLATE_SKINS[id].lift && !PLATE_SKINS[id].vol) || state.cosmetics.owned.includes('plate:' + id));
+const plateHasGoal = k => !!(k.lift || k.vol || k.wk || k.prs);
+const plateOwned = id => !!PLATE_SKINS[id] && (!plateHasGoal(PLATE_SKINS[id]) || state.cosmetics.owned.includes('plate:' + id));
 const bbBest = () => { let m = 0; for (const w of state.workouts) for (const e of w.entries) if (EX[e.ex] && EX[e.ex].eq === 'bb') for (const s of e.sets) if (+s.r > 0 && +s.w > m) m = +s.w; return m; };
 function claimPlates(){ // retroactive: any barbell set ever logged counts
-  const m = bbBest(), vol = liftVolume(), got = [];
-  for (const id in PLATE_SKINS){ const k = PLATE_SKINS[id]; if (((k.lift && m >= k.lift) || (k.vol && vol >= k.vol)) && !plateOwned(id)){ state.cosmetics.owned.push('plate:' + id); got.push(id); } }
+  const m = bbBest(), vol = liftVolume(), nW = state.workouts.length, nP = state.prCount || 0, got = [];
+  for (const id in PLATE_SKINS){ const k = PLATE_SKINS[id]; if (((k.lift && m >= k.lift) || (k.vol && vol >= k.vol) || (k.wk && nW >= k.wk) || (k.prs && nP >= k.prs)) && !plateOwned(id)){ state.cosmetics.owned.push('plate:' + id); got.push(id); } }
   return got;
 }
 const prng = seed => () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = (t + Math.imul(t ^ t >>> 7, 61 | t)) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
@@ -2662,8 +2663,8 @@ function openArmory(){
       return `<div class="arm-hd"><label class="lbl">${sn}</label><small class="mute">${owned}/${items.length}</small></div><div class="arm-row" data-slot="${slot}">
         <button class="arm-tile${!sk[slot] ? ' on' : ''}" data-act="eqSkin" data-s="${slot}" data-v=""><div class="arm-none">∅</div><b>None</b><small>${!sk[slot] ? 'Equipped' : '&nbsp;'}</small></button>
         ${items.map(([id, n, , u, ok]) => `<button class="arm-tile z-${slot === 'paint' && (CAMO[id] || id === 'eyeblack' || id === 'warpaint') ? 'head' : ARM_ZOOM[slot] || 'full'}${sk[slot] === id ? ' on' : ''}${ok ? '' : ' locked'}" data-act="eqSkin" data-s="${slot}" data-v="${id}"><div class="hmini">${figMini({id, slot}, t, true)}</div><b>${esc(n)}</b><small>${sk[slot] === id ? 'Equipped' : ok ? 'Unlocked' : '🔒 ' + unlockLabel(u)}</small></button>`).join('')}</div>`; }).join('')}
-    <div class="arm-hd"><label class="lbl">Plates</label><small class="mute">${Object.keys(PLATE_SKINS).filter(id => !PLATE_SKINS[id].sketch && plateOwned(id)).length}/${Object.keys(PLATE_SKINS).filter(id => !PLATE_SKINS[id].sketch).length}</small></div><div class="arm-row" data-slot="plates">
-      ${Object.entries(PLATE_SKINS).filter(([, k]) => !k.sketch).map(([id, k]) => { const ok = plateOwned(id), on = plateSkin() === k;
+    <div class="arm-hd"><label class="lbl">Plates</label><small class="mute">${Object.keys(PLATE_SKINS).filter(plateOwned).length}/${Object.keys(PLATE_SKINS).length}</small></div><div class="arm-row" data-slot="plates">
+      ${Object.entries(PLATE_SKINS).map(([id, k]) => { const ok = plateOwned(id), on = plateSkin() === k;
         return `<button class="arm-tile${on ? ' on' : ''}${ok ? '' : ' locked'}" data-act="eqPlate" data-v="${id}"><div class="arm-plate">${plateDisc(45, k)}</div><b>${esc(k.name)}</b><small>${on ? 'Equipped' : ok ? 'Unlocked' : `🔒 ${plateGoal(k)}`}</small></button>`; }).join('')}</div>
     <details class="icon-more"${ui.iconOpen ? ' open' : ''}><summary><img src="icons/${iconId()}-180.png" alt=""><span>App icon</span><small>${APP_ICONS.find(x => x[0] === iconId())[1]}</small></summary>
       <div class="icons-grid">${APP_ICONS.map(([id, n]) => `<button class="icon-tile${iconId() === id ? ' on' : ''}" data-act="eqIcon" data-v="${id}"><img src="icons/${id}-180.png" alt="" loading="lazy"><small>${n}</small></button>`).join('')}</div>
@@ -3760,7 +3761,7 @@ const ACT = {
   eqTheme: d => { const th = THEMES.find(t => t[0] === d.v); if (!isUnlocked(d.v, th[2])) return toast(`Unlocks with ${unlockLabel(th[2])}`); state.cosmetics.theme = d.v; save(); applyTheme(); render(); const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; publishStats(true); },
   eqCamoNew: (d, b) => { state.cosmetics.paint = d.v; save(); publishStats(true); b.textContent = 'Equipped'; b.disabled = true; },
   eqPlateNew: (d, b) => { state.plateSkin = d.v; save(); b.textContent = 'Equipped'; b.disabled = true; },
-  eqPlate: d => { const k = PLATE_SKINS[d.v]; if (!k) return; if (!plateOwned(d.v)) return toast(k.lift ? `Lift ${k.lift} lb on any barbell exercise to unlock` : `Unlocks at ${fmt(k.vol)} lb lifted in total (you're at ${fmt(Math.round(liftVolume()))})`);
+  eqPlate: d => { const k = PLATE_SKINS[d.v]; if (!k) return; if (!plateOwned(d.v)) return toast(k.lift ? `Lift ${k.lift} lb on any barbell exercise to unlock` : k.wk ? `Unlocks at ${k.wk} workouts (you're at ${state.workouts.length})` : k.prs ? `Unlocks at ${k.prs} PRs (you're at ${state.prCount || 0})` : `Unlocks at ${fmt(k.vol)} lb lifted in total (you're at ${fmt(Math.round(liftVolume()))})`);
     state.plateSkin = d.v; save(); const y = $('#sheet').scrollTop, xs = Object.fromEntries([...document.querySelectorAll('.arm-row')].map(r => [r.dataset.slot, r.scrollLeft])); openArmory(); $('#sheet').scrollTop = y; document.querySelectorAll('.arm-row').forEach(r => r.scrollLeft = xs[r.dataset.slot] || 0); toast(`${k.name} plates equipped`); },
   eqSkin: d => { const it = SKINS.find(s => s[0] === d.v); if (it && !isUnlocked(d.v, it[3])) return toast(it[3].boot ? `Boot camp: ${it[3].boot} weeks in a row with 3+ workouts (best so far: ${bootBest()})` : `Unlocks with ${unlockLabel(it[3])}`); state.cosmetics[d.s] = d.v; save(); render(); const y = $('#sheet').scrollTop, xs = Object.fromEntries([...document.querySelectorAll('.arm-row')].map(r => [r.dataset.slot, r.scrollLeft])); openArmory(); $('#sheet').scrollTop = y; document.querySelectorAll('.arm-row').forEach(r => r.scrollLeft = xs[r.dataset.slot] || 0); publishStats(true); },
   closeLvlUp: () => { const d = document.getElementById('lvlUp'); if (d){ d.classList.add('out'); setTimeout(() => d.remove(), 300); } },
