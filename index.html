@@ -279,7 +279,7 @@ svg.body .aura.flame,svg.body .aura.ghostfire{animation:flick .5s ease-in-out in
 .arm-tile.z-neck .hmini svg{width:400%!important;margin-left:-50%!important;margin-top:-19px}
 .arm-tile.z-top .hmini svg{width:240%!important;margin-left:-10%!important;margin-top:-18px}
 .arm-tile.z-low .hmini svg{width:240%!important;margin-left:-10%!important;margin-top:-55px}
-.arm-tile.z-feet .hmini svg{width:320%!important;margin-left:-30%!important;margin-top:-137px}
+.arm-tile.z-feet .hmini svg{width:423%!important;margin-left:-56%!important;margin-top:-151px}
 .arm-none{width:62px;height:96px;border-radius:9px;background:#0f0e16;display:grid;place-items:center;font-size:26px;color:var(--mute)}
 .reward-prev,.hmini{flex:none;overflow:hidden;border-radius:10px}.reward-prev{width:84px}.hmini{width:44px}
 .reward-prev svg,.hmini svg{width:200%;display:block}
@@ -2246,6 +2246,8 @@ const SKINS = [
   ['belt_brown','Leather Belt','waist',{}], ['belt_black','Black Belt','waist',{}], ['champ','Champion Belt','waist',{}],
   // feet
   ['kicks_white','White Kicks','feet',{}], ['kicks_red','Red Kicks','feet',{}], ['hightops','High-Tops','feet',{}], ['kicks_gold','Gold Kicks','feet',{}],
+  ['sn_skyline','Skyline Hi','feet',{}], ['sn_midnight','Midnight Mid','feet',{}], ['sn_volt','Volt Mid','feet',{}], ['sn_ember','Ember Hi','feet',{}], ['sn_arctic','Arctic Low','feet',{}],
+  ['sn_teal','Teal Court Mid','feet',{}], ['sn_sunset','Sunset Hi','feet',{}], ['sn_shadow','Shadow Hi','feet',{}], ['sn_gum','Gum Classic Low','feet',{}], ['sn_bubble','Bubblegum Mid','feet',{}],
   // back
   ['cape','Hero Cape','back',{lvl:8}], ['royalcape','Royal Cape','back',{lvl:18}], ['shadowcape','Shadow Cape','back',{}], ['angel','Angel Wings','back',{}], ['dragon','Dragon Wings','back',{}],
   // aura
@@ -2336,6 +2338,53 @@ const GEAR = {
 };
 const TOPS = { tank_red:['tank','#c0263f'], tank_black:['tank','#0b0a10'], stringer:['stringer','#e8e6f2'], comp_blue:['tank','#1d4ed8',1], singlet_gold:['tank','#d4a017']};
 const BOTTOMS = {shorts_black:['shorts','#0b0a10'], shorts_red:['shorts','#b91c1c'], board:['board','#0e7490','stripes'], joggers:['joggers','#5d5b78']};
+// Original sneaker line. h: hi/mid/low collar. Colours: up(per), toe cap, pan(el) + panel style, eye(stays), lace, tng (tongue),
+// col(lar lining), mid(sole), ms (midsole stripe), out(sole), heel (counter + tab), loop (pull loop, hi only)
+const SNEAKERS = {
+  sn_skyline:{h:'hi', up:'#f3f3f6', toe:'#1f2a4d', pan:'#1f2a4d', ps:'quarter', eye:'#1f2a4d', lace:'#f3f3f6', tng:'#1f2a4d', col:'#c9a227', mid:'#f3f3f6', ms:'#c9a227', out:'#1f2a4d', heel:'#1f2a4d', loop:'#c9a227'},
+  sn_midnight:{h:'mid', up:'#16151c', toe:'#16151c', pan:'#2b2838', ps:'quarter', eye:'#2b2838', lace:'#c9ccd6', tng:'#16151c', col:'#7c4ddb', mid:'#e9e7f0', out:'#7c4ddb', heel:'#2b2838'},
+  sn_volt:{h:'mid', up:'#3a3d44', toe:'#22242a', pan:'#22242a', ps:'stripe', eye:'#c6f432', lace:'#c6f432', tng:'#22242a', col:'#c6f432', mid:'#22242a', ms:'#c6f432', out:'#c6f432', heel:'#22242a'},
+  sn_ember:{h:'hi', up:'#d4283b', toe:'#d4283b', pan:'#17161b', ps:'stripe', eye:'#17161b', lace:'#17161b', tng:'#d4283b', col:'#17161b', mid:'#f2f1f5', out:'#17161b', heel:'#17161b', loop:'#f2f1f5'},
+  sn_arctic:{h:'low', up:'#f6f8fb', toe:'#cfe7f7', pan:'#cfe7f7', ps:'quarter', eye:'#f6f8fb', lace:'#f6f8fb', tng:'#f6f8fb', col:'#8fc8ee', mid:'#f6f8fb', out:'#9fd3f2', heel:'#cfe7f7', icy:true},
+  sn_teal:{h:'mid', up:'#f2f2f4', toe:'#1aa39a', pan:'#1aa39a', ps:'heelband', eye:'#1aa39a', lace:'#f2f2f4', tng:'#f2f2f4', col:'#20242b', mid:'#b9bec7', out:'#20242b', heel:'#1aa39a'},
+  sn_sunset:{h:'hi', up:'#f07a2a', toe:'#5a2f8f', pan:'#5a2f8f', ps:'quarter', eye:'#5a2f8f', lace:'#f6f1ea', tng:'#f07a2a', col:'#f6c34a', mid:'#f6f1ea', ms:'#5a2f8f', out:'#5a2f8f', heel:'#5a2f8f', loop:'#f6c34a'},
+  sn_shadow:{h:'hi', up:'#2a2a31', toe:'#151519', pan:'#151519', ps:'quarter', eye:'#c9a227', lace:'#c9a227', tng:'#141418', col:'#c9a227', mid:'#141418', ms:'#c9a227', out:'#0b0b0e', heel:'#1d1d22', loop:'#c9a227'},
+  sn_gum:{h:'low', up:'#efe6d4', toe:'#b48a5a', pan:'#b48a5a', ps:'quarter', eye:'#b48a5a', lace:'#efe6d4', tng:'#efe6d4', col:'#b48a5a', mid:'#efe6d4', out:'#a4693a', heel:'#b48a5a'},
+  sn_bubble:{h:'mid', up:'#f7f3f6', toe:'#f29cc0', pan:'#f29cc0', ps:'stripe', eye:'#f29cc0', lace:'#f7f3f6', tng:'#f29cc0', col:'#8ee0c8', mid:'#f7f3f6', ms:'#8ee0c8', out:'#8ee0c8', heel:'#f29cc0'}};
+const SN_TOP = {hi:350, mid:360, low:370}, SN_X = {hi:[60.4, 80.4], mid:[61, 80], low:[61.8, 79.4]};
+function sneakerSVG(k, front){
+  const t = SN_TOP[k.h], [xl, xr] = SN_X[k.h], tt = {hi:372.4, mid:374, low:376.6}[k.h], ht = tt + 1.2, O = 'stroke="#0b0a12" stroke-width=".45" stroke-linejoin="round"', LT = 'stroke="#fff" stroke-opacity=".35" stroke-width=".4" fill="none" stroke-dasharray=".9 .7"';
+  // upper tapers from the ankle collar out to a rounded toe box
+  const upper = `M${xl},${t} C${xl - .4},${t + 9} 54.6,371 54.1,379.5 C53.9,382.6 54.2,384.4 55,385 L84,385 C84.8,384.4 85.1,382.6 84.9,379.5 C84.4,371 ${xr + .4},${t + 9} ${xr},${t} Z`;
+  let g = `<path d="M54.6,389.4 L84.4,389.4 C84.6,391.8 83.4,392.8 81.2,392.8 L57.8,392.8 C55.6,392.8 54.4,391.8 54.6,389.4Z" fill="${k.out}" ${O}${k.icy ? ' fill-opacity=".82"' : ''}/>`; // outsole
+  g += [58, 62, 66, 70, 74, 78, 82].map(x => `<path d="M${x},390.4 L${x - .6},392.3" stroke="#000" stroke-opacity=".28" stroke-width=".55"/>`).join(''); // tread
+  g += `<path d="M53.9,384 L85.1,384 C85.6,386.6 85.3,389.6 83,389.6 L56,389.6 C53.7,389.6 53.4,386.6 53.9,384Z" fill="${k.mid}" ${O}/>`; // midsole
+  if (k.ms) g += `<path d="M54.4,386.9 L84.6,386.9" stroke="${k.ms}" stroke-width="1.05"/>`;
+  g += `<path d="${upper}" fill="${k.up}" ${O}/>`;
+  if (front){
+    if (k.ps === 'quarter') g += `<path d="M${xl + .2},${t + 3.5} C${xl - .3},${t + 10} 55.5,369 54.6,377 L60.5,373.4 C61.4,366 62.2,${t + 9} 63.3,${t + 3}Z" fill="${k.pan}" ${O}/><path d="M${xr - .2},${t + 3.5} C${xr + .3},${t + 10} 83.5,369 84.4,377 L78.5,373.4 C77.6,366 76.8,${t + 9} 75.7,${t + 3}Z" fill="${k.pan}" ${O}/>`;
+    if (k.ps === 'stripe') g += `<path d="M55.3,378.5 L62.4,${t + 8} L64.4,${t + 9.6} L57.6,380.2Z" fill="${k.pan}"/><path d="M83.7,378.5 L76.6,${t + 8} L74.6,${t + 9.6} L81.4,380.2Z" fill="${k.pan}"/>`;
+    if (k.ps === 'heelband') g += `<path d="M${xl},${t + 2.4} L${xr},${t + 2.4} L${xr + .2},${t + 5.6} L${xl - .2},${t + 5.6}Z" fill="${k.pan}"/>`;
+    g += `<path d="M54.2,381.6 C54.8,${tt + 2.2} 61,${tt} 69.5,${tt} C78,${tt} 84.2,${tt + 2.2} 84.8,381.6 L85,385 L54,385Z" fill="${k.toe}" ${O}/>`; // toe box
+    g += `<path d="M55.6,381.2 C56.4,${tt + 3.2} 61.6,${tt + 1.4} 69.5,${tt + 1.4} C77.4,${tt + 1.4} 82.6,${tt + 3.2} 83.4,381.2" ${LT}/>`; // stitching
+    g += `<path d="M65.6,${t - 2.6} C65.6,${t - 4.6} 73.4,${t - 4.6} 73.4,${t - 2.6} L74,${tt + .4} L65,${tt + .4}Z" fill="${k.tng}" ${O}/>`; // tongue
+    g += `<path d="M63.6,${t + 1} L65.6,${t + 1} L65.1,${tt + .5} L62.8,${tt + 1}Z M75.4,${t + 1} L73.4,${t + 1} L73.9,${tt + .5} L76.2,${tt + 1}Z" fill="${k.eye}" ${O}/>`; // eyestays
+    const n = Math.max(2, Math.floor((tt - .4 - (t + 2.6)) / 4.4)), step = (tt - .4 - (t + 2.6)) / n;
+    for (let i = 0; i < n; i++){ const y = t + 2.6 + i * step, y2 = y + step * .62, L = `M64.6,${y.toFixed(1)} L74.4,${y2.toFixed(1)} M64.6,${y2.toFixed(1)} L74.4,${y.toFixed(1)}`;
+      g += `<path d="${L}" stroke="#0b0a12" stroke-opacity=".45" stroke-width="1.6" stroke-linecap="round"/><path d="${L}" stroke="${k.lace}" stroke-width="1" stroke-linecap="round"/>`
+        + `<circle cx="64.4" cy="${y.toFixed(1)}" r=".55" fill="#0b0a12" fill-opacity=".55"/><circle cx="74.6" cy="${y.toFixed(1)}" r=".55" fill="#0b0a12" fill-opacity=".55"/>`; }
+  } else {
+    if (k.ps === 'heelband') g += `<path d="M${xl},${t + 2.4} L${xr},${t + 2.4} L${xr + .2},${t + 5.6} L${xl - .2},${t + 5.6}Z" fill="${k.pan}"/>`;
+    g += `<path d="M69.5,${t + 1} L69.5,${ht}" stroke="#0b0a12" stroke-opacity=".35" stroke-width=".5"/>`; // back seam
+    g += `<path d="M54.4,385 C54.9,${ht + 2.6} 61,${ht} 69.5,${ht} C78,${ht} 84.1,${ht + 2.6} 84.6,385Z" fill="${k.heel}" ${O}/>`; // heel counter
+    g += `<path d="M55.8,384 C56.4,${ht + 3.8} 61.6,${ht + 1.4} 69.5,${ht + 1.4} C77.4,${ht + 1.4} 82.6,${ht + 3.8} 83.2,384" ${LT}/>`;
+    const th = {hi:8, mid:6.5, low:4.6}[k.h];
+    g += `<path d="M67.7,${t + th} L67.7,${t + .2} C67.7,${t - 1.4} 71.3,${t - 1.4} 71.3,${t + .2} L71.3,${t + th} Z" fill="${k.heel}" ${O}/>`; // heel tab
+    if (k.loop) g += `<path d="M68.2,${t - .4} C68,${t - 4.4} 71,${t - 4.4} 70.8,${t - .4}" fill="none" stroke="${k.loop}" stroke-width="1.2" stroke-linecap="round"/>`;
+  }
+  g += `<path d="M${xl},${t} C${xl + 3.2},${t - 2.2} ${xr - 3.2},${t - 2.2} ${xr},${t} C${xr - 3.2},${t + 1.8} ${xl + 3.2},${t + 1.8} ${xl},${t}Z" fill="${k.col}" ${O}/>`; // padded collar
+  return g;
+}
 const SHOES = {kicks_white:['shoe','#f4f4f8','#e23b54'], kicks_red:['shoe','#d42d45','#f4f4f8'], hightops:['hightop','#4c46c8','#f4f4f8'], kicks_gold:['shoe','#e8b923','#7a5a00']};
 const WRISTS = {bands_red:['band','#e23b54'], bands_blue:['band','#3b82f6'], wraps:['wrap','#f1f0f6']};
 const AURA_C = {toxic:'#84cc16', bloodmoon:'#dc2626', ghostfire:'#4ade80', glow:'var(--gold)', flame:'#fb923c', lightning:'#60a5fa', ice:'#a5f3fc', shadow:'#7c3aed', rainbow:'url(#gdRainbow)'};
@@ -2426,6 +2475,7 @@ function skinFront(sk, front){
   const w = WRISTS[sk.wrists]; if (w) s += both(GEAR[w[0]], `fill="${w[1]}" stroke="#0b0a12" stroke-width=".5" transform-origin="0 0"`);
   if (sk.wrists === 'gloves') s += both(GEAR.glove, 'fill="#0d0c12" stroke="#a9a6c2" stroke-width=".9"') + both('M44,186 L62,186', 'stroke="#e23b54" stroke-width="2.2"');
   // feet
+  const sn = SNEAKERS[sk.feet]; if (sn){ const g = sneakerSVG(sn, front); s += g + `<g ${MIR}>${g}</g>`; }
   const f = SHOES[sk.feet]; if (f) s += both(GEAR[f[0]], `fill="${f[1]}" stroke="${f[1] === '#0d0c12' ? '#d8d6ea' : '#0b0a12'}" stroke-width="${f[1] === '#0d0c12' ? .9 : .6}"`) + both('M54,386 L83,386', 'stroke="#0b0a12" stroke-width="1.4" opacity=".5"') + both(f[0] === 'hightop' ? 'M60,364 L78,372 M60,372 L79,378' : 'M61,376 L77,381', `stroke="${f[2]}" stroke-width="1.8" stroke-linecap="round"`);
   // capes: clasps / collar
   if (sk.back === 'vampcape') s += front ? `<circle cx="79" cy="61" r="3.2" fill="#b91c1c" stroke="#f2c94c" stroke-width="1"/><circle cx="121" cy="61" r="3.2" fill="#b91c1c" stroke="#f2c94c" stroke-width="1"/>` : `<path d="M78,57 Q100,66 122,57 L120,64 Q100,72 80,64Z" fill="#140b18"/>`;
