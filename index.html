@@ -319,6 +319,12 @@ body.resting main{padding-bottom:170px}
 .season-dots{display:flex;gap:6px;justify-content:center;margin-top:10px}.season-dots i{width:8px;height:8px;border-radius:50%;background:var(--line)}.season-dots i.got{background:var(--se)}
 .season-count{display:flex;align-items:baseline;gap:8px;justify-content:center;margin:14px 0 4px}.season-count b{font:700 34px 'Chakra Petch';color:var(--se)}.season-count span{color:var(--mute)}
 .season-box{border-color:#f9731688;cursor:pointer}.season-box h4{color:#f97316}
+.ns-card{cursor:pointer;position:relative;overflow:hidden;background:radial-gradient(circle at 88% -10%,#8b7cf63a,transparent 55%),linear-gradient(160deg,#141433,var(--panel) 75%);border-color:#6d5fd655}
+.ns-card .kick{color:#b8acff}.ns-card>*{position:relative}
+.ns-stars{position:absolute!important;inset:0;pointer-events:none;opacity:.5;background-image:radial-gradient(1px 1px at 18% 22%,#fff,transparent),radial-gradient(1px 1px at 72% 14%,#fff,transparent),radial-gradient(1.4px 1.4px at 46% 38%,#fff,transparent),radial-gradient(1px 1px at 88% 52%,#fff,transparent),radial-gradient(1px 1px at 30% 70%,#fff,transparent),radial-gradient(1.2px 1.2px at 62% 82%,#fff,transparent)}
+.ns-chest{background:linear-gradient(160deg,#2a2460,#16143a);box-shadow:0 0 18px #8b7cf655 inset}
+.ns-box{border-color:#8b7cf688;background:linear-gradient(160deg,#1d1a48,transparent)}.ns-box h4{color:#b8acff}
+.ns-count{--se:#8b7cf6}
 .rep-from{display:flex;gap:12px;align-items:center;margin-top:12px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px}
 .rep-from>div:last-child{display:flex;flex-direction:column;gap:1px;min-width:0}.rep-from b{font-size:15px}
 .rep-tag{display:inline-block;white-space:nowrap;margin-right:4px;font:700 9px Inter;letter-spacing:.06em;text-transform:uppercase;color:#06231f;background:var(--teal);border-radius:99px;padding:2px 6px;vertical-align:2px}
@@ -477,12 +483,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.15.2"></script>
+<script src="exercises.js?v=2026.10.16.1"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.15.2';
+const APP_VERSION = '2026.10.16.1';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -2287,7 +2293,7 @@ function titleList(L = curLevel()){
   const t = TITLES.map((n, i) => [n, i * 3, L >= i * 3]);
   ACH.forEach(a => t.push([a[2], 'trophy', !!state.achievements[a[0]]]));
   LOOT_TITLES.forEach(([n, r]) => t.push([n, r + ' loot', state.cosmetics.owned.includes('t:' + n)]));
-  SEASONS.forEach(se => se.doors.forEach(d => { if (d.title && (state.cosmetics.owned.includes('t:' + d.title) || seasonLive(se))) t.push([d.title, se.name, state.cosmetics.owned.includes('t:' + d.title)]); }));
+  SEASONS.forEach(se => se.doors.forEach(d => { if (d.title && (state.cosmetics.owned.includes('t:' + d.title) || dkey(Date.now()) >= se.start)) t.push([d.title, se.name, state.cosmetics.owned.includes('t:' + d.title)]); }));
   return t;
 }
 const autoTitle = L => TITLES[Math.min(Math.floor(L / 3), TITLES.length - 1)];
@@ -2621,7 +2627,45 @@ function doorInfo(d){
   return {name:`${d.name} +${d.xp} XP`, kind:'XP treat', icon:'🍬'};
 }
 function seasonLabel(u){ const se = seasonById(u.season); if (!se) return 'Event';
-  return seasonLive(se) ? `${se.icon} ${se.name}` : dkey(Date.now()) < se.start ? `${se.icon} ${se.name}` : `${se.icon} ${se.name} ended`; }
+  return dkey(Date.now()) > se.end ? '🌙 Night Shift' : `${se.icon} ${se.name}`; }
+const seasonSoon = id => { const se = seasonById(id); return !!se && dkey(Date.now()) < se.start; };
+const seasonOver = id => { const se = seasonById(id); return !!se && dkey(Date.now()) > se.end; };
+/* ---- Night Shift: after an event ends, anything you missed can still drop from a Cursed Chest ----
+   Finish a workout between 9 PM and 4 AM → 30% chance. At most one chest per night. */
+const NS_CHANCE = .3;
+const nsNight = (t = Date.now()) => dkey(t - 6 * 36e5); // 9 PM–4 AM all counts as the same night
+const nsOpen = (t = Date.now()) => { const h = new Date(t).getHours(); return h >= 21 || h < 4; };
+function nsAll(){ const out = [];
+  SEASONS.filter(se => dkey(Date.now()) > se.end).forEach(se => se.doors.forEach(d => {
+    if (d.skin) out.push({se, id:d.skin, d:{skin:d.skin}});
+    if (d.title) out.push({se, id:'t:' + d.title, d:{title:d.title}}); }));
+  return out.map(x => ({...x, ...doorInfo(x.d), got:state.cosmetics.owned.includes(x.id)}));
+}
+const nsMissed = () => nsAll().filter(x => !x.got);
+const nsFoundTonight = (t = Date.now()) => (state.nightShift || {}).last === nsNight(t);
+function nightShiftRoll(t = Date.now()){
+  if (!nsOpen(t) || nsFoundTonight(t)) return null;
+  const pool = nsMissed(); if (!pool.length || Math.random() >= NS_CHANCE) return null;
+  const it = pool[Math.floor(Math.random() * pool.length)], ns = (state.nightShift = state.nightShift || {});
+  state.cosmetics.owned.push(it.id); ns.last = nsNight(t); ns.n = (ns.n || 0) + 1;
+  return it;
+}
+function nightShiftCard(){
+  if (activeSeason()) return ''; const all = nsAll(), m = all.filter(x => !x.got); if (!m.length) return '';
+  const msg = nsFoundTonight() ? "You found tonight's Cursed Chest. More drop tomorrow night."
+    : nsOpen() ? 'The night shift is on. Finish a workout before 4 AM for a 30% shot at a Cursed Chest.'
+    : 'Finish a workout between 9 PM and 4 AM for a 30% shot at a Cursed Chest.';
+  return `<div class="card ns-card" data-act="nightShift"><div class="ns-stars"></div><div class="row between"><small class="kick">🌙 NIGHT SHIFT${nsOpen() && !nsFoundTonight() ? ' · OPEN NOW' : ''}</small><small class="mute">${all.length - m.length}/${all.length} found</small></div>
+    <div class="season-next"><div class="door-ico ns-chest">${CANDY_BUCKET}</div><div style="flex:1;min-width:0"><h3 style="margin:0">${m.length} spooky item${m.length === 1 ? '' : 's'} still out there</h3><small class="mute">${msg}</small></div></div></div>`;
+}
+function openNightShift(){
+  const all = nsAll(), t = muscleTotals(), sk = equippedSkin(); all.sort((a, b) => a.got - b.got);
+  openSheet(`<div class="row between"><h2 style="margin:0">🌙 Night Shift</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    <small class="mute">Missed something from an event? Finish a workout between 9 PM and 4 AM and there's a 30% chance of a Cursed Chest with one of these inside. One chest per night.</small>
+    <div class="season-count ns-count"><b>${all.filter(x => x.got).length}/${all.length}</b><span>found</span></div>
+    <div class="h-track">${all.map(x => `<div class="${x.got ? 'got' : ''}">${x.slot ? `<div class="hmini">${figMini({id:x.id, slot:x.slot}, t, true)}</div>` : `<div class="door-ico sm">${x.icon}</div>`}<span><b>${esc(x.name)}</b><small>${x.kind} · ${x.se.name}</small></span>
+      ${x.got ? (x.slot ? `<button class="btn ghost xs" data-act="eqNsNew" data-s="${x.slot}" data-v="${x.id}"${sk[x.slot] === x.id ? ' disabled' : ''}>${sk[x.slot] === x.id ? 'Equipped' : 'Equip'}</button>` : '<small class="goal" style="color:var(--teal)">✓</small>') : '<small class="goal">🌙</small>'}</div>`).join('')}</div>`);
+}
 // Door order is shuffled once per player (so every day is a surprise) — the grand prize always stays behind the last door.
 // Doors already opened keep what they gave.
 function doorOrder(se){
@@ -2728,14 +2772,14 @@ function openArmory(){
   openSheet(`<div class="row between"><h2 style="margin:0">Armory</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
     <div style="max-width:250px;margin:4px auto 0">${bodySVG(m => rankOf(lvl(t[m]))[2], {labels:false, skin:sk})}</div>
     <label class="lbl">Title</label><div class="chips wrap">${got.map(([n]) => `<button class="chip${n === cur ? ' on' : ''}" data-act="eqTitle" data-v="${esc(n)}">${esc(n)}</button>`).join('')}</div>
-    <small class="mute">${tl.length - got.length} more to unlock through levels, trophies and loot</small>
+    <small class="mute">${tl.length - got.length} more to unlock through levels, trophies, loot${nsMissed().length ? ' and the night shift' : ''}</small>
     <label class="lbl">Theme</label><div class="themes">${THEMES.map(([id, n, u, c]) => { const ok = isUnlocked(id, u, L), on = (state.cosmetics.theme || 'classic') === id;
       return `<button class="theme-tile${on ? ' on' : ''}${ok ? '' : ' locked'}" data-act="eqTheme" data-v="${id}" style="--a:${c[0]};--b:${c[1]};--p:${c[2]}"><span class="sw"><i></i><i></i></span><b>${n}</b><small>${ok ? (on ? 'Equipped' : 'Unlocked') : '🔒 ' + unlockLabel(u)}</small></button>`; }).join('')}</div>
-    ${SLOTS.map(([slot, sn]) => { const items = SKINS.filter(x => x[2] === slot && !(x[3].season && !isUnlocked(x[0], x[3], L) && !seasonLive(seasonById(x[3].season) || {start:'', end:''}))).map(x => [...x, isUnlocked(x[0], x[3], L)]);
+    ${SLOTS.map(([slot, sn]) => { const items = SKINS.filter(x => x[2] === slot && !(x[3].season && !isUnlocked(x[0], x[3], L) && seasonSoon(x[3].season))).map(x => [...x, isUnlocked(x[0], x[3], L)]);
       const owned = items.filter(x => x[4]).length; items.sort((a, b) => b[4] - a[4]);
       return `<div class="arm-hd"><label class="lbl">${sn}</label><small class="mute">${owned}/${items.length}</small></div><div class="arm-row" data-slot="${slot}">
         <button class="arm-tile${!sk[slot] ? ' on' : ''}" data-act="eqSkin" data-s="${slot}" data-v=""><div class="arm-none">∅</div><b>None</b><small>${!sk[slot] ? 'Equipped' : '&nbsp;'}</small></button>
-        ${items.map(([id, n, , u, ok]) => `<button class="arm-tile z-${slot === 'paint' && (CAMO[id] || id === 'eyeblack' || id === 'warpaint') ? 'head' : ARM_ZOOM[slot] || 'full'}${sk[slot] === id ? ' on' : ''}${ok ? '' : ' locked'}" data-act="eqSkin" data-s="${slot}" data-v="${id}"><div class="hmini">${figMini({id, slot}, t, true)}</div><b>${esc(n)}</b><small>${sk[slot] === id ? 'Equipped' : ok ? 'Unlocked' : '🔒 ' + unlockLabel(u)}</small></button>`).join('')}</div>`; }).join('')}
+        ${items.map(([id, n, , u, ok]) => `<button class="arm-tile z-${slot === 'paint' && (CAMO[id] || id === 'eyeblack' || id === 'warpaint') ? 'head' : ARM_ZOOM[slot] || 'full'}${sk[slot] === id ? ' on' : ''}${ok ? '' : ' locked'}" data-act="eqSkin" data-s="${slot}" data-v="${id}"><div class="hmini">${figMini({id, slot}, t, true)}</div><b>${esc(n)}</b><small>${sk[slot] === id ? 'Equipped' : ok ? 'Unlocked' : (u.season && seasonOver(u.season) ? '' : '🔒 ') + unlockLabel(u)}</small></button>`).join('')}</div>`; }).join('')}
     <div class="arm-hd"><label class="lbl">Plates</label><small class="mute">${Object.keys(PLATE_SKINS).filter(plateOwned).length}/${Object.keys(PLATE_SKINS).length}</small></div><div class="arm-row" data-slot="plates">
       ${Object.entries(PLATE_SKINS).map(([id, k]) => { const ok = plateOwned(id), on = plateSkin() === k;
         return `<button class="arm-tile${on ? ' on' : ''}${ok ? '' : ' locked'}" data-act="eqPlate" data-v="${id}"><div class="arm-plate">${plateDisc(45, k)}</div><b>${esc(k.name)}</b><small>${on ? 'Equipped' : ok ? 'Unlocked' : `🔒 ${plateGoal(k)}`}</small></button>`; }).join('')}</div>
@@ -3174,7 +3218,7 @@ function renderBody(){
 }
 function renderProgress(){
   const t = muscleTotals(), hit = lastHit();
-  let h = `<h2>Progress</h2>` + leaderboardCard() + seasonCard();
+  let h = `<h2>Progress</h2>` + leaderboardCard() + seasonCard() + nightShiftCard();
   // Quests
   h += `<div class="card"><div class="row between"><h3 style="margin:0">Quests</h3><small class="mute">Daily · weekly</small></div>${questList().map(q => { const ok = q.done || q.prog >= q.n;
     return `<div class="quest${q.done ? ' done' : ''}"><div class="row between gap"><span><span class="qscope">${q.scope}${q.weak ? ' · Weak point' : ''}</span><br><b style="font-size:14px">${q.title}</b></span><span class="xp">${ok ? '✓' : '+' + q.xp}</span></div>
@@ -3267,7 +3311,7 @@ async function finishWorkout(){
   const achs = checkAchievements(); bonus += achs.length * 100;
   state.bonusXP += bonus;
   const loot = rollLoot(state.workouts.length === 1); if (loot && loot.kind === 'xp') state.bonusXP += loot.xp; w.loot = loot;
-  const seasonal = claimSeason(), newPlates = claimPlates(), newCamo = SKINS.filter(x => x[3].boot && bootB < x[3].boot && bootBest() >= x[3].boot);
+  const night = nightShiftRoll(now), seasonal = claimSeason(), newPlates = claimPlates(), newCamo = SKINS.filter(x => x[3].boot && bootB < x[3].boot && bootBest() >= x[3].boot);
   save();
   const after = muscleTotals(), plA = playerLvl(sumObj(after) + state.bonusXP);
   ui.tab = 'body'; render(); publishStats(true);
@@ -3281,6 +3325,7 @@ async function finishWorkout(){
     ${quests.length ? `<div class="pr-box q"><h4>📜 QUEST${quests.length > 1 ? 'S' : ''} COMPLETE</h4>${quests.map(q => `<div class="mini-row"><span>${q.title}</span><span class="xp">+${q.xp}</span></div>`).join('')}</div>` : ''}
     ${achs.length ? `<div class="pr-box"><h4>TROPHY UNLOCKED</h4>${achs.map(id => { const x = achById(id); return `<div class="mini-row"><span>${x[1]} <b>${x[2]}</b> <small class="mute">${x[3]}</small></span><span class="xp">+100</span></div>`; }).join('')}</div>` : ''}
     ${seasonal.length ? `<div class="pr-box season-box" data-act="seasonTrack"><h4>${seasonal[0].se.icon} DOOR ${seasonal.map(x => x.n).join(' + ')} OPENED</h4>${seasonal.map(x => `<div class="mini-row"><span>${x.icon} <b>${esc(x.name)}</b> <small class="mute">${x.kind}</small></span><span class="xp">NEW</span></div>`).join('')}<small class="mute">${seasonal.some(x => x.slot) ? 'Equip it in the Armory' : 'Tap to see the calendar'}</small></div>` : ''}
+    ${night ? `<div class="pr-box ns-box"><h4>🌙 NIGHT SHIFT · CURSED CHEST</h4><div class="mini-row"><span style="flex:1">${night.icon} <b>${esc(night.name)}</b> <small class="mute">${night.kind} · ${night.se.name}</small></span>${night.slot ? `<button class="btn ghost xs" data-act="eqNsNew" data-s="${night.slot}" data-v="${night.id}">Equip</button>` : ''}</div><small class="mute">${nsMissed().length ? `${nsMissed().length} more still out there` : 'You found every last one 🎃'}</small></div>` : ''}
     ${newCamo.length ? `<div class="pr-box"><h4>🪖 BOOT CAMP · ${bootBest()} WEEKS</h4>${newCamo.map(([id, n]) => `<div class="mini-row"><span style="flex:1"><b>${n}</b> <small class="mute">face paint unlocked</small></span><button class="btn ghost xs" data-act="eqCamoNew" data-v="${id}">Equip</button></div>`).join('')}</div>` : ''}
     ${newPlates.length ? `<div class="pr-box"><h4>🏋 NEW PLATES UNLOCKED</h4>${newPlates.map(id => `<div class="mini-row plate-new"><span class="arm-plate sm">${plateDisc(45, PLATE_SKINS[id])}</span><span style="flex:1"><b>${PLATE_SKINS[id].name}</b> <small class="mute">${plateGoal(PLATE_SKINS[id])}</small></span><button class="btn ghost xs" data-act="eqPlateNew" data-v="${id}">Equip</button></div>`).join('')}</div>` : ''}
     ${comeback.length ? `<div class="hint">🕸️ Comeback bonus +50% on ${comeback.map(m => MUSCLES[m]).join(', ')}</div>` : ''}
@@ -3740,6 +3785,8 @@ const ACT = {
   friends: openFriends,
   viewPlayer: d => openPlayer(d.id),
   seasonTrack: () => openSeasonTrack(),
+  nightShift: () => openNightShift(),
+  eqNsNew: (d, b) => { state.cosmetics[d.s] = d.v; save(); publishStats(true); render(); b.textContent = 'Equipped'; b.disabled = true; },
   lbMetric: d => { ui.lbMetric = d.v; render(); },
   shareCode: async () => { const text = `Add me on Gymdom! My friend code is ${state.profile.playerId} — ${location.origin + location.pathname}`;
     if (navigator.share){ try { await navigator.share({text}); } catch(e){} } else ACT.copyCode(); },
@@ -3836,7 +3883,7 @@ const ACT = {
   eqPlateNew: (d, b) => { state.plateSkin = d.v; save(); b.textContent = 'Equipped'; b.disabled = true; },
   eqPlate: d => { const k = PLATE_SKINS[d.v]; if (!k) return; if (!plateOwned(d.v)) return toast(k.lift ? `Lift ${k.lift} lb on any barbell exercise to unlock` : k.wk ? `Unlocks at ${k.wk} workouts (you're at ${state.workouts.length})` : k.prs ? `Unlocks at ${k.prs} PRs (you're at ${state.prCount || 0})` : `Unlocks at ${fmt(k.vol)} lb lifted in total (you're at ${fmt(Math.round(liftVolume()))})`);
     state.plateSkin = d.v; save(); const y = $('#sheet').scrollTop, xs = Object.fromEntries([...document.querySelectorAll('.arm-row')].map(r => [r.dataset.slot, r.scrollLeft])); openArmory(); $('#sheet').scrollTop = y; document.querySelectorAll('.arm-row').forEach(r => r.scrollLeft = xs[r.dataset.slot] || 0); toast(`${k.name} plates equipped`); },
-  eqSkin: d => { const it = SKINS.find(s => s[0] === d.v); if (it && !isUnlocked(d.v, it[3])) return toast(it[3].boot ? `Boot camp: ${it[3].boot} weeks in a row with 3+ workouts (best so far: ${bootBest()})` : `Unlocks with ${unlockLabel(it[3])}`); state.cosmetics[d.s] = d.v; save(); render(); const y = $('#sheet').scrollTop, xs = Object.fromEntries([...document.querySelectorAll('.arm-row')].map(r => [r.dataset.slot, r.scrollLeft])); openArmory(); $('#sheet').scrollTop = y; document.querySelectorAll('.arm-row').forEach(r => r.scrollLeft = xs[r.dataset.slot] || 0); publishStats(true); },
+  eqSkin: d => { const it = SKINS.find(s => s[0] === d.v); if (it && !isUnlocked(d.v, it[3])) return toast(it[3].season && seasonOver(it[3].season) ? '🌙 Missed it? Finish a workout between 9 PM and 4 AM for a 30% shot at a Cursed Chest' : it[3].boot ? `Boot camp: ${it[3].boot} weeks in a row with 3+ workouts (best so far: ${bootBest()})` : `Unlocks with ${unlockLabel(it[3])}`); state.cosmetics[d.s] = d.v; save(); render(); const y = $('#sheet').scrollTop, xs = Object.fromEntries([...document.querySelectorAll('.arm-row')].map(r => [r.dataset.slot, r.scrollLeft])); openArmory(); $('#sheet').scrollTop = y; document.querySelectorAll('.arm-row').forEach(r => r.scrollLeft = xs[r.dataset.slot] || 0); publishStats(true); },
   closeLvlUp: () => { const d = document.getElementById('lvlUp'); if (d){ d.classList.add('out'); setTimeout(() => d.remove(), 300); } },
   openLoot: (d, b) => { if (b.classList.contains('opening') || b.classList.contains('open')) return; b.classList.add('opening'); if (navigator.vibrate) navigator.vibrate([20, 40, 20, 40, 20]);
     setTimeout(() => { b.classList.remove('opening'); b.classList.add('open'); if (navigator.vibrate) navigator.vibrate(80); }, 900); },
