@@ -67,6 +67,11 @@ svg.body text{fill:var(--mute);font:600 11px 'Chakra Petch';letter-spacing:.25em
 .bty-mini{display:flex;align-items:center;gap:10px;background:linear-gradient(160deg,#2b2113,var(--panel));border:1px solid #c9a22755;border-radius:12px;padding:9px 12px;margin:0 0 12px}
 .bty-mini b{font-size:13px;display:block;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bty-mini .bar{height:5px;margin:0}.bty-mini small{color:var(--mute);font-size:11px;flex:none}
 .bty-mini.ready small{color:#f2c94c;font-weight:700}.bty-mini.done{opacity:.6}.bty-box{border-color:#c9a22788}.bty-box h4{color:#f2c94c}
+.flex-stage{position:relative;overflow:hidden;border-radius:16px;margin:10px 0;background:radial-gradient(ellipse 60% 55% at 50% 42%,color-mix(in srgb,var(--fc) 30%,transparent),transparent 70%),#09080e;border:1px solid color-mix(in srgb,var(--fc) 40%,var(--line))}
+.flex-rays{position:absolute;inset:-50%;background:repeating-conic-gradient(from 0deg at 50% 50%,color-mix(in srgb,var(--fc) 16%,transparent) 0 8deg,transparent 8deg 22deg);animation:flexSpin 14s linear infinite;opacity:.8}
+@keyframes flexSpin{to{transform:rotate(360deg)}}
+.flex-label{position:relative;text-align:center;padding:12px 10px 0}.flex-label b{display:block;font:800 22px 'Chakra Petch';letter-spacing:3px;color:var(--fc);text-shadow:0 0 18px color-mix(in srgb,var(--fc) 70%,transparent)}
+.flex-label small{color:var(--mute);font-size:12px}.reward .flex-fig{max-width:220px}.flex-fig{position:relative;display:block;width:100%;max-width:300px;margin:-6px auto 0}
 .map-seg{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:2px}
 .map-seg button{background:none;border:0;color:var(--mute);font:600 12px Inter;padding:6px 11px;border-radius:8px;cursor:pointer}.map-seg button.on{background:var(--teal);color:#06231f}
 .rec-line{display:flex;align-items:center;gap:8px;margin-top:10px;padding:9px 12px;border-radius:10px;background:color-mix(in srgb,var(--c) 12%,var(--panel2));font-size:13px}
@@ -506,12 +511,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.20.3"></script>
+<script src="exercises.js?v=2026.10.20.4"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.20.3';
+const APP_VERSION = '2026.10.20.4';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -2526,10 +2531,10 @@ function garmentOver(sk, front){
     s += '</g>'; }
   if (t){ const d = GEAR[t.racer && !front ? 'racer' : t.g];
     s += `<g clip-path="url(#gdBody)"><path d="${d}" fill="${t.c}" fill-opacity="${TINT}"/><path d="${d}" fill="url(#gdFab)"/>`;
-    if (t.sleeve) s += both(GEAR.sleeve, `fill="${t.c}" fill-opacity="${TINT}"`) + both(GEAR.sleeve, 'fill="url(#gdFab)"');
+    if (t.sleeve && !sk._flex) s += both(GEAR.sleeve, `fill="${t.c}" fill-opacity="${TINT}"`) + both(GEAR.sleeve, 'fill="url(#gdFab)"');
     // necklines + armholes (front scoop is deeper than the back)
     if (t.g === 'tank') s += edge(front ? [[81,58],[87,57.6],[93,61.4],[100,67]] : [[81,58],[88,56.6],[95,57.6],[100,59]], t.c === '#16151c' ? t.t : t.t) + edge([[81,58],[79.5,66],[75,82],[72.5,100]], t.t);
-    if (t.g === 'tee') s += edge([[79,57.5],[87,55.5],[94,58],[100,60.5]], t.t) + edge([[40.6,110],[47.5,116],[55.5,110],[62,101]], t.t);
+    if (t.g === 'tee') s += edge([[79,57.5],[87,55.5],[94,58],[100,60.5]], t.t) + (sk._flex ? '' : edge([[40.6,110],[47.5,116],[55.5,110],[62,101]], t.t));
     if (t.g === 'singlet') s += edge(front ? [[84.5,57.5],[88.5,57.5],[93,63],[100,72]] : [[84.5,57.5],[90,57],[96,59.5],[100,62]], t.t) + edge([[84.5,57.5],[82,66],[77,84],[74.5,100]], t.t) + edge([[71.5,228],[84,232],[94,230],[98.5,224]], t.t)
       + bothL([[78,104],[79.6,140],[80.6,176],[76.6,196],[73.6,226]], `fill="none" stroke="${t.stripe}" stroke-opacity=".75" stroke-width="2.2"`);
     if (t.g === 'stringer') s += front ? edge([[87.5,57.5],[90.5,58],[95,67],[100,76]], t.t) + edge([[87.5,57.5],[85,64],[80.5,92],[78,112]], t.t)
@@ -2661,7 +2666,7 @@ function skinBehind(sk, front){
 function skinUnder(sk, front){
   let s = '';
   const b = BOTTOMS[sk.bottom]; if (b) s += `<path d="${GEAR[b.g]}" fill="${b.pat ? 'url(#gdStripes)' : b.c}" clip-path="url(#gdBody)"/>`;
-  const t = TOPS[sk.top]; if (t){ s += `<path d="${GEAR[t.racer && !front ? 'racer' : t.g]}" fill="${t.c}" clip-path="url(#gdBody)"/>`; if (t.sleeve) s += both(GEAR.sleeve, `fill="${t.c}" clip-path="url(#gdBody)"`); }
+  const t = TOPS[sk.top]; if (t){ s += `<path d="${GEAR[t.racer && !front ? 'racer' : t.g]}" fill="${t.c}" clip-path="url(#gdBody)"/>`; if (t.sleeve && !sk._flex) s += both(GEAR.sleeve, `fill="${t.c}" clip-path="url(#gdBody)"`); }
   return s;
 }
 /* ---- Camo face paint: base coat + ragged blotches + smears over the eyes, clipped to the head ---- */
@@ -2852,6 +2857,40 @@ function skinFront(sk, front){
   return s;
 }
 // Scenes behind the muscle map (full map width)
+/* ---- Flex poses: a front figure with jointed arms (shoulder + elbow) that cycles through poses ----
+   Angles: [upper arm from straight down, forearm relative to upper arm]; positive swings the arm outward. */
+const TORSO_HALF = [[100,10],[91,12],[86.5,21],[86.5,32],[89.5,41],[94.5,48],[92,54],[80,58],[67,63],[56,67],[47,77],[44,90],[48,101],[57,106],[66,107],[72,120],[76,141],[80,160],[81,178],
+  [77,196],[72,220],[68,246],[66,268],[64,284],[59,302],[58,322],[61,346],[63,368],[56,381],[58,391],[80,391],[81,380],[78,368],[80,346],[84,318],[86,290],[87,274],[92,248],[96,226],[100,212]];
+const TORSO_S = TORSO_HALF.map((p, i) => i < 6 ? shapeHead(p) : shape(p));
+const TORSO = spline([...TORSO_S, ...mirrorPts(TORSO_S).reverse().slice(1, -1)]);
+const POSES = {rest:[[12, -14], [12, -14]], dbl:[[100, 76], [100, 76]], lat:[[30, -102], [30, -102]], pump:[[100, 76], [172, 6]]};
+const POSE_LOOP = ['dbl', 'dbl', 'lat', 'lat', 'pump', 'pump', 'dbl'], POSE_KT = '0;.26;.33;.6;.67;.93;1', POSE_DUR = 7.5;
+const ARM = {up:'M-13,-9 C-16.6,10 -16,38 -11.6,57 C-7,63.4 7,63.4 11.6,57 C15.6,38 15.6,10 12.6,-10 Z',
+  bi:'M-9,10 C-12,24 -10,44 -3,54 C3,57.6 10,51 10.6,39 C11.4,25 8,12 1.6,8 C-2.6,6.4 -7,7.4 -9,10 Z',
+  fore:'M-12.2,-2 C-13.6,10 -11.8,30 -8.2,44 L8.2,44 C11,30 13.6,12 12.2,-2 Z',
+  fm:'M-9,3 C-11,15 -8.6,29 -4.4,37 C.4,39.4 5.4,34.6 7.4,25 C9.2,14.6 8,5 3,1 C-.6,-1 -6.8,0 -9,3 Z',
+  fist:'M-9.2,40 C-11.8,47 -10.6,57 -4.8,60.8 C1,63.2 7.8,60.8 10.2,54.6 C11.6,48.6 10.6,43 8.2,39.4 Z', knuck:'M-7,52.4 Q0,55 7.4,52 M-8,47.4 Q0,49.8 8.4,47'};
+function flexSVG(col, skin = {}){
+  const sk = {...skin, _flex:1}; delete sk.wrists; delete sk.bg; delete sk.aura; if (['tribal', 'neon'].includes(sk.paint)) delete sk.paint;
+  const seq = side => POSE_LOOP.map(k => POSES[k][side]), anim = (vals, j) => `<animateTransform attributeName="transform" type="rotate" values="${POSES.rest[0][j]};${vals[0][j]}" dur=".55s" fill="freeze" calcMode="spline" keySplines=".3 .8 .3 1"/>
+    <animateTransform attributeName="transform" type="rotate" begin=".55s" dur="${POSE_DUR}s" repeatCount="indefinite" values="${vals.map(v => v[j]).join(';')}" keyTimes="${POSE_KT}" calcMode="spline" keySplines="${vals.slice(1).map(() => '.4 0 .2 1').join(';')}"/>`;
+  const arm = side => { const v = seq(side), c = m => { const x = col(m); return Array.isArray(x) ? x[0] : x; };
+    return `<g transform="translate(49.2 82)"><g transform="rotate(${POSES.rest[0][0]})">${anim(v, 0)}
+      <circle r="13.5" class="base"/><path d="${ARM.up}" class="base"/><circle cy="58" r="11.6" class="base"/><g transform="translate(.6 33)"><animateTransform attributeName="transform" type="scale" additive="sum" values="1;1.1 1.14;1" dur="1.1s" repeatCount="indefinite"/><path d="${ARM.bi}" transform="translate(-.6 -33)" class="mus" fill="${c('biceps')}"/></g>
+      <g transform="translate(0 58)"><g transform="rotate(${POSES.rest[0][1]})">${anim(v, 1)}<path d="${ARM.fore}" class="base"/><path d="${ARM.fist}" class="base"/><path d="${ARM.fm}" class="mus" fill="${c('forearms')}"/>
+        <path d="${ARM.knuck}" fill="none" stroke="#000" stroke-opacity=".45" stroke-width=".9" stroke-linecap="round"/></g></g></g></g>`; };
+  let m = '';
+  for (const [k, d, mir] of FRONT){ if (k === 'biceps' || k === 'forearms') continue; const x = col(k), a = `class="mus" fill="${Array.isArray(x) ? x[0] : x}"`; m += `<path d="${d}" ${a}/>` + (mir ? `<path d="${d}" ${MIR} ${a}/>` : ''); }
+  const sh = FRONT.find(x => x[0] === 'shoulders'), shc = col('shoulders'), shA = `class="mus" fill="${Array.isArray(shc) ? shc[0] : shc}"`;
+  return `<svg class="body flex-fig" viewBox="-40 -58 280 458" xmlns="http://www.w3.org/2000/svg">${SKIN_DEFS}${skinBehind(sk, 1)}
+    <path d="${TORSO}" class="base"/>${skinUnder(sk, 1)}${m}${skinFront(sk, 1)}
+    <g>${arm(0)}</g><g ${MIR}>${arm(1)}</g><path d="${sh[1]}" ${shA}/><path d="${sh[1]}" ${MIR} ${shA}/></svg>`;
+}
+function flexStage(label, sub, glow){
+  const t = muscleTotals(), sk = equippedSkin();
+  return `<div class="flex-stage" style="--fc:${glow || AURA_C[sk.aura] || 'var(--gold)'}"><div class="flex-rays"></div><div class="flex-label"><b>${esc(label)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</div>
+    ${flexSVG(m => rankOf(lvl(t[m]))[2], sk)}</div>`;
+}
 function mapBG(id, W, top, H){
   const R = `x="0" y="${top}" width="${W}" height="${H}"`, F = top + H;
   const sc = {
@@ -3055,7 +3094,7 @@ const ARM_ZOOM = {head:'head', face:'head', neck:'neck', top:'top', paint:'neck'
 function openArmory(){
   const L = curLevel(), t = muscleTotals(), sk = equippedSkin(), cur = myTitle(L);
   const tl = titleList(L), got = tl.filter(x => x[2]);
-  openSheet(`<div class="row between"><h2 style="margin:0">Armory</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
+  openSheet(`<div class="row between"><h2 style="margin:0">Armory</h2><span class="row gap"><button class="btn ghost xs" data-act="flexNow">💪 Flex</button><button class="icon-btn" data-act="closeSheet">✕</button></span></div>
     <div style="max-width:250px;margin:4px auto 0">${bodySVG(m => rankOf(lvl(t[m]))[2], {labels:false, skin:sk})}</div>
     <label class="lbl">Title</label><div class="chips wrap">${got.map(([n]) => `<button class="chip${n === cur ? ' on' : ''}" data-act="eqTitle" data-v="${esc(n)}">${esc(n)}</button>`).join('')}</div>
     <small class="mute">${tl.length - got.length} more to unlock through levels, trophies, loot${nsMissed().length ? ' and the night shift' : ''}</small>
@@ -3613,6 +3652,7 @@ async function finishWorkout(){
   openSheet(`<div class="reward">${confetti}<small class="title-tag">Workout complete</small><div class="big">+${fmt(sumObj(w.xp) + bonus + (bounty ? BOUNTY_XP : 0))} XP</div>${lootBox(loot)}
     ${bounty ? `<div class="pr-box bty-box"><h4>🎯 BOUNTY CLAIMED · +${BOUNTY_XP} XP</h4><div class="mini-row"><span>${bounty.icon} <b>${esc(bounty.title)}</b></span></div><small class="mute">Your chest is guaranteed Rare or better.</small></div>` : ''}
     ${plA > plB ? `<div class="banner">PLAYER LEVEL UP · LV ${plA}</div>` : ''}
+    ${w.prs.length ? flexStage(w.prs.length > 1 ? `${w.prs.length} NEW PRS` : 'NEW PR', w.prs.map(p => EX[p.ex].name).slice(0, 2).join(' · ')) : ''}
     ${w.prs.length ? `<div class="pr-box"><h4>🏆 NEW PR${w.prs.length > 1 ? 'S' : ''} · +${w.prs.length * 100} XP</h4>${w.prs.map(p => `<div class="mini-row"><span>${EX[p.ex].name} <small class="mute">${EX[p.ex].bw && !p.w ? 'BW' : p.w}×${p.r}</small></span><span><small class="mute">est. 1RM</small> ${p.prev} → <b style="color:var(--gold)">${p.rm}</b></span></div>`).join('')}</div>` : ''}
     ${quests.length ? `<div class="pr-box q"><h4>📜 QUEST${quests.length > 1 ? 'S' : ''} COMPLETE</h4>${quests.map(q => `<div class="mini-row"><span>${q.title}</span><span class="xp">+${q.xp}</span></div>`).join('')}</div>` : ''}
     ${achs.length ? `<div class="pr-box"><h4>TROPHY UNLOCKED</h4>${achs.map(id => { const x = achById(id); return `<div class="mini-row"><span>${x[1]} <b>${x[2]}</b> <small class="mute">${x[3]}</small></span><span class="xp">+100</span></div>`; }).join('')}</div>` : ''}
@@ -3940,6 +3980,7 @@ const ACT = {
   exfAddSet: () => { const e = state.active.entries[ui.exf.i], l = e.sets[e.sets.length - 1]; e.sets.push({w:l ? l.w : '', r:''}); save(); renderExf(); },
   startEmpty: () => startWorkout('Workout', []),
   bountyReroll: () => { const b = bountyState(); if (b.roll || b.done) return; b.roll = 1; save(); render(); toast('New bounty posted'); },
+  flexNow: () => openSheet(`<div class="row between"><h2 style="margin:0">💪 Flex</h2><button class="icon-btn" data-act="armory">‹ Armory</button></div>${flexStage('LOOKING STRONG', 'Double biceps · Lat spread · Victory')}<small class="mute" style="display:block;text-align:center;margin-top:8px">Your character strikes these poses whenever you hit a PR.</small>`),
   mapMode: d => { ui.mapMode = d.v; render(); },
   trainToday: openTrainToday,
   trainTpl: async d => {
