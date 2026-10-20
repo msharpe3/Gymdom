@@ -60,6 +60,14 @@ svg.body text{fill:var(--mute);font:600 11px 'Chakra Petch';letter-spacing:.25em
 .stats.s4{grid-template-columns:repeat(4,1fr);gap:8px}.stats.s4 .stat{padding-left:4px;padding-right:4px}.stats.s4 .stat b{font-size:17px}.stats.s4 .stat small{font-size:10px}
 .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center}
 .stat b{display:block;font:700 22px 'Chakra Petch'}.stat small{color:var(--mute)}
+.map-seg{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:2px}
+.map-seg button{background:none;border:0;color:var(--mute);font:600 12px Inter;padding:6px 11px;border-radius:8px;cursor:pointer}.map-seg button.on{background:var(--teal);color:#06231f}
+.rec-line{display:flex;align-items:center;gap:8px;margin-top:10px;padding:9px 12px;border-radius:10px;background:color-mix(in srgb,var(--c) 12%,var(--panel2));font-size:13px}
+.rec-line i{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none}.rec-line b{color:var(--c)}.rec-line span{color:var(--mute)}
+.rec-opt{margin:12px 0 0;padding:14px}.rec-opt.best{border-color:color-mix(in srgb,var(--teal) 55%,var(--line))}
+.rec-pct{text-align:center;flex:none}.rec-pct b{display:block;font:700 22px 'Chakra Petch';color:var(--c)}.rec-pct small{color:var(--mute);font-size:11px}
+.rec-dots{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.rec-dot{display:inline-flex;align-items:center;gap:5px;font-size:12px;background:var(--panel2);border-radius:99px;padding:4px 9px}
+.rec-dot::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--c)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:center;margin-top:8px}
 .legend span{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--mute)}.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
 .mrow{display:grid;grid-template-columns:118px 1fr 48px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);cursor:pointer}
@@ -483,12 +491,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.18.1"></script>
+<script src="exercises.js?v=2026.10.20.1"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.18.1';
+const APP_VERSION = '2026.10.20.1';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1136,6 +1144,54 @@ function overloadHint(e){
 }
 // Muscle decay: fades on the map after 7 days, "Rusty" after 14
 function lastHit(){ const l = {}; for (const w of state.workouts) for (const m in w.xp) if (w.xp[m] > 0 && !(l[m] > w.date)) l[m] = w.date; return l; }
+/* ---- Recovery: how ready each muscle is, from the hard sets of the last few days ----
+   Each session needs 16h + 6h per set on that muscle (secondary = half a set), capped at 72h, scaled for muscle size. */
+const REC_K = {biceps:.75, triceps:.75, forearms:.6, calves:.6, abs:.6, obliques:.7, shoulders:.9, traps:.8, chest:1, lats:1, lowerback:1.1, glutes:1, quads:1.1, hamstrings:1.1};
+function recovery(now = Date.now()){
+  const out = {}; for (const m in MUSCLES) out[m] = {pct:1, ready:0, sets:0, last:0};
+  for (const w of state.workouts){ const age = (now - w.date) / 36e5; if (age > 120 || age < 0) continue;
+    const sets = {};
+    for (const e of w.entries){ const ex = EX[e.ex]; if (!ex || ex.nx) continue; const n = e.sets.length;
+      ex.p.forEach(m => sets[m] = (sets[m] || 0) + n); ex.s.forEach(m => sets[m] = (sets[m] || 0) + n * .5); }
+    for (const m in sets){ if (!out[m]) continue; const need = Math.min(72, 16 + sets[m] * 6) * (REC_K[m] || 1), pct = Math.min(1, age / need);
+      if (pct < out[m].pct) out[m] = {pct, ready:w.date + need * 36e5, sets:sets[m], last:w.date}; } }
+  return out;
+}
+const REC_ST = [[1, 'Ready', '#4ade80'], [.6, 'Recovering', '#facc15'], [0, 'Sore', '#f87171']];
+const recState = p => REC_ST.find(r => p >= r[0]);
+const readyIn = ts => { const h = Math.max(1, Math.round((ts - Date.now()) / 36e5)); return h < 20 ? `~${h}h` : new Date(ts).toDateString() === new Date(Date.now() + DAY).toDateString() ? 'tomorrow' : `in ${Math.round(h / 24)} days`; };
+// What to train: score every split day (or a stock template) by how recovered + how overdue its muscles are
+const TRAIN_TPL = [['Push', ['chest', 'shoulders', 'triceps']], ['Pull', ['lats', 'traps', 'biceps', 'forearms']], ['Legs', ['quads', 'hamstrings', 'glutes', 'calves']],
+  ['Upper', ['chest', 'lats', 'shoulders', 'biceps', 'triceps']], ['Lower', ['quads', 'hamstrings', 'glutes', 'calves', 'lowerback']], ['Arms + Core', ['biceps', 'triceps', 'forearms', 'abs', 'obliques']]];
+function scoreMuscles(ms, rec, hit){
+  const W = {}; ms.forEach(m => W[m] = (W[m] || 0) + 1); const ks = Object.keys(W), tot = sumObj(W) || 1;
+  const ready = ks.reduce((a, m) => a + rec[m].pct * W[m], 0) / tot;
+  const due = ks.reduce((a, m) => a + Math.min(1, hit[m] ? (Date.now() - hit[m]) / (4 * DAY) : 1) * W[m], 0) / tot;
+  return {ready, due, score:ready * .7 + due * .3, ms:ks};
+}
+function favExercise(m, skip){ // the lift you use most for a muscle, else the first stock one
+  const n = {}; state.workouts.slice(0, 60).forEach(w => w.entries.forEach(e => { const ex = EX[e.ex]; if (ex && ex.p.includes(m)) n[e.ex] = (n[e.ex] || 0) + 1; }));
+  return Object.keys(n).filter(id => !skip.includes(id)).sort((a, b) => n[b] - n[a])[0] || (EXL.find(e => e.p.includes(m) && !skip.includes(e.id)) || {}).id;
+}
+function trainOptions(){
+  const rec = recovery(), hit = lastHit(), out = [];
+  for (const sp of state.splits) for (const d of sp.days){ const ms = d.items.flatMap(it => (EX[it.ex] ? EX[it.ex].p : []).flatMap(m => Array(Math.max(1, +it.sets || 3)).fill(m)));
+    if (ms.length) out.push({name:d.name, sub:sp.name, s:sp.id, d:d.id, ...scoreMuscles(ms, rec, hit)}); }
+  if (!out.length) TRAIN_TPL.forEach(([name, ms], i) => out.push({name, sub:'Suggested workout', g:i, ...scoreMuscles(ms, rec, hit)}));
+  return out.sort((a, b) => b.score - a.score);
+}
+function openTrainToday(){
+  const rec = recovery(), opts = trainOptions().slice(0, 3);
+  const dots = ms => ms.map(m => `<span class="rec-dot" style="--c:${recState(rec[m].pct)[2]}">${MUSCLES[m]}</span>`).join('');
+  openSheet(`<div class="row between"><h2 style="margin:0">🎯 Train today</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    <small class="mute">Picked from how recovered each muscle is and how long since you last trained it.</small>
+    <div style="max-width:250px;margin:8px auto 0">${bodySVG(m => recState(rec[m].pct)[2], {labels:false})}</div>
+    ${opts.map((o, i) => `<div class="card rec-opt${i ? '' : ' best'}"><div class="row between gap"><div style="min-width:0">${i ? '' : '<small class="kick" style="color:var(--teal)">BEST PICK</small><br>'}<b style="font-size:16px">${esc(o.name)}</b><br><small class="mute">${esc(o.sub)}</small></div>
+      <div class="rec-pct" style="--c:${o.ready >= .85 ? REC_ST[0][2] : o.ready >= .6 ? REC_ST[1][2] : REC_ST[2][2]}"><b>${Math.round(o.ready * 100)}%</b><small>ready</small></div></div>
+      <div class="rec-dots">${dots(o.ms)}</div>
+      ${o.ready < .6 ? '<small class="mute">These muscles are still sore. A lighter session or rest might be smarter.</small>' : ''}
+      <button class="btn ${i ? 'ghost' : 'gold'} block" style="margin-top:8px" ${o.s ? `data-act="startDay" data-s="${o.s}" data-d="${o.d}"` : `data-act="trainTpl" data-g="${o.g}"`}>Start ${esc(o.name)}</button></div>`).join('')}`);
+}
 function decayOf(ts){ if (!ts) return {op:1, tag:''}; const d = (Date.now() - ts) / DAY; return d <= 7 ? {op:1, tag:''} : d <= 14 ? {op:.6, tag:'Cooling'} : {op:.35, tag:'Rusty'}; }
 // Supersets: an entry with ss=true is linked to the next one
 function ssLabels(list){ const out = []; let n = 0, i = 0; while (i < list.length){ let j = i; while (j < list.length - 1 && list[j].ss) j++; if (j > i){ const L = 'ABCDEFGH'[n++ % 8]; for (let k = i; k <= j; k++) out[k] = L; } i = j + 1; } return out; }
@@ -3348,10 +3404,12 @@ function renderBody(){
     <div class="bar" style="margin:8px 0 6px"><i style="width:${pct}%"></i></div>
     <div class="row between gap"><small class="mute">${fmt(total)} XP · ${fmt(nxt-total)} to Lv ${pl+1}</small><button class="btn ghost xs armory-btn" data-act="armory">⚔️ Armory</button></div></div></div>
     <div class="stats"><div class="stat"><b>${state.workouts.length}</b><small>Workouts</small></div><div class="stat"><b>${week}</b><small>Last 7 days</small></div><div class="stat"><b>${weekStreak()}🔥</b><small>Week streak</small></div></div>`;
-  h += `<div class="card"><div class="row between"><h3>Muscle Map</h3><small class="mute">Tap a muscle</small></div>
-    ${bodySVG(m => { const c = rankOf(lvl(t[m]))[2]; return t[m] > 0 ? [c, decayOf(hit[m]).op] : c; }, {tap:true, skin:equippedSkin()})}
-    <div class="legend">${RANKS.map(r => `<span><i style="background:${r[2]}"></i>${r[1]}</span>`).join('')}</div>
-    <p class="mute" style="font-size:11px;text-align:center;margin:6px 0 0">Faded = not trained in 7+ days</p></div>`;
+  const recMode = ui.mapMode === 'rec', rec = recMode ? recovery() : null;
+  h += `<div class="card"><div class="row between"><h3 style="margin:0">Muscle Map</h3><div class="map-seg"><button class="${recMode ? '' : 'on'}" data-act="mapMode" data-v="rank">Ranks</button><button class="${recMode ? 'on' : ''}" data-act="mapMode" data-v="rec">Recovery</button></div></div>
+    ${bodySVG(recMode ? m => recState(rec[m].pct)[2] : m => { const c = rankOf(lvl(t[m]))[2]; return t[m] > 0 ? [c, decayOf(hit[m]).op] : c; }, {tap:true, skin:equippedSkin()})}
+    <div class="legend">${recMode ? REC_ST.map(r => `<span><i style="background:${r[2]}"></i>${r[1]}</span>`).join('') : RANKS.map(r => `<span><i style="background:${r[2]}"></i>${r[1]}</span>`).join('')}</div>
+    <p class="mute" style="font-size:11px;text-align:center;margin:6px 0 0">${recMode ? 'Based on the sets you did in the last few days · tap a muscle' : 'Faded = not trained in 7+ days · tap a muscle'}</p>
+    <button class="btn ghost block" style="margin-top:10px" data-act="trainToday">🎯 What should I train today?</button></div>`;
   h += bwCard();
   return h;
 }
@@ -3391,6 +3449,7 @@ function muscleInfo(m){
     <div class="row between"><span class="title-tag" style="color:${r[2]===UNTR?'var(--mute)':r[2]}">${r[1]} rank</span><b style="font:700 20px 'Chakra Petch'">Lv ${L}</b></div>
     <div class="bar" style="margin:8px 0 6px"><i style="width:${(xp-lvlXP(L))/(lvlXP(L+1)-lvlXP(L))*100}%"></i></div>
     <small class="mute">${fmt(xp)} XP · ${fmt(lvlXP(L+1)-xp)} to Lv ${L+1}${last?` · last trained ${dstr(last)}`:''}</small>
+    ${(() => { const r = recovery()[m], st = recState(r.pct); return `<div class="rec-line" style="--c:${st[2]}"><i></i><b>${st[1]}</b><span>${r.pct >= 1 ? 'Fully recovered' : `${Math.round(r.pct * 100)}% recovered · ready ${readyIn(r.ready)}`}</span></div>`; })()}
     ${decayOf(last).tag ? `<div class="hint" style="margin-top:10px">${decayOf(last).tag === 'Rusty' ? '🕸️ Rusty — your next session on this muscle earns a +50% comeback bonus' : '⏳ Cooling off — train it within a week to keep its full glow'}</div>` : ''}
     ${top.length ? `<h3 style="margin-top:16px">Top XP sources</h3>${top.map(([id,v]) => `<div class="prow" data-act="exInfo" data-id="${id}"><span>${EX[id].name}</span><span class="sr">${fmt(v)} XP</span></div>`).join('')}` : ''}
     <h3 style="margin-top:16px">Level it up with</h3><div class="chips wrap">${sug.map(e => `<button class="chip" data-act="exInfo" data-id="${e.id}">${e.name}</button>`).join('')}</div>`);
@@ -3786,9 +3845,18 @@ const ACT = {
   exfPlay: () => { const f = ui.exf; f.play = !f.play; const el = $('.exf-play'); if (el) el.textContent = f.play ? '❚❚' : '▶'; },
   exfAddSet: () => { const e = state.active.entries[ui.exf.i], l = e.sets[e.sets.length - 1]; e.sets.push({w:l ? l.w : '', r:''}); save(); renderExf(); },
   startEmpty: () => startWorkout('Workout', []),
+  mapMode: d => { ui.mapMode = d.v; render(); },
+  trainToday: openTrainToday,
+  trainTpl: async d => {
+    if (state.active && !(await confirmBox('Replace the workout in progress?', 'Replace'))) return;
+    const [name, ms] = TRAIN_TPL[+d.g], picks = [];
+    ms.forEach(m => { const id = favExercise(m, picks); if (id) picks.push(id); });
+    closeSheet(); startWorkout(name, picks.slice(0, 6).map(id => newEntry(id)));
+  },
   startDay: async d => {
     if (state.active && !(await confirmBox('Replace the workout in progress?', 'Replace'))) return;
     const s = state.splits.find(x => x.id === d.s), day = s && s.days.find(x => x.id === d.d); if (!day) return;
+    if ($('#sheetWrap').classList.contains('open')) closeSheet();
     startWorkout(day.name, day.items.map(it => ({...newEntry(it.ex, Math.max(1, +it.sets || 3), `${it.sets}×${it.reps}`), ss:!!it.ss})));
   },
   replaceEx: d => openReplace(+d.i),
