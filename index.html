@@ -146,6 +146,14 @@ svg.body text{fill:var(--mute);font:600 11px 'Chakra Petch';letter-spacing:.25em
 #toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--panel2);border:1px solid var(--line);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;transition:.25s;z-index:30;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1;transform:translateX(-50%)}
 .spark{width:100%;height:60px;display:block;margin:6px 0 12px}
+.hint.warn{color:#fbbf24;background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.3)}
+.tip-use{margin-left:6px;background:var(--teal);color:#06231f;border:0;border-radius:6px;font:700 11px Inter;padding:3px 8px;cursor:pointer;white-space:nowrap}.hint.warn .tip-use{background:#fbbf24}
+.wu{border:1px solid var(--line);border-radius:10px;margin:0 0 10px;overflow:hidden}.wu.all{opacity:.6}
+.wu-hd{width:100%;display:flex;justify-content:space-between;align-items:center;background:var(--panel2);border:0;color:var(--text);font:600 13px Inter;padding:8px 10px;cursor:pointer}
+.wu-hd small{color:var(--mute);font-weight:400;margin-left:4px}.wu-hd i{font-style:normal;font-size:11px;color:var(--mute)}
+.wu-row{width:100%;display:flex;align-items:center;gap:10px;background:none;border:0;border-top:1px solid var(--line);color:var(--text);font:13px Inter;padding:8px 10px;cursor:pointer;text-align:left}
+.wu-row b{font-weight:600;min-width:92px}.wu-row small{color:var(--mute)}.wu-row .ck{width:18px;height:18px;border-radius:5px;border:2px solid var(--line);flex:none;display:grid;place-items:center}
+.wu-row.done .ck{background:var(--teal);border-color:var(--teal)}.wu-row.done .ck::after{content:'✓';color:#06231f;font-size:12px;font-weight:800}.wu-row.done b{text-decoration:line-through;color:var(--mute)}
 .hint{font-size:12px;color:var(--teal);background:rgba(79,209,197,.08);border:1px solid rgba(79,209,197,.25);border-radius:8px;padding:6px 9px;margin:0 0 10px}
 .card.ss{border-left:3px solid var(--purple)}
 .ss-tag{font:700 10px 'Chakra Petch';letter-spacing:.14em;color:var(--purple);margin-bottom:6px}
@@ -491,12 +499,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.20.1"></script>
+<script src="exercises.js?v=2026.10.20.2"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.20.1';
+const APP_VERSION = '2026.10.20.2';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1129,18 +1137,44 @@ function bestBefore(exId, ts = Infinity){
   return seen ? rm : null;
 }
 // Progressive overload: look at last session and suggest the next small step
-function overloadHint(e){
-  const ex = EX[e.ex], last = lastSets(e.ex);
-  if (ex.nx) return `${CATS[ex.cat]} — logged for tracking, earns no XP`;
-  if (!last || !last.length) return 'First time — pick a weight you can control for every rep';
-  const m = String(e.target || '').match(/×\s*(\d+)(?:\s*-\s*(\d+))?/);
-  const hi = m ? +(m[2] || m[1]) : 12;
-  const maxW = Math.max(...last.map(s => +s.w || 0));
-  const reps = last.filter(s => (+s.w || 0) === maxW).map(s => s.r);
-  if (ex.bw && !maxW) return `Last: ${reps.join('/')} reps — aim for ${Math.max(...reps) + 1}`;
-  const inc = ex.p.some(x => LOWER.includes(x)) ? 10 : 5;
-  if (reps.every(r => r >= hi)) return `Top of range hit — try ${maxW + inc} lb`;
-  return `Last: ${maxW}×${reps.join('/')} — aim for ${maxW}×${Math.min(...reps) + 1}`;
+// Next-weight tip from your recent sessions: go up when you topped the rep range, deload when stuck 3 sessions
+function sessionsFor(exId, n = 3){ const out = []; for (const w of state.workouts){ const e = w.entries.find(x => x.ex === exId); if (e){ out.push(e.sets); if (out.length >= n) break; } } return out; }
+function tipFor(e){
+  const ex = EX[e.ex], ss = sessionsFor(e.ex);
+  if (ex.nx) return {text:`${CATS[ex.cat]} — logged for tracking, earns no XP`};
+  if (!ss.length) return {text:'First time — pick a weight you can control for every rep'};
+  const m = String(e.target || '').match(/×\s*(\d+)(?:\s*-\s*(\d+))?/), hi = m ? +(m[2] || m[1]) : 12;
+  const top = x => Math.max(...x.map(s => +s.w || 0)), repsAt = (x, w) => x.filter(s => (+s.w || 0) === w).map(s => +s.r);
+  const maxW = top(ss[0]), rs = repsAt(ss[0], maxW);
+  if (ex.bw && !maxW) return {text:`Last: ${rs.join('/')} reps — aim for ${Math.max(...rs) + 1}`};
+  const inc = ex.eq === 'db' || ex.eq === 'cb' ? 5 : ex.p.some(x => LOWER.includes(x)) ? 10 : 5;
+  if (rs.every(r => r >= hi)) return {text:`Top of range hit — try ${maxW + inc} lb`, w:maxW + inc, kind:'up'};
+  if (ss.length >= 3 && ss.every(x => top(x) === maxW)){ const best = ss.map(x => Math.max(...repsAt(x, maxW)));
+    if (best[0] <= best[2]){ const dw = Math.max(plDefault(ex), Math.round(maxW * .9 / 5) * 5);
+      return {text:`Stuck at ${maxW} lb for 3 sessions — deload to ${dw} lb today, then build back up`, w:dw, kind:'deload'}; } }
+  return {text:`Last: ${maxW}×${rs.join('/')} — aim for ${maxW}×${Math.min(...rs) + 1}`, w:maxW, kind:'hold'};
+}
+const overloadHint = e => tipFor(e).text;
+// Warm-up ladder up to the working weight. Barbells start with the empty bar; plates shown per side.
+function workWeight(e){ const typed = Math.max(0, ...e.sets.map(s => +s.w || 0)); return typed || tipFor(e).w || 0; }
+function warmupSets(e){
+  const ex = EX[e.ex], work = workWeight(e); if (ex.nx || ex.bw || !work) return [];
+  const bar = ['bb', 'ez'].includes(ex.eq) ? ((state.plateStart || {})[ex.id] || {}).s ?? plDefault(ex) : 0;
+  if (bar ? work < bar + 40 : work < 50) return [];
+  const steps = bar ? [[0, 10], [.4, 5], [.6, 3], [.8, 2]] : [[.5, 8], [.75, 4]], out = [];
+  for (const [f, r] of steps){ const w = f ? Math.max(bar, Math.round(work * f / 5) * 5) : bar; if (w >= work || out.some(o => o.w === w)) continue;
+    out.push({w, r, pl:bar ? plateMath(w, bar).out : null}); }
+  return out;
+}
+function warmupRow(e, i){
+  const L = warmupSets(e); if (!L.length) return '';
+  const done = e.wu || [], open = ui.wuOpen === i, n = L.filter((_, j) => done.includes(j)).length;
+  return `<div class="wu${open ? ' open' : ''}${n === L.length ? ' all' : ''}"><button class="wu-hd" data-act="wuTog" data-i="${i}"><span>🔥 Warm-up <small>${L.length} sets up to ${workWeight(e)} lb</small></span><i>${n === L.length ? '✓' : `${n}/${L.length}`}</i></button>
+    ${open ? L.map((x, j) => `<button class="wu-row${done.includes(j) ? ' done' : ''}" data-act="wuDone" data-i="${i}" data-j="${j}"><span class="ck"></span><b>${x.w} lb × ${x.r}</b><small>${x.pl ? (x.pl.length ? x.pl.join(' + ') + ' a side' : 'empty bar') : ''}</small></button>`).join('') : ''}</div>`;
+}
+function tipRow(e, i){
+  const t = tipFor(e), open = e.sets.some(s => !s.r && String(s.w) !== String(t.w));
+  return `<div class="hint${t.kind === 'deload' ? ' warn' : ''}">${t.kind === 'deload' ? '↓' : '↑'} ${esc(t.text)}${t.w && open ? ` <button class="tip-use" data-act="tipUse" data-i="${i}">Use ${t.w} lb</button>` : ''}</div>`;
 }
 // Muscle decay: fades on the map after 7 days, "Rusty" after 14
 function lastHit(){ const l = {}; for (const w of state.workouts) for (const m in w.xp) if (w.xp[m] > 0 && !(l[m] > w.date)) l[m] = w.date; return l; }
@@ -3468,7 +3502,7 @@ function renderTrain(){
     const ex = EX[e.ex], prev = lastSets(e.ex) || [], pb = bestBefore(e.ex);
     const lastW = [...e.sets].reverse().find(s => +s.w)?.w || prev[0]?.w || '';
     h += `<div class="card${ssl[i] ? ' ss' : ''}">${ssl[i] ? `<div class="ss-tag">SUPERSET ${ssl[i]}</div>` : ''}<div class="ex-head"><button class="ex-open" data-act="exFocus" data-i="${i}" aria-label="Open ${esc(ex.name)}">${thumb(ex)}<i>⤢</i></button><div class="info"><b data-act="exFocus" data-i="${i}">${ex.name}</b><small class="mute">${e.target ? 'Target ' + esc(e.target) + ' · ' : ''}${EQN[ex.eq]}</small></div><button class="icon-btn sm" data-act="rmEntry" data-i="${i}">✕</button></div>
-      <div class="hint">↑ ${esc(overloadHint(e))}</div>
+      ${tipRow(e, i)}${warmupRow(e, i)}
       <div class="set-row hdr"><span>SET</span><span style="text-align:center">PREV</span><span style="text-align:center">${ex.bw?'+LB':'LB'}</span><span style="text-align:center">REPS</span><span></span></div>
       ${e.sets.map((s, j) => { const p = prev[j], isPR = pb !== null && +s.r > 0 && e1rm(ex, s) > pb + .01;
         return `<div class="set-row" data-row="${i}-${j}"><span class="n">${isPR ? '🏆' : j+1}</span><span class="prev">${p ? (ex.bw && !p.w ? 'BW' : p.w) + '×' + p.r : '—'}</span>
@@ -3866,6 +3900,10 @@ const ACT = {
   addEx: () => openPicker(id => { state.active.entries.push(newEntry(id)); save(); render(); }),
   addToWorkout: d => { state.active.entries.push(newEntry(d.id)); save(); closeSheet(); ui.tab = 'train'; render(); toast('Added to workout'); },
   rmEntry: d => { state.active.entries.splice(+d.i, 1); save(); render(); },
+  tipUse: d => { const e = state.active.entries[+d.i], t = tipFor(e); if (!t.w) return; e.sets.forEach(s => { if (!s.r) s.w = t.w; }); save(); render(); toast(`${t.w} lb set for the sets you haven't done`); },
+  wuTog: d => { ui.wuOpen = ui.wuOpen === +d.i ? null : +d.i; render(); },
+  wuDone: d => { const e = state.active.entries[+d.i], j = +d.j; e.wu = e.wu || []; e.wu = e.wu.includes(j) ? e.wu.filter(x => x !== j) : [...e.wu, j]; if (navigator.vibrate) navigator.vibrate(10);
+    if (e.wu.length >= warmupSets(e).length) ui.wuOpen = null; save(); render(); },
   addSet: d => { const e = state.active.entries[+d.i], l = e.sets[e.sets.length-1]; e.sets.push({w:l ? l.w : '', r:''}); save(); render(); },
   rmSet: d => { state.active.entries[+d.i].sets.splice(+d.s, 1); save(); render(); },
   restStart: () => startRest(),
