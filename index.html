@@ -78,6 +78,10 @@ svg.body text{fill:var(--mute);font:600 11px 'Chakra Petch';letter-spacing:.25em
 .crew-row .lbname{flex:1}.crew-dots{display:inline-flex;gap:4px;align-items:center;margin-top:3px}.crew-dots i{width:9px;height:9px;border-radius:50%;background:var(--panel2);border:1px solid var(--line)}
 .crew-dots i.on{background:var(--teal);border-color:var(--teal)}.crew-dots small{font-size:10px;color:var(--teal);margin-left:2px}
 svg.body .snow-fx{pointer-events:none}.aurora-fx{pointer-events:none}
+.ev-wrap{margin:0 0 12px}.ev-slider{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;align-items:stretch}
+.ev-slider::-webkit-scrollbar{display:none}.ev-slide{flex:0 0 100%;scroll-snap-align:start;display:flex;padding:0 1px;box-sizing:border-box}.ev-slide>.card{flex:1;margin:0}
+.ev-dots{display:flex;justify-content:center;gap:7px;margin-top:8px}.ev-dots button{width:7px;height:7px;border-radius:50%;border:0;padding:0;background:var(--line);cursor:pointer;transition:all .2s}
+.ev-dots button.on{width:18px;border-radius:4px;background:var(--teal)}
 .map-seg{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:2px}
 .map-seg button{background:none;border:0;color:var(--mute);font:600 12px Inter;padding:6px 11px;border-radius:8px;cursor:pointer}.map-seg button.on{background:var(--teal);color:#06231f}
 .rec-line{display:flex;align-items:center;gap:8px;margin-top:10px;padding:9px 12px;border-radius:10px;background:color-mix(in srgb,var(--c) 12%,var(--panel2));font-size:13px}
@@ -517,12 +521,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.20.7"></script>
+<script src="exercises.js?v=2026.10.20.8"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.20.7';
+const APP_VERSION = '2026.10.20.8';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -2397,6 +2401,21 @@ function openCrewSheet(mode){
     <p class="mute" style="font-size:11px">Crewmates see the same things friends do, plus your workout count and XP for this week.</p>
     <button class="btn danger block" style="margin-top:12px" data-act="crewLeave">Leave crew</button>`);
 }
+// Swipe sideways between the live event, Night Shift and today's bounty (dots are tappable too)
+function eventSlider(){
+  const cards = [seasonCard(), nightShiftCard(), bountyCard()].filter(Boolean);
+  if (cards.length < 2) return cards.join('');
+  const i = Math.min(ui.evIdx || 0, cards.length - 1);
+  return `<div class="ev-wrap"><div class="ev-slider" data-i="${i}">${cards.map(c => `<div class="ev-slide">${c}</div>`).join('')}</div>
+    <div class="ev-dots">${cards.map((_, j) => `<button class="${j === i ? 'on' : ''}" data-act="evGo" data-v="${j}" aria-label="Card ${j + 1}"></button>`).join('')}</div></div>`;
+}
+function wireEventSlider(){
+  const el = $('.ev-slider'); if (!el) return;
+  const w = () => el.clientWidth || 1;
+  el.scrollLeft = (+el.dataset.i || 0) * w();
+  let t; el.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(() => { const i = Math.round(el.scrollLeft / w()); ui.evIdx = i;
+    document.querySelectorAll('.ev-dots button').forEach((b, j) => b.classList.toggle('on', j === i)); }, 60); }, {passive:true});
+}
 function leaderboardCard(){
   if (!FIREBASE_CONFIG) return '';
   if (!ui.lbAt || Date.now() - ui.lbAt > 60e3) setTimeout(loadLeaderboard, 0);
@@ -3686,6 +3705,7 @@ function render(){
   const v = $('#view');
   v.innerHTML = ({body:renderBody, progress:renderProgress, food:renderFood, train:renderTrain, splits:renderSplits, library:renderLibrary, coach:renderCoach, habits:renderHabits})[ui.tab]();
   if (ui.tab === 'library') renderLibList();
+  if (ui.tab === 'progress') wireEventSlider();
 }
 
 /* ============ BODY VIEW ============ */
@@ -3709,7 +3729,7 @@ function renderBody(){
 }
 function renderProgress(){
   const t = muscleTotals(), hit = lastHit();
-  let h = `<h2>Progress</h2>` + leaderboardCard() + crewCard() + seasonCard() + nightShiftCard() + bountyCard();
+  let h = `<h2>Progress</h2>` + leaderboardCard() + crewCard() + eventSlider();
   // Quests
   h += `<div class="card"><div class="row between"><h3 style="margin:0">Quests</h3><small class="mute">Daily · weekly</small></div>${questList().map(q => { const ok = q.done || q.prog >= q.n;
     return `<div class="quest${q.done ? ' done' : ''}"><div class="row between gap"><span><span class="qscope">${q.scope}${q.weak ? ' · Weak point' : ''}</span><br><b style="font-size:14px">${q.title}</b></span><span class="xp">${ok ? '✓' : '+' + q.xp}</span></div>
@@ -3753,7 +3773,7 @@ function muscleInfo(m){
 function renderTrain(){
   const a = state.active;
   if (ui.edit) return renderSplits();
-  if (!a) return `<h2>Train</h2><button class="btn gold block" data-act="startEmpty" style="margin-bottom:12px">+ Start empty workout</button>${bountyCard()}
+  if (!a) return `<h2>Train</h2><button class="btn gold block" data-act="startEmpty" style="margin-bottom:12px">+ Start empty workout</button>
     <button class="card coach-card" data-act="tab" data-tab="coach"><svg viewBox="0 0 24 24"><path d="M3 14a6 6 0 0 0 12 0v-2h6V8H9a6 6 0 0 0-6 6Z"/><circle cx="9" cy="14" r="2"/><path d="M5.5 9.5 3.5 6.5"/><circle cx="3" cy="5.5" r="1.2"/></svg><span><b>Coach</b><small>Build a split from your goal, schedule and equipment</small></span><i>›</i></button>` + renderSplits();
   const pz = !!a.paused;
   let h = `<div class="card live${pz ? ' paused' : ''}"><div class="row between" style="margin-bottom:10px">${pz ? '<span class="pz-tag">❚❚ PAUSED</span>' : '<span class="pulse">● LIVE</span>'}<span class="row gap" style="align-items:center">${pz ? '' : '<button class="btn ghost xs" data-act="restStart">⏱ Rest</button>'}<button class="btn ${pz ? 'gold' : 'ghost'} xs" data-act="pauseW">${pz ? '▶ Resume' : '❚❚ Pause'}</button><span id="elapsed">${mmss(workoutSecs(a))}</span></span></div><input id="wname" value="${esc(a.name)}" placeholder="Workout name"></div>`;
@@ -4143,6 +4163,7 @@ const ACT = {
   exfAddSet: () => { const e = state.active.entries[ui.exf.i], l = e.sets[e.sets.length - 1]; e.sets.push({w:l ? l.w : '', r:''}); save(); renderExf(); },
   startEmpty: () => startWorkout('Workout', []),
   bountyReroll: () => { const b = bountyState(); if (b.roll || b.done) return; b.roll = 1; save(); render(); toast('New bounty posted'); },
+  evGo: d => { const el = $('.ev-slider'); ui.evIdx = +d.v; if (el) el.scrollTo({left:+d.v * el.clientWidth, behavior:'smooth'}); },
   mapMode: d => { ui.mapMode = d.v; render(); },
   trainToday: openTrainToday,
   trainTpl: async d => {
