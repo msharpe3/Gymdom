@@ -67,6 +67,9 @@ svg.body text{fill:var(--mute);font:600 11px 'Chakra Petch';letter-spacing:.25em
 .bty-mini{display:flex;align-items:center;gap:10px;background:linear-gradient(160deg,#2b2113,var(--panel));border:1px solid #c9a22755;border-radius:12px;padding:9px 12px;margin:0 0 12px}
 .bty-mini b{font-size:13px;display:block;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bty-mini .bar{height:5px;margin:0}.bty-mini small{color:var(--mute);font-size:11px;flex:none}
 .bty-mini.ready small{color:#f2c94c;font-weight:700}.bty-mini.done{opacity:.6}.bty-box{border-color:#c9a22788}.bty-box h4{color:#f2c94c}
+.code-saved{display:flex;align-items:center;gap:10px;background:color-mix(in srgb,var(--teal) 10%,var(--panel2));border:1px solid color-mix(in srgb,var(--teal) 35%,var(--line));border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.code-saved>span{font-size:20px}.code-saved div{flex:1;min-width:0}.code-saved b{display:block;font-size:14px}.code-saved small{font-size:12px}
+.code-note{font-size:12px;color:var(--teal);margin:10px 0 0}.link-btn{background:none;border:0;color:var(--teal);font:600 13px Inter;padding:10px 0 0;cursor:pointer;display:block}
 .map-seg{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:2px}
 .map-seg button{background:none;border:0;color:var(--mute);font:600 12px Inter;padding:6px 11px;border-radius:8px;cursor:pointer}.map-seg button.on{background:var(--teal);color:#06231f}
 .rec-line{display:flex;align-items:center;gap:8px;margin-top:10px;padding:9px 12px;border-radius:10px;background:color-mix(in srgb,var(--c) 12%,var(--panel2));font-size:13px}
@@ -506,12 +509,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.20.3"></script>
+<script src="exercises.js?v=2026.10.20.5"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.20.3';
+const APP_VERSION = '2026.10.20.5';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1055,6 +1058,7 @@ function migrate(s){
   s.profile = Object.assign({name:'', bw:180, syncCode:''}, s.profile || {});
   s.splits = s.splits || []; s.workouts = s.workouts || []; s.active = s.active || null;
   s.updatedAt = s.updatedAt || 0;
+  s.codes = s.codes || {}; // barcode → your saved version of that product
   s.bwLog = s.bwLog || []; s.achievements = s.achievements || {}; s.questsDone = s.questsDone || {};
   s.bonusXP = s.bonusXP || 0; s.prCount = s.prCount || 0;
   s.cosmetics = Object.assign({theme:'classic', head:'', face:'', back:'', aura:'', title:'', owned:[]}, s.cosmetics || {});
@@ -2013,29 +2017,31 @@ function recentUI(){
     : foodRow(f, i, 'recent')).join('') : '<p class="mute">Foods you add will show up here for quick re-adding.</p>';
 }
 function manualUI(pre = {}){
-  ui.manualLabel = !!pre.label;
+  ui.manualLabel = !!(pre.label || pre.saved || pre.serv);
   const miss = v => pre.label && v == null ? ' class="lbl-miss" placeholder="Not found"' : '';
-  $('#foodArea').innerHTML = `${pre.label ? `<div class="lbl-review"><button class="lbl-shot small" data-act="lblZoom" aria-label="Enlarge photo"><img src="${pre.img}" alt=""></button><span><b>Read ${pre.found} values from your label</b><small class="mute">Check them against the photo (tap it to enlarge), name it, and fix anything that's off.</small></span></div>` : ''}
+  const sc = pre.saved || (ui.scanCode && !pre.edit ? ui.scanCode : '');
+  $('#foodArea').innerHTML = `${pre.saved ? `<div class="code-saved"><span>📌</span><div><b>Your saved barcode</b><small class="mute">${esc(pre.saved)} · numbers are for one serving</small></div><button class="btn ghost xs" data-act="codeForget">Forget</button></div>` : ''}${pre.label ? `<div class="lbl-review"><button class="lbl-shot small" data-act="lblZoom" aria-label="Enlarge photo"><img src="${pre.img}" alt=""></button><span><b>Read ${pre.found} values from your label</b><small class="mute">Check them against the photo (tap it to enlarge), name it, and fix anything that's off.</small></span></div>` : ''}
     <label class="lbl">Food name</label><input id="mName" value="${esc(pre.name || '')}" placeholder="${pre.label ? 'e.g. Honey Nut Cheerios' : 'e.g. Chipotle burrito bowl'}">
     <div class="mgrid"><div><label class="lbl">Calories</label><input id="mK" type="number" inputmode="decimal" value="${pre.k ?? ''}"${miss(pre.k)}></div><div><label class="lbl">Protein (g)</label><input id="mP" type="number" inputmode="decimal" value="${pre.p ?? ''}"${miss(pre.p)}></div>
     <div><label class="lbl">Carbs (g)</label><input id="mC" type="number" inputmode="decimal" value="${pre.c ?? ''}"${miss(pre.c)}></div><div><label class="lbl">Fat (g)</label><input id="mF" type="number" inputmode="decimal" value="${pre.f ?? ''}"${miss(pre.f)}></div></div>
-    ${pre.label ? `<div class="mgrid"><div><label class="lbl">Servings eaten</label><input id="mS" type="number" inputmode="decimal" step="0.25" min="0" value="1"></div><div><label class="lbl">Per serving</label><input id="mA" value="${esc(pre.a || '')}"></div></div><small class="mute" style="font-size:12px">Numbers above are for one serving — they're multiplied by servings when you add it.</small>`
+    ${pre.label || pre.saved || pre.serv ? `<div class="mgrid"><div><label class="lbl">Servings eaten</label><input id="mS" type="number" inputmode="decimal" step="0.25" min="0" value="${pre.sv || 1}"></div><div><label class="lbl">Per serving</label><input id="mA" value="${esc(pre.a || '')}"></div></div><small class="mute" style="font-size:12px">Numbers above are for one serving — they're multiplied by servings when you add it.</small>`
       : `<label class="lbl">Amount (optional)</label><input id="mA" value="${esc(pre.a || '')}" placeholder="e.g. 1 bowl">`}
     <details class="mextra"${pre.x && Object.keys(pre.x).length ? ' open' : ''}><summary>More nutrition facts (optional)</summary><div class="mgrid">${MANUAL_EXTRA.map(([k, l, u]) => `<div><label class="lbl">${l} (${u})</label><input id="mx_${k}" type="number" inputmode="decimal" value="${pre.x && pre.x[k] != null ? pre.x[k] : ''}"></div>`).join('')}</div></details>
-    ${pre.note ? `<p class="mute" style="font-size:12px">${esc(pre.note)}</p>` : ''}${pre.labelBtn ? `<button class="btn ghost block" data-act="foodMode" data-v="label">📷 Read the Nutrition Facts label instead</button>` : ''}
+    ${pre.note ? `<p class="mute" style="font-size:12px">${esc(pre.note)}</p>` : ''}${sc && !pre.saved ? `<p class="code-note">📌 Saves to barcode ${esc(sc)} — next scan fills this in instantly</p>` : ''}${pre.labelBtn ? `<button class="btn ghost block" data-act="foodMode" data-v="label">📷 Read the Nutrition Facts label instead</button>` : ''}
     <button class="btn gold block" style="margin-top:14px" data-act="manualSave">${pre.edit ? 'Save changes' : 'Add food'}</button>
     ${pre.edit ? `<button class="btn danger block" style="margin-top:8px" data-act="foodDel">Delete</button>` : ''}`;
 }
 
 /* ---- Amount picker with live macro breakdown ---- */
-function openAmount(food, edit){
-  ui.amt = {food, edit, unit: edit ? edit.u : (food.sv[0] ? 's0' : 'g'), qty: edit ? edit.q : (food.sv[0] ? 1 : 100)};
+function openAmount(food, edit, last){
+  ui.amt = {food, edit, unit: edit ? edit.u : last && last.u ? last.u : (food.sv[0] ? 's0' : 'g'), qty: edit ? edit.q : last && last.q ? last.q : (food.sv[0] ? 1 : 100)};
   const opts = [...food.sv.map(([l, g], i) => [`s${i}`, `${l} (${g} g)`]), ['g', 'grams'], ['oz', 'ounces']];
   openSheet(`<div class="row between"><h3 style="margin:0">${esc(food.name)}</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
     <div class="mgrid" style="margin-top:12px"><div><label class="lbl">Amount</label><input id="amtQ" type="number" inputmode="decimal" value="${ui.amt.qty}"></div>
     <div><label class="lbl">Unit</label><select id="amtU">${opts.map(([v, l]) => `<option value="${v}"${v === ui.amt.unit ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></div></div>
     <div id="amtPrev" style="margin-top:14px"></div>
     <button class="btn gold block" style="margin-top:14px" data-act="amtSave">${edit ? 'Save changes' : 'Add to ' + MEALS.find(x => x[0] === ui.foodMeal)[1]}</button>
+    ${food.code && !edit ? `<div class="row between" style="align-items:center">${food.saved ? '<small class="code-note" style="margin:10px 0 0">📌 Saved barcode · your usual amount</small>' : '<span></span>'}<button class="link-btn" data-act="codeFix">✏️ Fix numbers</button></div>` : ''}
     ${edit ? `<button class="btn danger block" style="margin-top:8px" data-act="foodDel">Delete</button>` : ''}
     <div id="amtLabel" style="margin-top:14px"></div>
     <p class="mute" style="font-size:11px;margin:10px 0 0">Per 100 g: ${Math.round(food.per.k)} Cal · ${r1(food.per.p)}P · ${r1(food.per.c)}C · ${r1(food.per.f)}F${food.src === 'off' ? ' · from Open Food Facts' : ''}</p>`);
@@ -2175,15 +2181,23 @@ async function scanPhoto(file){
     const res = await reader.decodeFromImageUrl(url); URL.revokeObjectURL(url); stopScan(); lookupBarcode(res.getText()); }
   catch(e){ if (m) m.textContent = "Couldn't find a barcode in that photo. Try again closer, or type the number."; }
 }
+// A product you typed in (or corrected) for a barcode: one serving's numbers + how many servings you had last time
+function openSavedCode(code){
+  const c = state.codes[code]; ui.scanCode = code; ui.foodMode = 'manual';
+  manualUI({name:c.name, k:c.per.k, p:c.per.p, c:c.per.c, f:c.per.f, a:c.a, x:c.x, saved:code, sv:c.sv || 1});
+}
 async function lookupBarcode(code){
   code = String(code).replace(/\D/g, '');
   const area = $('#foodArea'); if (!code || !area) return;
+  const mine = state.codes[code];
+  if (mine && mine.kind === 'man') return openSavedCode(code);
+  if (mine && mine.kind === 'off') return openAmount({...mine.food, saved:true}, null, {q:mine.q, u:mine.u});
   area.innerHTML = `<p class="mute">Looking up barcode ${esc(code)}…</p>`;
   try {
     const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=code,product_name,product_name_en,brands,serving_size,serving_quantity,nutriments`);
     const j = await r.json(), food = j && j.status === 1 && j.product ? offToFood({...j.product, code}) : null;
     if (food) return openAmount(food);
-    ui.foodMode = 'manual'; manualUI({note:`Barcode ${code} isn't in the database (or has no nutrition info). Snap the label or enter it by hand.`, labelBtn:true});
+    ui.foodMode = 'manual'; ui.scanCode = code; manualUI({note:`Barcode ${code} isn't in the database (or has no nutrition info). Snap the label or enter it by hand — I'll remember it for next time.`, labelBtn:true});
   } catch(e){ area.innerHTML = `<p class="mute">Couldn't reach the food database. Check your connection and try again.</p><button class="btn ghost sm" data-act="foodMode" data-v="scan">Try again</button>`; }
 }
 
@@ -4033,10 +4047,10 @@ const ACT = {
   bwHistory: openBwHistory,
   bwDel: d => { state.bwLog = state.bwLog.filter(l => l.date !== +d.d); const last = state.bwLog[state.bwLog.length - 1]; if (last) state.profile.bw = last.w; save(); render(); openBwHistory(); },
   foodDay: d => { const base = ui.foodDate || Date.now(), n = new Date(base); n.setDate(n.getDate() + (+d.v)); if (dkey(n) > dkey(Date.now())) return; ui.foodDate = n.getTime(); render(); },
-  foodAdd: d => { ui.foodQ = ''; ui.foodN = 30; openAddFood(d.m, ui.foodMode === 'scan' ? 'scan' : 'search'); },
+  foodAdd: d => { ui.scanCode = null; ui.foodQ = ''; ui.foodN = 30; openAddFood(d.m, ui.foodMode === 'scan' ? 'scan' : 'search'); },
   lblManual: () => { ui.foodMode = 'manual'; manualUI(); },
   lblZoom: (d, b) => b.classList.toggle('big'),
-  foodMode: d => { stopScan(); ui.foodMode = d.v; openAddFood(ui.foodMeal, d.v); },
+  foodMode: d => { stopScan(); if (d.v !== 'label') ui.scanCode = null; ui.foodMode = d.v; openAddFood(ui.foodMeal, d.v); },
   offSearch: () => offSearch(),
   foodMore: () => { ui.foodN = (ui.foodN || 30) + 30; renderFoodRes(); },
   facts: d => openFacts(d.v),
@@ -4046,17 +4060,24 @@ const ACT = {
   amtSave: () => { const {food, edit, tot} = ui.amt; if (!(amtGrams() > 0)) return toast('Enter an amount');
     const e = {n:food.name, a:amtLabel(), q:+ui.amt.qty, u:ui.amt.unit, k:r1(tot.k), p:r1(tot.p), c:r1(tot.c), f:r1(tot.f), ...(food.n ? {x:scaleN(food.n, amtGrams())} : {}), d:{per:food.per, n:food.n, sv:food.sv, src:food.src, code:food.code}};
     const day = foodDay(); if (edit) day[edit.m][edit.i] = e; else (day[ui.foodMeal] = day[ui.foodMeal] || []).push(e);
+    if (food.code && !edit) state.codes[food.code] = {kind:'off', food:{name:food.name, per:food.per, n:food.n, sv:food.sv, src:food.src, code:food.code}, q:+ui.amt.qty, u:ui.amt.unit, t:Date.now()};
     rememberFood(food); ui.foodEditRef = null; save(); closeSheet(); render(); toast(edit ? 'Updated' : 'Added'); },
   manualSave: () => { const name = $('#mName').value.trim(); const v = id => r1(+$(id).value || 0);
     if (!name) return toast('Give the food a name'); const fixed = {k:v('#mK'), p:v('#mP'), c:v('#mC'), f:v('#mF')}; if (!fixed.k && !fixed.p && !fixed.c && !fixed.f) return toast('Enter at least the calories');
     const x = {}; MANUAL_EXTRA.forEach(([k]) => { const el = $('#mx_' + k), v = el && el.value.trim(); if (v !== '' && v != null && isFinite(+v)) x[k] = +v; });
-    let amt = $('#mA').value.trim(); const sv = ui.manualLabel ? +$('#mS').value : 1;
+    let amt = $('#mA').value.trim(); const sv = ui.manualLabel ? +$('#mS').value : 1, one = {...fixed}, x1 = {...x}, perA = amt;
     if (ui.manualLabel){ if (!(sv > 0)) return toast('Enter how many servings you had'); // label scan: scale one serving up to what was eaten
       for (const k in fixed) fixed[k] = r1(fixed[k] * sv); for (const k in x) x[k] = r1(x[k] * sv);
       amt = sv === 1 ? amt : !amt || amt === '1 serving' ? `${sv} servings` : `${sv} × ${amt}`; }
     const e = {n:name, a:amt, ...fixed, ...(Object.keys(x).length ? {x} : {}), m:1}, day = foodDay(), ed = ui.foodEditRef;
     if (ed) day[ed.m][ed.i] = e; else (day[ui.foodMeal] = day[ui.foodMeal] || []).push(e);
-    rememberFood({name, a:e.a, fixed, ...(e.x ? {x:e.x} : {})}); ui.foodEditRef = null; save(); closeSheet(); render(); toast(ed ? 'Updated' : 'Added'); },
+    const code = !ed && ui.scanCode; if (code) state.codes[code] = {kind:'man', name, a:perA, per:one, ...(Object.keys(x1).length ? {x:x1} : {}), sv, t:Date.now()};
+    ui.scanCode = null; rememberFood({name, a:e.a, fixed, ...(e.x ? {x:e.x} : {})}); ui.foodEditRef = null; save(); closeSheet(); render(); toast(ed ? 'Updated' : code ? 'Added · barcode saved' : 'Added'); },
+  codeForget: () => { const c = ui.scanCode; if (!c) return; delete state.codes[c]; ui.scanCode = null; save(); toast('Barcode forgotten'); openAddFood(ui.foodMeal, 'scan'); },
+  codeFix: () => { const {food} = ui.amt, sv = food.sv[0], g = sv ? sv[1] : 100, k = v => r1(v * g / 100);
+    ui.scanCode = food.code; ui.foodMode = 'manual';
+    openSheet(`<div class="row between"><h3 style="margin:0">Fix this product</h3><button class="icon-btn" data-act="closeSheet">✕</button></div><div id="foodArea"></div>`);
+    manualUI({name:food.name, k:k(food.per.k), p:k(food.per.p), c:k(food.per.c), f:k(food.per.f), a:sv ? sv[0] : '100 g', serv:true, note:'Your numbers replace the Open Food Facts ones for this barcode from now on.'}); },
   foodEdit: d => { const e = foodDay()[d.m][+d.i]; ui.foodMeal = d.m;
     if (e.m || !e.d){ ui.foodEditRef = {m:d.m, i:+d.i}; openSheet(`<div class="row between"><h3 style="margin:0">Edit food</h3><button class="icon-btn" data-act="closeSheet">✕</button></div><div id="foodArea"></div>`); manualUI({name:e.n, k:e.k, p:e.p, c:e.c, f:e.f, a:e.a, x:e.x, edit:true}); }
     else { ui.foodEditRef = {m:d.m, i:+d.i}; openAmount({name:e.n, ...e.d}, {m:d.m, i:+d.i, q:e.q, u:e.u}); } },
