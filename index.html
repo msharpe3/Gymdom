@@ -60,6 +60,13 @@ svg.body text{fill:var(--mute);font:600 11px 'Chakra Petch';letter-spacing:.25em
 .stats.s4{grid-template-columns:repeat(4,1fr);gap:8px}.stats.s4 .stat{padding-left:4px;padding-right:4px}.stats.s4 .stat b{font-size:17px}.stats.s4 .stat small{font-size:10px}
 .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center}
 .stat b{display:block;font:700 22px 'Chakra Petch'}.stat small{color:var(--mute)}
+.bounty{background:linear-gradient(160deg,#2b2113,var(--panel) 70%);border-color:#c9a22755}.bounty.done{opacity:.65}
+.bty-tag{font:800 13px 'Chakra Petch';letter-spacing:3px;color:#f2c94c;border:1.5px solid #f2c94c88;border-radius:6px;padding:2px 8px}
+.bty-body{display:flex;gap:12px;align-items:center;margin:12px 0 10px}.bty-body b{display:block;font-size:16px}.bty-body small{color:var(--mute);font-size:12px}
+.bty-ico{width:46px;height:46px;border-radius:12px;background:#f2c94c1f;display:grid;place-items:center;font-size:24px;flex:none}.bty-rw{color:#f2c94c;font-weight:600}
+.bty-mini{display:flex;align-items:center;gap:10px;background:linear-gradient(160deg,#2b2113,var(--panel));border:1px solid #c9a22755;border-radius:12px;padding:9px 12px;margin:0 0 12px}
+.bty-mini b{font-size:13px;display:block;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bty-mini .bar{height:5px;margin:0}.bty-mini small{color:var(--mute);font-size:11px;flex:none}
+.bty-mini.ready small{color:#f2c94c;font-weight:700}.bty-mini.done{opacity:.6}.bty-box{border-color:#c9a22788}.bty-box h4{color:#f2c94c}
 .map-seg{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:2px}
 .map-seg button{background:none;border:0;color:var(--mute);font:600 12px Inter;padding:6px 11px;border-radius:8px;cursor:pointer}.map-seg button.on{background:var(--teal);color:#06231f}
 .rec-line{display:flex;align-items:center;gap:8px;margin-top:10px;padding:9px 12px;border-radius:10px;background:color-mix(in srgb,var(--c) 12%,var(--panel2));font-size:13px}
@@ -499,12 +506,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.20.2"></script>
+<script src="exercises.js?v=2026.10.20.3"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.20.2';
+const APP_VERSION = '2026.10.20.3';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1250,6 +1257,54 @@ function questList(){
   for (const q of qs){ q.prog = questProgress(q); q.done = !!state.questsDone[q.id]; q.title = questTitle(q); }
   return qs;
 }
+/* ---- Daily bounty: one specific target built from your own lifts. Claim = +300 XP and a Rare-or-better chest ----
+   Same bounty all day (seeded by the date); one free reroll before you start on it. */
+const BOUNTY_XP = 300;
+function bountyState(){ const dk = dayKey(Date.now()); if (!state.bounty || state.bounty.d !== dk) state.bounty = {d:dk, roll:0, done:false}; return state.bounty; }
+function bountyFor(dk, roll){
+  const R = rng(dk / DAY * 31 + roll * 977 + 11), pick = a => a[Math.floor(R() * a.length)]; R(); R(); R(); // warm up: nearby seeds start out close
+  const freq = {}, last = {};
+  for (const w of state.workouts){ if (w.date >= dk || w.date < dk - 45 * DAY) continue;
+    for (const e of w.entries){ const ex = EX[e.ex]; if (!ex || ex.nx || ex.bw || !e.sets.length) continue; freq[e.ex] = (freq[e.ex] || 0) + 1;
+      if (!last[e.ex]){ const top = Math.max(...e.sets.map(x => +x.w || 0)); if (top > 0) last[e.ex] = {w:top, reps:e.sets.filter(x => (+x.w || 0) >= top).reduce((a, x) => a + +x.r, 0), ton:e.sets.reduce((a, x) => a + (+x.w || 0) * +x.r, 0)}; } } }
+  const lifts = Object.keys(freq).filter(id => freq[id] >= 2 && last[id]).sort((a, b) => freq[b] - freq[a]).slice(0, 8);
+  const t = pick(lifts.length ? ['reps', 'heavy', 'tonnage', 'fresh', 'pr'] : ['fresh', 'fresh', 'pr']);
+  if (t === 'fresh' || (t === 'pr' && !state.workouts.length)){ const hit = lastHit(), rec = recovery(dk + 12 * 36e5);
+    const ms = Object.keys(MUSCLES).filter(m => rec[m].pct >= 1).sort((a, b) => (hit[a] || 0) - (hit[b] || 0)).slice(0, 4), m = pick(ms.length ? ms : Object.keys(MUSCLES));
+    return {t:'fresh', m, n:6, icon:'🎯', title:`Do 6 sets for ${MUSCLES[m]}`, sub:`It's fully recovered and${hit[m] ? ` hasn't been trained since ${dstr(hit[m])}` : ' waiting for its first session'}`}; }
+  if (t === 'pr') return {t:'pr', n:1, icon:'🏆', title:'Set a PR on any lift', sub:'Beat your best estimated 1-rep max on anything'};
+  const id = pick(lifts), ex = EX[id], L = last[id], inc = ex.p.some(x => LOWER.includes(x)) && ex.eq !== 'db' ? 10 : 5;
+  if (t === 'reps') return {t, ex:id, w:L.w, n:L.reps + 2, icon:'🔁', title:`${L.reps + 2} total reps of ${ex.name}`, sub:`At ${L.w} lb or heavier — 2 more than last time`};
+  if (t === 'heavy') return {t, ex:id, w:L.w + inc, n:1, icon:'🏋️', title:`${ex.name}: ${L.w + inc} lb for 3+ reps`, sub:`One set, ${inc} lb above your last top set`};
+  const T = Math.round(L.ton * 1.1 / 100) * 100;
+  return {t:'tonnage', ex:id, n:T, icon:'⚖️', title:`Move ${fmt(T)} lb on ${ex.name}`, sub:'Weight × reps across all sets — 10% more than last time'};
+}
+const todayBounty = () => { const b = bountyState(); return {...bountyFor(b.d, b.roll), done:b.done, roll:b.roll}; };
+function bountyProgress(q, live){
+  const sets = [];
+  state.workouts.filter(w => w.date >= bountyState().d).forEach(w => w.entries.forEach(e => e.sets.forEach(x => sets.push({ex:e.ex, w:+x.w || 0, r:+x.r || 0, pr:false}))));
+  if (live && state.active) state.active.entries.forEach(e => e.sets.forEach(x => { if (+x.r > 0) sets.push({ex:e.ex, w:+x.w || 0, r:+x.r}); }));
+  if (q.t === 'pr'){ let n = state.workouts.filter(w => w.date >= bountyState().d).reduce((a, w) => a + (w.prs ? w.prs.length : 0), 0);
+    if (live && state.active) state.active.entries.forEach(e => { const pb = bestBefore(e.ex), ex = EX[e.ex]; if (pb !== null && e.sets.some(x => +x.r > 0 && e1rm(ex, x) > pb + .01)) n++; });
+    return n; }
+  if (q.t === 'fresh') return sets.filter(x => EX[x.ex] && EX[x.ex].p.includes(q.m)).length;
+  const mine = sets.filter(x => x.ex === q.ex);
+  if (q.t === 'reps') return mine.filter(x => x.w >= q.w).reduce((a, x) => a + x.r, 0);
+  if (q.t === 'heavy') return mine.some(x => x.w >= q.w && x.r >= 3) ? 1 : 0;
+  return Math.round(mine.reduce((a, x) => a + x.w * x.r, 0));
+}
+function claimBounty(){ const b = bountyState(); if (b.done) return null; const q = bountyFor(b.d, b.roll); if (bountyProgress(q) < q.n) return null;
+  b.done = true; state.bountiesDone = (state.bountiesDone || 0) + 1; state.bonusXP += BOUNTY_XP; return q; }
+function bountyCard(compact){
+  const q = todayBounty(), prog = q.done ? q.n : bountyProgress(q, true), pct = Math.min(1, prog / q.n), ready = !q.done && prog >= q.n;
+  const num = v => q.t === 'tonnage' ? fmt(v) : v;
+  if (compact) return `<div class="bty-mini${q.done ? ' done' : ready ? ' ready' : ''}"><span>${q.icon}</span><div style="flex:1;min-width:0"><b>${esc(q.title)}</b><div class="bar"><i style="width:${pct * 100}%"></i></div></div><small>${q.done ? '✓' : ready ? 'Finish to claim' : `${num(Math.min(prog, q.n))}/${num(q.n)}`}</small></div>`;
+  return `<div class="card bounty${q.done ? ' done' : ''}"><div class="row between"><span class="bty-tag">WANTED</span><small class="mute">Daily bounty · new one at midnight</small></div>
+    <div class="bty-body"><div class="bty-ico">${q.icon}</div><div style="min-width:0"><b>${esc(q.title)}</b><small>${esc(q.sub)}</small></div></div>
+    <div class="bar"><i style="width:${pct * 100}%"></i></div>
+    <div class="row between" style="margin-top:6px"><small class="mute">${q.done ? 'Claimed ✓ — come back tomorrow' : ready ? 'Done! Finish your workout to claim it' : `${num(Math.min(prog, q.n))} / ${num(q.n)}`}</small><small class="bty-rw">+${BOUNTY_XP} XP · Rare+ chest</small></div>
+    ${!q.done && !q.roll && !prog ? '<button class="btn ghost xs" style="margin-top:8px" data-act="bountyReroll">↻ Different bounty (1 free swap)</button>' : ''}</div>`;
+}
 function questProgress(q){
   const ws = state.workouts.filter(w => w.date >= q.start);
   if (q.t === 'workouts') return ws.length;
@@ -1290,6 +1345,8 @@ const ACH = [
   ['d405','⛓️','Four-Plate Pull','Deadlift 405 lb', () => maxWOf('deadlift') >= 405],
   ['q1','📜','Quest Taker','Complete a quest', s => Object.keys(s.questsDone).length >= 1],
   ['q20','🗺️','Adventurer','Complete 20 quests', s => Object.keys(s.questsDone).length >= 20],
+  ['bty1','🎯','Bounty Hunter','Claim a daily bounty', s => (s.bountiesDone || 0) >= 1],
+  ['bty25','🤠','Most Wanted','Claim 25 daily bounties', s => (s.bountiesDone || 0) >= 25],
   ['early','🌅','Early Bird','Finish a workout before 7 AM', s => s.workouts.some(w => new Date(w.date).getHours() < 7)],
   ['owl','🦉','Night Owl','Finish a workout after 10 PM', s => s.workouts.some(w => new Date(w.date).getHours() >= 22)]
 ];
@@ -2958,9 +3015,9 @@ function openSeasonTrack(){
 }
 /* ---- Loot ---- */
 const RARITY = {common:['Common','#b8c4d6'], rare:['Rare','#4fd1c5'], epic:['Epic','#a78bfa'], legendary:['Legendary','#f2c94c']};
-function rollLoot(first){
-  if (!first && Math.random() > 0.4) return null;
-  const r = Math.random(), rar = first ? 'common' : r < 0.03 ? 'legendary' : r < 0.15 ? 'epic' : r < 0.45 ? 'rare' : 'common';
+function rollLoot(first, rarePlus){
+  if (!first && !rarePlus && Math.random() > 0.4) return null;
+  const r = Math.random(), rar = rarePlus ? (r < .08 ? 'legendary' : r < .35 ? 'epic' : 'rare') : first ? 'common' : r < 0.03 ? 'legendary' : r < 0.15 ? 'epic' : r < 0.45 ? 'rare' : 'common';
   const owned = state.cosmetics.owned;
   if (rar === 'epic' || rar === 'legendary'){
     const pool = [...THEMES.filter(t => t[2].loot === rar).map(t => ({kind:'theme', id:t[0], name:t[1]})),
@@ -3449,7 +3506,7 @@ function renderBody(){
 }
 function renderProgress(){
   const t = muscleTotals(), hit = lastHit();
-  let h = `<h2>Progress</h2>` + leaderboardCard() + seasonCard() + nightShiftCard();
+  let h = `<h2>Progress</h2>` + leaderboardCard() + seasonCard() + nightShiftCard() + bountyCard();
   // Quests
   h += `<div class="card"><div class="row between"><h3 style="margin:0">Quests</h3><small class="mute">Daily · weekly</small></div>${questList().map(q => { const ok = q.done || q.prog >= q.n;
     return `<div class="quest${q.done ? ' done' : ''}"><div class="row between gap"><span><span class="qscope">${q.scope}${q.weak ? ' · Weak point' : ''}</span><br><b style="font-size:14px">${q.title}</b></span><span class="xp">${ok ? '✓' : '+' + q.xp}</span></div>
@@ -3493,10 +3550,11 @@ function muscleInfo(m){
 function renderTrain(){
   const a = state.active;
   if (ui.edit) return renderSplits();
-  if (!a) return `<h2>Train</h2><button class="btn gold block" data-act="startEmpty" style="margin-bottom:12px">+ Start empty workout</button>
+  if (!a) return `<h2>Train</h2><button class="btn gold block" data-act="startEmpty" style="margin-bottom:12px">+ Start empty workout</button>${bountyCard()}
     <button class="card coach-card" data-act="tab" data-tab="coach"><svg viewBox="0 0 24 24"><path d="M3 14a6 6 0 0 0 12 0v-2h6V8H9a6 6 0 0 0-6 6Z"/><circle cx="9" cy="14" r="2"/><path d="M5.5 9.5 3.5 6.5"/><circle cx="3" cy="5.5" r="1.2"/></svg><span><b>Coach</b><small>Build a split from your goal, schedule and equipment</small></span><i>›</i></button>` + renderSplits();
   const pz = !!a.paused;
   let h = `<div class="card live${pz ? ' paused' : ''}"><div class="row between" style="margin-bottom:10px">${pz ? '<span class="pz-tag">❚❚ PAUSED</span>' : '<span class="pulse">● LIVE</span>'}<span class="row gap" style="align-items:center">${pz ? '' : '<button class="btn ghost xs" data-act="restStart">⏱ Rest</button>'}<button class="btn ${pz ? 'gold' : 'ghost'} xs" data-act="pauseW">${pz ? '▶ Resume' : '❚❚ Pause'}</button><span id="elapsed">${mmss(workoutSecs(a))}</span></span></div><input id="wname" value="${esc(a.name)}" placeholder="Workout name"></div>`;
+  h += bountyCard(true);
   const ssl = ssLabels(a.entries);
   a.entries.forEach((e, i) => {
     const ex = EX[e.ex], prev = lastSets(e.ex) || [], pb = bestBefore(e.ex);
@@ -3540,9 +3598,10 @@ async function finishWorkout(){
   let bonus = w.prs.length * 100;
   const quests = questList().filter(q => !q.done && q.prog >= q.n);
   quests.forEach(q => { state.questsDone[q.id] = now; bonus += q.xp; });
+  const bounty = claimBounty();
   const achs = checkAchievements(); bonus += achs.length * 100;
   state.bonusXP += bonus;
-  const loot = rollLoot(state.workouts.length === 1); if (loot && loot.kind === 'xp') state.bonusXP += loot.xp; w.loot = loot;
+  const loot = bounty ? rollLoot(false, true) : rollLoot(state.workouts.length === 1); if (loot && loot.kind === 'xp') state.bonusXP += loot.xp; w.loot = loot;
   const night = nightShiftRoll(now), seasonal = claimSeason(), newPlates = claimPlates(), newCamo = SKINS.filter(x => x[3].boot && bootB < x[3].boot && bootBest() >= x[3].boot);
   save();
   const after = muscleTotals(), plA = playerLvl(sumObj(after) + state.bonusXP);
@@ -3551,7 +3610,8 @@ async function finishWorkout(){
   const lvUps = gained.filter(m => lvl(after[m]) > lvl(before[m])).length;
   const party = w.prs.length || achs.length || lvUps || plA > plB;
   const confetti = party ? `<div class="confetti">${Array.from({length:30}, (_, i) => `<i style="left:${Math.random()*100}%;background:${[GOLD, TEAL, '#a78bfa', '#f2667a'][i % 4]};animation-delay:${(Math.random()*.7).toFixed(2)}s"></i>`).join('')}</div>` : '';
-  openSheet(`<div class="reward">${confetti}<small class="title-tag">Workout complete</small><div class="big">+${fmt(sumObj(w.xp) + bonus)} XP</div>${lootBox(loot)}
+  openSheet(`<div class="reward">${confetti}<small class="title-tag">Workout complete</small><div class="big">+${fmt(sumObj(w.xp) + bonus + (bounty ? BOUNTY_XP : 0))} XP</div>${lootBox(loot)}
+    ${bounty ? `<div class="pr-box bty-box"><h4>🎯 BOUNTY CLAIMED · +${BOUNTY_XP} XP</h4><div class="mini-row"><span>${bounty.icon} <b>${esc(bounty.title)}</b></span></div><small class="mute">Your chest is guaranteed Rare or better.</small></div>` : ''}
     ${plA > plB ? `<div class="banner">PLAYER LEVEL UP · LV ${plA}</div>` : ''}
     ${w.prs.length ? `<div class="pr-box"><h4>🏆 NEW PR${w.prs.length > 1 ? 'S' : ''} · +${w.prs.length * 100} XP</h4>${w.prs.map(p => `<div class="mini-row"><span>${EX[p.ex].name} <small class="mute">${EX[p.ex].bw && !p.w ? 'BW' : p.w}×${p.r}</small></span><span><small class="mute">est. 1RM</small> ${p.prev} → <b style="color:var(--gold)">${p.rm}</b></span></div>`).join('')}</div>` : ''}
     ${quests.length ? `<div class="pr-box q"><h4>📜 QUEST${quests.length > 1 ? 'S' : ''} COMPLETE</h4>${quests.map(q => `<div class="mini-row"><span>${q.title}</span><span class="xp">+${q.xp}</span></div>`).join('')}</div>` : ''}
@@ -3879,6 +3939,7 @@ const ACT = {
   exfPlay: () => { const f = ui.exf; f.play = !f.play; const el = $('.exf-play'); if (el) el.textContent = f.play ? '❚❚' : '▶'; },
   exfAddSet: () => { const e = state.active.entries[ui.exf.i], l = e.sets[e.sets.length - 1]; e.sets.push({w:l ? l.w : '', r:''}); save(); renderExf(); },
   startEmpty: () => startWorkout('Workout', []),
+  bountyReroll: () => { const b = bountyState(); if (b.roll || b.done) return; b.roll = 1; save(); render(); toast('New bounty posted'); },
   mapMode: d => { ui.mapMode = d.v; render(); },
   trainToday: openTrainToday,
   trainTpl: async d => {
