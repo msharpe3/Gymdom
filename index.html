@@ -70,6 +70,13 @@ svg.body text{fill:var(--mute);font:600 11px 'Chakra Petch';letter-spacing:.25em
 .code-saved{display:flex;align-items:center;gap:10px;background:color-mix(in srgb,var(--teal) 10%,var(--panel2));border:1px solid color-mix(in srgb,var(--teal) 35%,var(--line));border-radius:12px;padding:10px 12px;margin-bottom:10px}
 .code-saved>span{font-size:20px}.code-saved div{flex:1;min-width:0}.code-saved b{display:block;font-size:14px}.code-saved small{font-size:12px}
 .code-note{font-size:12px;color:var(--teal);margin:10px 0 0}.link-btn{background:none;border:0;color:var(--teal);font:600 13px Inter;padding:10px 0 0;cursor:pointer;display:block}
+.crew-card.won{border-color:color-mix(in srgb,var(--gold) 55%,var(--line))}
+.crew-emb{width:40px;height:40px;border-radius:12px;background:var(--panel2);display:grid;place-items:center;font-size:22px;flex:none;border:1px solid var(--line)}.crew-emb.sm{width:32px;height:32px;font-size:17px}
+.crew-embs{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.crew-emb.pick{width:100%;height:46px;cursor:pointer}.crew-emb.pick.on{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 15%,var(--panel2))}
+.crew-goal{margin:12px 0 8px}.crew-goal .bar{margin-top:6px}
+.crew-row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-top:1px solid var(--line);cursor:pointer}.crew-row.me{background:color-mix(in srgb,var(--teal) 6%,transparent)}
+.crew-row .lbname{flex:1}.crew-dots{display:inline-flex;gap:4px;align-items:center;margin-top:3px}.crew-dots i{width:9px;height:9px;border-radius:50%;background:var(--panel2);border:1px solid var(--line)}
+.crew-dots i.on{background:var(--teal);border-color:var(--teal)}.crew-dots small{font-size:10px;color:var(--teal);margin-left:2px}
 .map-seg{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:2px}
 .map-seg button{background:none;border:0;color:var(--mute);font:600 12px Inter;padding:6px 11px;border-radius:8px;cursor:pointer}.map-seg button.on{background:var(--teal);color:#06231f}
 .rec-line{display:flex;align-items:center;gap:8px;margin-top:10px;padding:9px 12px;border-radius:10px;background:color-mix(in srgb,var(--c) 12%,var(--panel2));font-size:13px}
@@ -509,12 +516,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.20.5"></script>
+<script src="exercises.js?v=2026.10.20.6"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.20.5';
+const APP_VERSION = '2026.10.20.6';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -2283,7 +2290,8 @@ function myStats(){
     trophies: Object.keys(state.achievements).length, lifted: Math.round(liftVolume()), updatedAt: Date.now(),
     // muscle map + gear so friends can see your figure
     ml: Object.fromEntries(Object.entries(muscleTotals()).map(([m, x]) => [m, lvl(x)])), gear: equippedSkin(), theme: state.cosmetics.theme || 'classic',
-    gearCount: SKINS.filter(s => isUnlocked(s[0], s[3])).length, habits: habitTotal(), hstreak: habitStreak()};
+    gearCount: SKINS.filter(s => isUnlocked(s[0], s[3])).length, habits: habitTotal(), hstreak: habitStreak(),
+    ...weekNums(), crew: state.crew ? state.crew.id : null};
 }
 let lastPublish = 0;
 async function publishStats(force){
@@ -2331,6 +2339,63 @@ async function loadLeaderboard(){
 }
 const lbLb = x => x >= 1e6 ? `${(x / 1e6).toFixed(2)}M` : x >= 1e4 ? `${Math.round(x / 1e3)}k` : fmt(x);
 const LB_METRICS = [['level','Level', p => p.level, p => `Lv ${p.level}`], ['lifted','Total lifted', p => p.lifted || 0, p => p.lifted != null ? `${lbLb(p.lifted)} lb` : '—'], ['streak','Week streak', p => p.streak, p => `${p.streak} 🔥`], ['week','This week', p => p.week, p => `${p.week} workout${p.week === 1 ? '' : 's'}`], ['xp','Total XP', p => p.xp, p => `${fmt(p.xp)} XP`]];
+/* ---- Gym crew: up to 8 friends share a weekly goal (3 workouts each). Hit it and everyone claims bonus XP. ----
+   The crew lives in its own doc in the players collection ("crew_<code>") so it works under the same access rules. */
+const CREW_MAX = 8, CREW_PER = 3, CREW_XP = 400, CREW_EMBLEMS = ['🐺','🦍','🐻','🦁','🐉','⚡','🔥','🛡️','⚔️','💀','🦅','🦈'];
+function weekNums(){ const wk = weekKey(Date.now()), ws = state.workouts.filter(w => w.date >= wk); return {wk, wkw:ws.length, wxp:Math.round(ws.reduce((a, w) => a + sumObj(w.xp), 0))}; }
+const crewDoc = async code => (await ensureFirebase()).collection('gymdom_players').doc('crew_' + code);
+const newCrewCode = () => Array.from({length:6}, () => 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 31)]).join('');
+function crewStreak(hits, wk){ const set = new Set(hits || []); let n = 0, k = set.has(wk) ? wk : weekKey(wk - 3 * DAY); while (set.has(k)){ n++; k = weekKey(k - 3 * DAY); } return n; }
+async function loadCrew(){
+  if (!FIREBASE_CONFIG || !state.crew || ui.crewLoading) return;
+  ui.crewLoading = true;
+  try {
+    await publishStats(true);
+    const ref = await crewDoc(state.crew.id), d = await ref.get();
+    if (!d.exists || !(d.data().members || []).includes(state.profile.playerId)){ state.crew = null; ui.crew = null; save(); toast('You are no longer in that crew'); }
+    else { const c = d.data(), col = (await ensureFirebase()).collection('gymdom_players'), wk = weekKey(Date.now());
+      const docs = await Promise.all(c.members.map(id => col.doc(id).get().then(x => x.exists ? {id, ...x.data()} : null).catch(() => null)));
+      const members = docs.filter(Boolean).map(m => m.id === state.profile.playerId ? {...m, ...myStats()} : m).map(m => ({...m, wkw:m.wk === wk ? m.wkw || 0 : 0, wxp:m.wk === wk ? m.wxp || 0 : 0}));
+      const goal = CREW_PER * c.members.length, done = members.reduce((a, m) => a + Math.min(m.wkw, CREW_PER + 2), 0);
+      if (done >= goal && !(c.hits || []).includes(wk)){ ref.set({hits:FV().arrayUnion(wk)}, {merge:true}).catch(() => {}); c.hits = [...(c.hits || []), wk]; }
+      state.crew = {id:state.crew.id, name:c.name, emblem:c.emblem}; ui.crew = {...c, members, goal, done, wk}; ui.crewErr = ''; }
+  } catch(e){ ui.crewErr = 'Crew unavailable: ' + (e.message || e); }
+  ui.crewLoading = false; ui.crewAt = Date.now();
+  if (ui.tab === 'progress' && !document.querySelector('#sheetWrap.open')) render();
+}
+function crewCard(){
+  if (!FIREBASE_CONFIG) return '';
+  if (!state.crew) return `<div class="card crew-card"><div class="row between"><h3 style="margin:0">Gym crew</h3><span class="crew-emb sm">🛡️</span></div>
+    <p class="mute" style="font-size:13px;margin:6px 0 10px">Team up with up to ${CREW_MAX} friends. Each week the crew shares one goal: ${CREW_PER} workouts per member. Hit it and everyone gets +${CREW_XP} XP.</p>
+    <div class="row gap"><button class="btn gold sm" style="flex:1" data-act="crewNew">Start a crew</button><button class="btn ghost sm" style="flex:1" data-act="crewJoinUI">Join with code</button></div></div>`;
+  if (!ui.crewAt || Date.now() - ui.crewAt > 60e3) setTimeout(loadCrew, 0);
+  const c = ui.crew, st = c ? crewStreak(c.hits, c.wk) : 0, won = c && c.done >= c.goal, claimed = c && (state.crewClaims || {})[c.wk];
+  const left = 7 - Math.floor((Date.now() - weekKey(Date.now())) / DAY);
+  const ms = c ? c.members.slice().sort((a, b) => b.wxp - a.wxp) : [];
+  return `<div class="card crew-card${won ? ' won' : ''}"><div class="row between" data-act="crewOpen" style="cursor:pointer"><span class="row gap" style="align-items:center"><span class="crew-emb">${state.crew.emblem}</span><span><b style="font-size:16px">${esc(state.crew.name)}</b><br><small class="mute">${c ? `${c.members.length} member${c.members.length === 1 ? '' : 's'}${st ? ` · ${st}-week streak 🔥` : ''}` : 'Loading crew…'}</small></span></span><small class="mute">›</small></div>
+    ${c ? `<div class="crew-goal"><div class="row between"><small><b>${Math.min(c.done, c.goal)} / ${c.goal}</b> workouts this week</small><small class="mute">${won ? 'Goal hit! 🎉' : `${left} day${left === 1 ? '' : 's'} left`}</small></div><div class="bar"><i style="width:${Math.min(1, c.done / c.goal) * 100}%"></i></div></div>
+      ${won && !claimed ? `<button class="btn gold block" style="margin:4px 0 10px" data-act="crewClaim">🎁 Claim +${CREW_XP} XP crew reward</button>` : ''}
+      ${ms.map((m, i) => `<div class="crew-row${m.id === state.profile.playerId ? ' me' : ''}" data-act="viewPlayer" data-id="${m.id}"><span class="lbrank">${i === 0 && m.wxp > 0 ? '👑' : i + 1}</span><span class="lbname">${esc(m.name)}${m.id === state.profile.playerId ? ' <small class="mute">(you)</small>' : ''}<br><span class="crew-dots">${Array.from({length:CREW_PER}, (_, j) => `<i class="${j < m.wkw ? 'on' : ''}"></i>`).join('')}${m.wkw > CREW_PER ? `<small>+${m.wkw - CREW_PER}</small>` : ''}</span></span><span class="lbval">${lbLb(m.wxp)} XP</span></div>`).join('')}
+      ${c.members.length < 2 ? `<button class="btn ghost sm block" style="margin-top:8px" data-act="crewOpen">+ Invite friends with your crew code</button>` : ''}` : ''}
+    ${ui.crewErr ? `<p class="mute" style="font-size:12px;margin:8px 0 0">${esc(ui.crewErr)}</p>` : ''}</div>`;
+}
+function openCrewSheet(mode){
+  const c = state.crew;
+  if (mode === 'new') return openSheet(`<div class="row between"><h2 style="margin:0">Start a crew</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    <label class="lbl">Crew name</label><input id="crewName" maxlength="24" placeholder="e.g. Iron Wolves">
+    <label class="lbl">Emblem</label><div class="crew-embs">${CREW_EMBLEMS.map((e, i) => `<button class="crew-emb pick${i === (ui.crewEmb || 0) ? ' on' : ''}" data-act="crewEmb" data-v="${i}">${e}</button>`).join('')}</div>
+    <button class="btn gold block" style="margin-top:16px" data-act="crewCreate">Create crew</button>
+    <p class="mute" style="font-size:12px;margin-top:10px">You'll get a crew code to share. Up to ${CREW_MAX} members.</p>`);
+  if (mode === 'join') return openSheet(`<div class="row between"><h2 style="margin:0">Join a crew</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    <label class="lbl">Crew code</label><div class="row gap"><input id="crewIn" placeholder="6-letter code" autocapitalize="characters" maxlength="6"><button class="btn sm" data-act="crewJoin">Join</button></div>`);
+  if (!c) return;
+  openSheet(`<div class="row between"><h2 style="margin:0">${c.emblem} ${esc(c.name)}</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    <label class="lbl">Crew code</label><div class="fcode">${c.id}</div>
+    <div class="row gap"><button class="btn ghost sm" style="flex:1" data-act="crewShare">Share invite</button><button class="btn ghost sm" style="flex:1" data-act="crewCopy">Copy</button></div>
+    <p class="mute" style="font-size:13px;margin-top:12px">Weekly goal: ${CREW_PER} workouts per member, counted Monday–Sunday. When the crew hits it, everyone can claim +${CREW_XP} XP. Keep hitting it for a crew streak.</p>
+    <p class="mute" style="font-size:11px">Crewmates see the same things friends do, plus your workout count and XP for this week.</p>
+    <button class="btn danger block" style="margin-top:12px" data-act="crewLeave">Leave crew</button>`);
+}
 function leaderboardCard(){
   if (!FIREBASE_CONFIG) return '';
   if (!ui.lbAt || Date.now() - ui.lbAt > 60e3) setTimeout(loadLeaderboard, 0);
@@ -3520,7 +3585,7 @@ function renderBody(){
 }
 function renderProgress(){
   const t = muscleTotals(), hit = lastHit();
-  let h = `<h2>Progress</h2>` + leaderboardCard() + seasonCard() + nightShiftCard() + bountyCard();
+  let h = `<h2>Progress</h2>` + leaderboardCard() + crewCard() + seasonCard() + nightShiftCard() + bountyCard();
   // Quests
   h += `<div class="card"><div class="row between"><h3 style="margin:0">Quests</h3><small class="mute">Daily · weekly</small></div>${questList().map(q => { const ok = q.done || q.prog >= q.n;
     return `<div class="quest${q.done ? ' done' : ''}"><div class="row between gap"><span><span class="qscope">${q.scope}${q.weak ? ' · Weak point' : ''}</span><br><b style="font-size:14px">${q.title}</b></span><span class="xp">${ok ? '✓' : '+' + q.xp}</span></div>
@@ -4115,6 +4180,31 @@ const ACT = {
   nightShift: () => openNightShift(),
   eqNsNew: (d, b) => { state.cosmetics[d.s] = d.v; save(); publishStats(true); render(); b.textContent = 'Equipped'; b.disabled = true; },
   lbMetric: d => { ui.lbMetric = d.v; render(); },
+  crewNew: () => openCrewSheet('new'),
+  crewJoinUI: () => openCrewSheet('join'),
+  crewOpen: () => openCrewSheet(),
+  crewEmb: (d, b) => { ui.crewEmb = +d.v; document.querySelectorAll('.crew-emb.pick').forEach(x => x.classList.toggle('on', x === b)); },
+  crewCreate: async () => { const name = $('#crewName').value.trim(); if (!name) return toast('Give your crew a name');
+    const emblem = CREW_EMBLEMS[ui.crewEmb || 0];
+    try { let code = newCrewCode(), ref = await crewDoc(code); if ((await ref.get()).exists){ code = newCrewCode(); ref = await crewDoc(code); }
+      await ref.set({type:'crew', name, emblem, members:[state.profile.playerId], hits:[], createdAt:Date.now()});
+      state.crew = {id:code, name, emblem}; save(); ui.crewAt = 0; openCrewSheet(); toast('Crew created — share the code'); loadCrew(); }
+    catch(e){ toast("Couldn't create the crew. Check your connection."); } },
+  crewJoin: async () => { const code = $('#crewIn').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ''); if (code.length !== 6) return toast('Crew codes are 6 characters');
+    try { const ref = await crewDoc(code), d = await ref.get(); if (!d.exists || d.data().type !== 'crew') return toast('No crew with that code');
+      const c = d.data(); if ((c.members || []).length >= CREW_MAX && !c.members.includes(state.profile.playerId)) return toast('That crew is full');
+      if (state.crew && state.crew.id !== code) (await crewDoc(state.crew.id)).set({members:FV().arrayRemove(state.profile.playerId)}, {merge:true}).catch(() => {});
+      await ref.set({members:FV().arrayUnion(state.profile.playerId)}, {merge:true});
+      state.crew = {id:code, name:c.name, emblem:c.emblem}; save(); ui.crewAt = 0; closeSheet(); render(); toast(`Welcome to ${c.name}!`); loadCrew(); }
+    catch(e){ toast("Couldn't join right now. Check your connection."); } },
+  crewLeave: async () => { if (!state.crew || !(await confirmBox(`Leave ${state.crew.name}?`, 'Leave'))) return;
+    try { (await crewDoc(state.crew.id)).set({members:FV().arrayRemove(state.profile.playerId)}, {merge:true}); } catch(e){}
+    state.crew = null; ui.crew = null; save(); publishStats(true); closeSheet(); render(); toast('Left the crew'); },
+  crewClaim: () => { const c = ui.crew; if (!c || c.done < c.goal) return; state.crewClaims = state.crewClaims || {}; if (state.crewClaims[c.wk]) return;
+    state.crewClaims[c.wk] = Date.now(); state.bonusXP += CREW_XP; save(); publishStats(true); render(); toast(`+${CREW_XP} XP — nice work, ${c.name}!`); },
+  crewShare: async () => { const c = state.crew, text = `Join my Gymdom crew "${c.name}" ${c.emblem} — crew code ${c.id} — ${location.origin + location.pathname}`;
+    if (navigator.share){ try { await navigator.share({text}); } catch(e){} } else ACT.crewCopy(); },
+  crewCopy: async () => { try { await navigator.clipboard.writeText(state.crew.id); toast('Crew code copied'); } catch(e){ toast('Crew code: ' + state.crew.id); } },
   shareCode: async () => { const text = `Add me on Gymdom! My friend code is ${state.profile.playerId} — ${location.origin + location.pathname}`;
     if (navigator.share){ try { await navigator.share({text}); } catch(e){} } else ACT.copyCode(); },
   copyCode: async () => { try { await navigator.clipboard.writeText(state.profile.playerId); toast('Code copied'); } catch(e){ toast('Your code: ' + state.profile.playerId); } },
