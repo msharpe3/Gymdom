@@ -223,6 +223,13 @@ svg.body .snow-fx{pointer-events:none}.aurora-fx{pointer-events:none}
 .photos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 12px}
 .photos figure{margin:0;background:#fff;border-radius:12px;overflow:hidden;position:relative}
 .photos img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
+.photos figure{cursor:zoom-in}.ph-zoom{position:absolute;right:6px;top:6px;width:22px;height:22px;border-radius:6px;background:rgba(11,10,18,.7);color:#fff;font-style:normal;font-size:12px;display:grid;place-items:center}
+#photoZoom{position:fixed;inset:0;z-index:60;background:rgba(5,4,10,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:calc(20px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));opacity:0;transition:opacity .18s}
+#photoZoom.open{opacity:1}.pz-x{position:absolute;top:calc(12px + env(safe-area-inset-top));right:14px;width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:18px;cursor:pointer}
+.pz-name{font:700 16px 'Chakra Petch';letter-spacing:.06em;color:var(--text);text-align:center;padding:0 50px}
+.pz-img{position:relative;width:100%;max-width:560px;aspect-ratio:4/3;background:#fff;border-radius:16px;overflow:hidden}
+.pz-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .2s}.pz-img img.on{opacity:1}
+.pz-seg{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:3px}.pz-seg button{background:none;border:0;color:var(--mute);font:600 14px Inter;padding:8px 22px;border-radius:9px;cursor:pointer}.pz-seg button.on{background:var(--teal);color:#06231f}
 .photos figcaption{position:absolute;left:6px;bottom:6px;font:700 10px 'Chakra Petch';letter-spacing:.12em;background:rgba(11,10,18,.8);color:var(--text);padding:2px 6px;border-radius:5px;text-transform:uppercase}
 details.steps{margin:0 0 12px}details.steps summary{cursor:pointer;color:var(--teal);font-weight:600;font-size:14px;margin-bottom:8px}
 .macros{display:grid;gap:10px;margin-top:12px}
@@ -523,12 +530,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.11.02.1"></script>
+<script src="exercises.js?v=2026.11.02.2"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.11.02.1';
+const APP_VERSION = '2026.11.02.2';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -783,6 +790,21 @@ for (const [id, name, eq, cat, level, p, s, steps, n, bw, nx] of (window.FX_EXTR
   EXL.push({id:'fx_' + id, name, eq, pat:'x', p, s, cue:'', bw, cat, level, steps, img: n ? id : null, nx: !!nx});
 const EX = Object.fromEntries(EXL.map(e => [e.id, e]));
 const EQN = {bb:'Barbell',db:'Dumbbell',mc:'Machine',cb:'Cable',bw:'Bodyweight',kb:'Kettlebell',ez:'EZ Bar',band:'Bands',mb:'Medicine Ball',sball:'Stability Ball',foam:'Foam Roller',other:'Other',none:'No equipment'};
+// Full-screen start/finish photo: tap Start/Finish (or swipe) to flip, tap outside or ✕ to close
+function openPhotoZoom(ex, i){
+  if (!ex || !ex.img) return; ui.pzEx = ex.id; ui.pz = i;
+  let z = document.getElementById('photoZoom'); if (!z){ z = document.createElement('div'); z.id = 'photoZoom'; document.body.appendChild(z);
+    z.addEventListener('click', e => { if (e.target === z) ACT.pzClose(); });
+    let x0 = null; z.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, {passive:true});
+    z.addEventListener('touchend', e => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null; if (Math.abs(dx) > 40){ ui.pz = dx < 0 ? 1 : 0; renderPhotoZoom(); } }, {passive:true}); }
+  renderPhotoZoom(); requestAnimationFrame(() => z.classList.add('open'));
+}
+function renderPhotoZoom(){
+  const z = document.getElementById('photoZoom'), ex = EX[ui.pzEx]; if (!z || !ex) return; const i = ui.pz;
+  z.innerHTML = `<button class="pz-x" data-act="pzClose" aria-label="Close">✕</button><div class="pz-name">${esc(ex.name)}</div>
+    <div class="pz-img"><img src="${photo(ex, 0)}" alt="Start position" class="${i ? '' : 'on'}"><img src="${photo(ex, 1)}" alt="Finish position" class="${i ? 'on' : ''}"></div>
+    <div class="pz-seg"><button class="${i ? '' : 'on'}" data-act="pzPose" data-v="0">Start</button><button class="${i ? 'on' : ''}" data-act="pzPose" data-v="1">Finish</button></div>`;
+}
 const photo = (ex, i = 0) => ex.img ? IMG_BASE + ex.img + '/' + i + '.jpg' : '';
 
 /* ============ STATE ============ */
@@ -4057,7 +4079,7 @@ function exInfo(id){
     spark = `<svg class="spark" viewBox="0 0 300 60" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${TEAL}" stroke-width="2.5" vector-effect="non-scaling-stroke"/></svg><small class="mute">Best estimated 1RM per session</small>`; }
   openSheet(`<div class="row between"><h2 style="margin:0">${ex.name}</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
     <div style="margin:8px 0"><span class="tag">${EQN[ex.eq]}</span>${ex.cat && ex.cat !== 'str' ? `<span class="tag">${CATS[ex.cat]}</span>` : ''}${ex.level ? `<span class="tag">${LEVELS[ex.level]}</span>` : ''}${ex.p.map(m => `<span class="tag p">${MUSCLES[m]}</span>`).join('')}${ex.s.map(m => `<span class="tag s">${MUSCLES[m]}</span>`).join('')}</div>
-    ${ex.img ? `<div class="photos"><figure><img src="${photo(ex, 0)}" alt="Start position"><figcaption>Start</figcaption></figure><figure><img src="${photo(ex, 1)}" alt="Finish position"><figcaption>Finish</figcaption></figure></div>` : ''}
+    ${ex.img ? `<div class="photos"><figure data-act="photoZoom" data-id="${ex.id}" data-v="0"><img src="${photo(ex, 0)}" alt="Start position"><figcaption>Start</figcaption><i class="ph-zoom">⤢</i></figure><figure data-act="photoZoom" data-id="${ex.id}" data-v="1"><img src="${photo(ex, 1)}" alt="Finish position"><figcaption>Finish</figcaption><i class="ph-zoom">⤢</i></figure></div>` : ''}
     ${ex.nx ? `<div class="hint">${CATS[ex.cat]} moves are logged for tracking and don't earn XP.</div>` : ''}
     <div style="max-width:${ex.img ? 240 : 320}px;margin:0 auto">${bodySVG(exColor(ex))}</div>
     <div class="legend"><span><i style="background:${GOLD}"></i>Primary · full XP</span><span><i style="background:${TEAL}"></i>Secondary · half XP</span></div>
@@ -4377,6 +4399,9 @@ const ACT = {
   foodAdd: d => { ui.scanCode = null; ui.foodQ = ''; ui.foodN = 30; openAddFood(d.m, ui.foodMode === 'scan' ? 'scan' : 'search'); },
   lblManual: () => { ui.foodMode = 'manual'; manualUI(); },
   lblZoom: (d, b) => b.classList.toggle('big'),
+  photoZoom: d => openPhotoZoom(EX[d.id], +d.v),
+  pzPose: d => { ui.pz = +d.v; renderPhotoZoom(); },
+  pzClose: () => { const z = document.getElementById('photoZoom'); if (z){ z.classList.remove('open'); setTimeout(() => z.remove(), 180); } },
   foodMode: d => { stopScan(); if (d.v !== 'label') ui.scanCode = null; ui.foodMode = d.v; openAddFood(ui.foodMeal, d.v); },
   offSearch: () => offSearch(),
   foodMore: () => { ui.foodN = (ui.foodN || 30) + 30; renderFoodRes(); },
