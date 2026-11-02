@@ -523,12 +523,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.10.27.1"></script>
+<script src="exercises.js?v=2026.11.02.1"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.10.27.1';
+const APP_VERSION = '2026.11.02.1';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -2405,7 +2405,7 @@ function openCrewSheet(mode){
 }
 // Swipe sideways between the live event, Night Shift and today's bounty (dots are tappable too)
 function eventSlider(){
-  const cards = [seasonCard(), nightShiftCard(), bountyCard()].filter(Boolean);
+  const cards = [bountyCard(), seasonCard(), nightShiftCard()].filter(Boolean);
   if (cards.length < 2) return cards.join('');
   const i = Math.min(ui.evIdx || 0, cards.length - 1);
   return `<div class="ev-wrap"><div class="ev-slider" data-i="${i}">${cards.map(c => `<div class="ev-slide">${c}</div>`).join('')}</div>
