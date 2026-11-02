@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0b0a12">
@@ -18,7 +18,8 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
 /* Only the content scrolls, so the iPhone bounce never drags the tab bar */
-html,body{overscroll-behavior:none}
+html,body{overscroll-behavior:none;touch-action:pan-x pan-y;-webkit-text-size-adjust:100%}
+*{touch-action:manipulation} /* no double-tap zoom; quick repeated taps still register */
 /* no visible scroll bars anywhere (page, sheets, rows) — scrolling still works */
 html,body,*{scrollbar-width:none;-ms-overflow-style:none}html::-webkit-scrollbar,body::-webkit-scrollbar,*::-webkit-scrollbar{display:none;width:0;height:0;background:transparent}
 body{padding-bottom:calc(80px + env(safe-area-inset-bottom))}
@@ -530,12 +531,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.11.02.2"></script>
+<script src="exercises.js?v=2026.11.02.3"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.11.02.2';
+const APP_VERSION = '2026.11.02.3';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -4599,6 +4600,9 @@ const ACT = {
   importData: () => $('#importFile').click(),
   resetAll: async () => { if (await confirmBox('Erase all workouts, splits and XP on this device?', 'Erase')){ const code = state.profile.syncCode; state = migrate(null); state.profile.syncCode = code; save(); render(); } }
 };
+// Feel like an app: no pinch-zoom and no double-tap zoom (iOS Safari ignores user-scalable=no on its own)
+['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), {passive:false}));
+document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, {passive:false});
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   if (Date.now() - (ui.dragEnd || 0) < 400 && b.closest('.h-cust, .split-card, .frow.meal, .sday, .nl-row')) return; // the tap that ends a drag
