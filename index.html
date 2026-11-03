@@ -531,12 +531,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.11.03.1"></script>
+<script src="exercises.js?v=2026.11.03.2"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.11.03.1';
+const APP_VERSION = '2026.11.03.2';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1123,19 +1123,76 @@ const HICONS = {
   scooter:['teal', _s('M17.2 18.4 14.6 4.4', 'GRD', 1.8) + _s('M11.8 4.4h5.4', 'GRD', 1.8) + _r(10.8, 3.4, 2.6, 2, 1, 'R') + _r(5, 16.8, 12.6, 2.2, 1.1, '#4fd1c5') + _c(6, 19.8, 2.3, 'GRD') + _c(18.4, 19.8, 2.3, 'GRD') + _c(6, 19.8, .9, 'W') + _c(18.4, 19.8, .9, 'W')],
   fuel:['red', _s('M14 9h2.5a2 2 0 0 1 2 2v6a1.5 1.5 0 0 0 3 0V8.4L19 6', 'GRD', 1.6) + _r(4, 4, 10, 16.6, 2, 'R') + _r(6, 6.4, 6, 4.2, 1, 'W') + _f('M9 12.6c1 1.4 1.8 2.4 1.8 3.4a1.8 1.8 0 0 1-3.6 0c0-1 .8-2 1.8-3.4Z', 'Y') + _r(3, 20, 12, 2, 1, 'RD')],
   passport:['indigo', _r(5, 2.5, 14, 19, 2, 'BD') + _r(5, 2.5, 2.2, 19, 1, 'D', .35) + _sc(12, 10.4, 3.6, 'Y', 1.2) + _s('M8.4 10.4h7.2M12 6.8c-1.6 2.2-1.6 5 0 7.2M12 6.8c1.6 2.2 1.6 5 0 7.2', 'Y', .9) + _s('M9 16.6h6M10 18.6h4', 'Y', 1)],
+  // ---- moods
+  grin:['gold', _c(12, 12, 9.5, 'Y') + _s('M7.6 9.8q1.4-1.6 2.8 0M13.6 9.8q1.4-1.6 2.8 0', 'D', 1.6) + _f('M6.8 13h10.4a5.2 5.2 0 0 1-10.4 0Z', 'D') + _f('M7.2 13h9.6v1.5H7.2Z', 'W') + _f('M9.6 17.2a4 2.4 0 0 1 4.8 0 5.2 5.2 0 0 1-4.8 0Z', 'R') + _c(5.8, 12.4, 1.3, 'O', .5) + _c(18.2, 12.4, 1.3, 'O', .5)],
+  hearteyes:['pink', _c(12, 12, 9.5, 'Y') + `<g transform="translate(5.4 6.2) scale(.28)">${_f(HEART, 'R')}</g><g transform="translate(11.9 6.2) scale(.28)">${_f(HEART, 'R')}</g>` + _s('M8 14.4a4.8 4.8 0 0 0 8 0', 'D', 1.8)],
+  cool:['blue', _c(12, 12, 9.5, 'Y') + _f('M4.8 8.6h6.2v2.4a2.8 2.8 0 0 1-2.8 2.8h-.6A2.8 2.8 0 0 1 4.8 11Z', 'D') + _f('M13 8.6h6.2V11a2.8 2.8 0 0 1-2.8 2.8h-.6A2.8 2.8 0 0 1 13 11Z', 'D') + _s('M11 9.4h2M2.8 9.2l2-.4M21.2 9.2l-2-.4', 'D', 1.3) + _s('M6.2 9.8l1.4 1.4M14.4 9.8l1.4 1.4', 'W', .9, .6) + _s('M9 16.2c2 1 4.4.8 6-.8', 'D', 1.6)],
+  sleepy:['indigo', _c(12, 12, 9.5, 'Y') + _s('M7.4 10.2q1.6 1.4 3.2 0M13.4 10.2q1.6 1.4 3.2 0', 'D', 1.5) + _c(12, 15.6, 1.5, 'D') + _s('M17.4 2.6h3l-3 3h3', 'B', 1.3) + _s('M20.6 7.4h1.8l-1.8 1.8h1.8', 'B', 1)],
+  thinking:['gold', _c(12, 12, 9.5, 'Y') + _c(9, 10, 1.2, 'D') + _c(15, 9.6, 1.2, 'D') + _s('M13.6 7.2q1.4-1 2.8-.2M7.6 7.8q1.2-.4 2.4 0', 'D', 1.2) + _s('M10.6 14.8h3.8', 'D', 1.6) + _r(7.2, 13.4, 2, 5, 1, 'YD') + _f('M6.6 17.4c.8-1.2 2.6-1.4 3.8-.4l1.2 1c.6.6.4 1.6-.4 1.8l-3.2.8c-1 .2-1.8-.4-1.8-1.4Z', 'YD')],
+  sad:['blue', _c(12, 12, 9.5, 'Y') + _c(9, 10.2, 1.3, 'D') + _c(15, 10.2, 1.3, 'D') + _s('M8.4 16.6a4.4 4.4 0 0 1 7.2 0', 'D', 1.8) + _f('M7.4 12.4c.7 1 1.2 1.7 1.2 2.4a1.2 1.2 0 0 1-2.4 0c0-.7.5-1.4 1.2-2.4Z', 'B')],
+  // ---- hands
+  clap:['gold', `<g transform="rotate(-24 9 13)">${_r(5.4, 6, 6.4, 12, 3.2, 'SK') + _r(3.6, 10, 2.6, 6, 1.3, 'SK')}</g><g transform="rotate(18 15 13)">${_r(12.4, 6.4, 6.4, 12, 3.2, 'TAN') + _r(18, 10.4, 2.6, 6, 1.3, 'TAN')}</g>` + _s('M12 2.4v2.2M8.4 3.4l1 1.8M15.6 3.4l-1 1.8', 'Y', 1.3)],
+  hello:['gold', `<g transform="rotate(-16 12 14)">${_f('M7 11V6.5a1.3 1.3 0 0 1 2.6 0V10h.4V4.5a1.3 1.3 0 0 1 2.6 0V10h.4V5a1.3 1.3 0 0 1 2.6 0v5.5h.4V7.5a1.3 1.3 0 0 1 2.6 0v7c0 4-2.8 7-6.6 7-2.8 0-4.4-1.4-5.8-3.6l-2.4-3.8a1.4 1.4 0 0 1 2.2-1.6Z', 'SK')}</g>` + _s('M3 8.4c-.6 1.4-.6 3 0 4.4M20.6 4.8c.8 1 1.2 2.4 1 3.8', 'B', 1.3)],
+  thanks:['purple', _f('M12 2.6c-1.6 0-2.8 1.2-2.8 3v8L5.6 18c-.7.9-.4 2.1.6 2.5l2.2 1L12 18Z', 'SK') + _f('M12 2.6c1.6 0 2.8 1.2 2.8 3v8l3.6 4.4c.7.9.4 2.1-.6 2.5l-2.2 1L12 18Z', 'TAN') + _s('M12 3v14.6', '#d9a86f', .8) + _s('M5.2 4.2l1.4 1.4M18.8 4.2l-1.4 1.4M3.6 8.8h1.8M20.4 8.8h-1.8', 'Y', 1.2)],
+  fist:['orange', _r(5.4, 6.4, 11.6, 11.6, 4.4, 'SK') + _s('M8.8 6.8v4.2M11.6 6.8v4.2M14.4 6.8v4.2', 'TAN', 1.3) + _f('M5.4 12h6.4a2.2 2.2 0 0 1 0 4.4H6.8a1.4 1.4 0 0 1-1.4-1.4Z', 'TAN') + _s('M19 8.2l2.6-1.4M19.6 12h3M19 15.8l2.6 1.4', 'Y', 1.4)],
+  // ---- animals
+  rabbit:['gray', `<ellipse cx="8.8" cy="6" rx="2.2" ry="5" fill="${_K.W}" transform="rotate(-10 8.8 6)"/><ellipse cx="15.2" cy="6" rx="2.2" ry="5" fill="${_K.W}" transform="rotate(10 15.2 6)"/><ellipse cx="8.8" cy="6.4" rx="1" ry="3.6" fill="${_K.PK}" transform="rotate(-10 8.8 6)"/><ellipse cx="15.2" cy="6.4" rx="1" ry="3.6" fill="${_K.PK}" transform="rotate(10 15.2 6)"/>` + _c(12, 15, 6.6, 'W') + _c(9.6, 14, 1, 'D') + _c(14.4, 14, 1, 'D') + _f('M11 16.2h2L12 17.4Z', 'PK') + _c(8.4, 16.6, 1.1, 'PK', .5) + _c(15.6, 16.6, 1.1, 'PK', .5) + _s('M12 17.4v1', 'GRD', .8)],
+  turtle:['green', _r(5, 15.6, 3, 4, 1.4, 'G') + _r(14.6, 15.6, 3, 4, 1.4, 'G') + _c(20, 13, 2.6, 'G') + _c(20.8, 12.4, .6, 'D') + _f('M2.6 16a8.4 7.4 0 0 1 16.8 0Z', 'GD') + _f('M7.4 11.4h4.4l1.6 2.4-1.6 2.2H7.4L5.8 13.8Z', 'G', .7) + _s('M11 6.4v2.6M5 11l1.8 1.8M17 11l-1.8 1.8', 'G', 1, .6) + _r(2.2, 15.4, 17.6, 1.6, .8, 'GD')],
+  horse:['amber', _f('M8 21c0-4 1-7 0-10-1-2-1.5-4 0-6l1.4-2.4 1 1.8c3-.2 6 1.6 8 4.4l2 3c.6 1-.2 2.2-1.4 2l-3-.6c-1 1.6-1 4.8 0 7.8Z', 'BR') + _f('M9.4 2.6c-1.6 1.6-3 4.4-3 7.6 0 3.4 1 6.6 1.6 10.8L8 21c-.4-3.8-1-7-.4-10.4C8 8 8.6 5 9.4 2.6Z', 'BRD') + _c(13.6, 8.6, .9, 'D') + _c(19.4, 12.2, .6, 'D')],
+  bee:['gold', `<ellipse cx="10" cy="7.6" rx="2.2" ry="3.6" fill="${_K.LB}" opacity=".9" transform="rotate(-20 10 7.6)"/><ellipse cx="14" cy="7.6" rx="2.2" ry="3.6" fill="${_K.LB}" opacity=".9" transform="rotate(20 14 7.6)"/><ellipse cx="12.4" cy="13.6" rx="6.4" ry="5" fill="${_K.Y}"/>` + _s('M10.6 9.2v8.8M14.4 9.4v8.4', 'D', 2) + _f('M18.6 13.6l2.6-.9v1.8Z', 'D') + _c(5.6, 13.4, 2.6, 'D') + _c(4.8, 12.6, .6, 'W') + _s('M5 11c-.6-1.4-1.6-2.2-2.6-2.4M6.4 10.8c0-1.4.4-2.6 1.2-3.2', 'D', .8)],
+  owl:['purple', _f('M5 9 4.6 3.6 8.4 6Z', 'BR') + _f('M19 9l.4-5.4L15.6 6Z', 'BR') + _f('M5 9c0-4 3-6.5 7-6.5S19 5 19 9v7c0 3.6-3 6-7 6s-7-2.4-7-6Z', 'BR') + `<ellipse cx="12" cy="16.4" rx="4" ry="4.4" fill="${_K.TAN}"/>` + _c(9, 10, 2.8, 'W') + _c(15, 10, 2.8, 'W') + _c(9.2, 10.2, 1.3, 'D') + _c(14.8, 10.2, 1.3, 'D') + _f('M11 12.2h2L12 14.4Z', 'O') + _s('M10.2 15.6l.6.6M13.2 15.6l.6.6M11.6 17.6l.8.6', 'BR', .8)],
+  frog:['green', _c(7.4, 8, 3, 'G') + _c(16.6, 8, 3, 'G') + `<ellipse cx="12" cy="14" rx="8.6" ry="6.2" fill="${_K.G}"/>` + _c(7.4, 7.8, 1.9, 'W') + _c(16.6, 7.8, 1.9, 'W') + _c(7.6, 8, 1, 'D') + _c(16.4, 8, 1, 'D') + _s('M7 15.4q5 3.4 10 0', 'GD', 1.4) + _c(5.4, 13.6, 1.2, 'PK', .5) + _c(18.6, 13.6, 1.2, 'PK', .5) + _c(10.8, 12, .5, 'GD') + _c(13.2, 12, .5, 'GD')],
+  penguin:['cyan', _f('M6.2 12.6c-1.6 1-2.4 3-2 5.2 1.4-.6 2.4-1.8 2.8-3.2Z', '#2b3550') + _f('M17.8 12.6c1.6 1 2.4 3 2 5.2-1.4-.6-2.4-1.8-2.8-3.2Z', '#2b3550') + _f('M12 2.5c4 0 6 4 6 9v5c0 3.4-2.6 5.5-6 5.5s-6-2.1-6-5.5v-5c0-5 2-9 6-9Z', '#2b3550') + `<ellipse cx="12" cy="15.2" rx="4" ry="5.8" fill="${_K.W}"/>` + _c(10.2, 8.2, 1.2, 'W') + _c(13.8, 8.2, 1.2, 'W') + _c(10.4, 8.4, .6, 'D') + _c(13.6, 8.4, .6, 'D') + _f('M10.6 10h2.8L12 12Z', 'O') + _r(8.6, 21, 2.6, 1.4, .7, 'O') + _r(12.8, 21, 2.6, 1.4, .7, 'O')],
+  fox:['orange', _f('M3 4l5 3.4h8L21 4l-1.4 8.2C18.6 17 15.6 20.6 12 20.6S5.4 17 4.4 12.2Z', 'O') + _f('M4.6 11.6c2.2 1.2 4.6 3.2 7.4 9-3.4 0-6.2-3.4-7.4-9Z', 'W') + _f('M19.4 11.6c-2.2 1.2-4.6 3.2-7.4 9 3.4 0 6.2-3.4 7.4-9Z', 'W') + _f('M4.6 5.6l2 2.4-1.6.6Z M19.4 5.6l-2 2.4 1.6.6Z', 'D') + _c(9, 11.6, 1.1, 'D') + _c(15, 11.6, 1.1, 'D') + _c(12, 19, 1.2, 'D')],
+  // ---- more food
+  sandwich:['amber', _f('M3 16.8 12 4l9 12.8Z', 'TAN') + _s('M3 16.8 12 4l9 12.8', 'BR', 1.2) + _r(2.6, 16.4, 18.8, 1.8, .9, 'G') + _r(3, 18, 18, 1.6, .8, 'R') + _r(3, 19.4, 18, 2.2, 1.1, 'TAN') + _c(10, 12, .6, 'BR') + _c(13.4, 10.4, .6, 'BR') + _c(12.6, 13.6, .6, 'BR')],
+  pancakes:['amber', `<ellipse cx="12" cy="19.6" rx="10" ry="2.4" fill="${_K.W}"/>` + [17, 14, 11].map(y => `<ellipse cx="12" cy="${y + 1}" rx="8" ry="2.4" fill="${_K.BR}"/><ellipse cx="12" cy="${y}" rx="8" ry="2.4" fill="${_K.TAN}"/>`).join('') + _r(10.2, 8.4, 3.6, 2.4, .6, 'Y') + _f('M5 11c0 1.6.6 3 1 4.4.4-1 .2-2.6.6-3.6Z M17.6 11.6c.4 1.4.4 2.6.2 4 .8-.8 1-2.4.6-3.8Z', 'BRD')],
+  ramen:['red', _s('M15.4 2.4 11 10.4M19.2 3.2 13.6 10.6', 'BR', 1.3) + _f('M2.5 11h19a9.5 9.5 0 0 1-19 0Z', 'R') + _f('M3 11c0-1 4-1.8 9-1.8s9 .8 9 1.8-4 1.8-9 1.8-9-.8-9-1.8Z', 'Y') + _s('M5 11q1.2-1 2.4 0t2.4 0 2.4 0 2.4 0 2.4 0', 'YD', .9) + _c(16.6, 10.6, 2, 'W') + _c(16.6, 10.6, 1, 'O') + _s('M5.4 15.4h13.2', 'W', .9, .55) + _r(8.6, 20.6, 6.8, 1.6, .8, 'RD')],
+  peach:['orange', _f('M12 6c4.5-2 9 1 9 6.5 0 5-4 9-9 9s-9-4-9-9C3 7 7.5 4 12 6Z', '#ffb27a') + _s('M12 6c-1.5 3-1.5 9 0 15', '#f0904f', 1.2) + _f('M12 6c.6-2 2.4-3.4 4.6-3.4-.4 2-2.4 3.4-4.6 3.4Z', 'G') + _c(16.4, 13, 2.6, 'PK', .35) + _s('M6.4 10.6a4 4 0 0 1 2.4-2.4', 'W', 1.2, .6)],
+  pineapple:['gold', _f('M12 8.6 9.4 2.6l2.6 2.4 2.6-2.4Z', 'G') + _f('M12 8.6 6 4.6l4 .6Z M12 8.6l6-4-4 .6Z', 'GD') + `<ellipse cx="12" cy="15" rx="5.6" ry="7" fill="${_K.Y}"/>` + _s('M8 10.4l8 8.8M7 14.2l6.4 7M10.6 8.4l6.2 6.8M16 10.4l-8 8.8M17 14.2l-6.4 7M13.4 8.4 7.2 15.2', 'YD', .9)],
+  blueberries:['indigo', _f('M12.6 7.6c1.6-2.6 4.6-3.6 7-3-1 2.6-4 3.8-7 3Z', 'G') + _c(8, 15.6, 4.4, '#4e5fd6') + _c(15.6, 15, 4.2, '#3b4bb8') + _c(11.6, 9.8, 3.8, '#5b6be6') + [[8, 13.4], [15.6, 12.8], [11.6, 7.8]].map(([x, y]) => _s(`M${x - .8} ${y}h1.6M${x} ${y - .8}v1.6`, '#25307d', .9)).join('') + _c(6.6, 14.4, .8, 'W', .45) + _c(10.4, 8.6, .7, 'W', .45)],
+  tomato:['red', _c(12, 13.4, 8.4, 'R') + _f('M12 5.6l1.4 1.8 2.6-.6-1.2 2 2.2 1.2-2.6.4L12 8.6l-2.4 1.8-2.6-.4 2.2-1.2-1.2-2 2.6.6Z', 'G') + _s('M12 5.6V3.4', 'GD', 1.3) + _s('M6.6 11.2a5.6 5.6 0 0 1 2.4-3', 'W', 1.3, .6)],
+  // ---- more sports
+  pingpong:['red', _s('M14.4 14.4 20 20', 'BR', 3) + _c(10, 10, 6.6, 'R') + _c(10, 10, 6.6, 'RD', .25) + _s('M6.4 7.6a4.6 4.6 0 0 1 2.4-2.2', 'W', 1.2, .6) + _c(19, 5, 2, 'W')],
+  badminton:['gray', `<g transform="rotate(-35 12 12)">${_f('M8.6 15.6 5.6 3.6h12.8l-3 12Z', 'W') + _s('M9.4 4.4l1.6 11M12 4v11.6M14.6 4.4 13 15.4M6.6 8h10.8M7.6 12h8.8', 'GR', .7) + _f('M8.6 15.6h6.8v1.4a3.4 3.4 0 0 1-6.8 0Z', 'R')}</g>`],
+  frisbee:['blue', `<ellipse cx="12" cy="13" rx="9.4" ry="4.6" fill="${_K.BD}"/><ellipse cx="12" cy="12" rx="9.4" ry="4.6" fill="${_K.B}"/><ellipse cx="12" cy="11.8" rx="5" ry="2.2" fill="none" stroke="${_K.LB}" stroke-width="1"/>` + _s('M2 6.4h4M3.4 4h3.4', 'W', 1.2, .6)],
+  iceskate:['cyan', _f('M6 3h6.6v7.4l6 2.6c1.4.6 2.4 1.8 2.4 3.4V17H6Z', 'W') + _s('M8 6h3.2M8 8.6h3.2', 'B', 1.1) + _r(6, 15.6, 15, 2, .8, 'LB') + _s('M4 20.6h17.4c.8 0 1.4-.6 1.4-1.4M8 17.6v3M17.6 17.6v3', 'GR', 1.4)],
+  // ---- places
+  school:['red', _s('M12 6.4V2.4', 'GRD', 1) + _f('M12 2.4h4l-1 1.2 1 1.2h-4Z', 'R') + _r(3, 11, 18, 10, 1, 'TAN') + _f('M7.4 11 12 6.4l4.6 4.6Z', 'R') + _c(12, 13.4, 1.6, 'W') + _s('M12 12.6v.8l.6.4', 'D', .7) + _r(10.5, 16, 3, 5, .5, 'BR') + _r(4.6, 13, 3, 3, .5, 'B') + _r(16.4, 13, 3, 3, .5, 'B') + _r(2.4, 10.4, 19.2, 1.4, .6, 'BRD')],
+  hospital:['red', _r(4, 6, 16, 15.4, 1.6, 'W') + _r(10.5, 8, 3, 8, .5, 'R') + _r(8, 10.5, 8, 3, .5, 'R') + _r(10, 17.4, 4, 4, .6, 'LB') + _r(5.6, 17.4, 2.4, 2.4, .4, 'LB') + _r(16, 17.4, 2.4, 2.4, .4, 'LB') + _r(3.4, 5, 17.2, 2, 1, 'GR')],
+  office:['blue', _r(13, 8, 8, 13.4, 1, 'BD') + _r(4, 3, 10, 18.4, 1, 'B') + [5, 8.4, 11.8, 15.2].map(y => _r(5.6, y, 2.4, 2, .3, 'LB') + _r(9.8, y, 2.4, 2, .3, 'LB')).join('') + [10, 13.4, 16.8].map(y => _r(14.8, y, 4.4, 1.6, .3, 'LB', .7)).join('') + _r(7.6, 18.4, 2.8, 3, .3, 'BD')],
+  park:['green', _s('M18 21v-6', 'BR', 1.4) + _c(18, 11, 3.6, 'G') + _c(16.4, 9, 2.4, 'GD') + _r(2.5, 10.4, 12, 1.8, .6, 'BR') + _r(2.5, 13.2, 12, 1.8, .6, 'BR') + _r(2, 15.8, 13, 1.8, .6, 'BRD') + _s('M4 17.6v3.6M13 17.6v3.6', 'GRD', 1.4) + _r(1.5, 21, 21, 1.4, .7, 'G', .6)],
+  // ---- objects
+  backpack:['orange', _s('M9.4 3.6a2.6 2.6 0 0 1 5.2 0', 'OD', 1.6) + _f('M5.6 9a5 5 0 0 1 5-5h2.8a5 5 0 0 1 5 5v10.6a1.8 1.8 0 0 1-1.8 1.8H7.4a1.8 1.8 0 0 1-1.8-1.8Z', 'O') + _r(8, 13, 8, 6.4, 1.6, 'OD') + _s('M8.4 13h7.2', 'Y', 1.1) + _r(11.2, 12, 1.6, 2.4, .6, 'Y') + _s('M7.6 8.4h8.8', 'W', 1, .45)],
+  watch:['gray', _r(9, 2.5, 6, 19, 2, 'BRD') + _c(12, 12, 6, 'GR') + _c(12, 12, 4.8, 'W') + _s('M12 9.2V12l2 1.4', 'D', 1.2) + _r(17.6, 11, 1.6, 2, .5, 'GR') + _c(12, 12, .6, 'R')],
+  magnifier:['blue', _s('M14.2 14.2 20.5 20.5', 'BR', 3) + _c(10, 10, 4.6, 'LB', .55) + _sc(10, 10, 5.4, 'GRD', 2.2) + _s('M7.4 8.6a3 3 0 0 1 2-1.8', 'W', 1.2, .85)],
+  books:['red', _r(4, 16, 16, 4.6, 1, 'B') + _r(16.6, 16.8, 2.6, 3, .4, 'W') + _r(5.6, 11.4, 14, 4.6, 1, 'R') + _r(16.2, 12.2, 2.6, 3, .4, 'W') + _r(3.4, 6.8, 15, 4.6, 1, 'G') + _r(15, 7.6, 2.6, 3, .4, 'W') + _s('M6 18.2h6M7.6 13.6h5.4M5.4 9h6', 'W', .9, .55)],
+  lipstick:['pink', _f('M9.4 11.4V6.4l5.2-3.2v8.2Z', 'R') + _r(8.6, 11.2, 6.8, 2.8, .5, 'Y') + _r(8, 13.8, 8, 7.8, 1.2, 'P') + _s('M9.8 15.6v4', 'W', 1, .45)],
+  shoppingbag:['pink', _s('M9 9.6V7a3 3 0 0 1 6 0v2.6', 'PKD', 1.6) + _f('M5 8h14l-1 13.5H6Z', 'PK') + _c(9, 10.2, .9, 'PKD') + _c(15, 10.2, .9, 'PKD') + _s('M6.8 18.6h10.4', 'W', 1, .45)],
+  toiletpaper:['gray', _f('M10 16.6h6.6V22H10Z', 'W') + _s('M10 19.2h6.6', 'GR', .7) + _c(10, 10.4, 6.6, 'W') + _sc(10, 10.4, 6.6, 'GR', .7) + _c(10, 10.4, 2.4, 'TAN') + _c(10, 10.4, 1.2, 'BRD') + _f('M10 16.6c3.6 0 6.6-2.8 6.6-6.2v6.2Z', 'W') + _s('M5.4 7.4a5 5 0 0 1 2.6-2.4', 'GR', 1, .6)],
+  paperclip:['gray', _s('M15.5 7v9a3.5 3.5 0 0 1-7 0V5.5a2.5 2.5 0 0 1 5 0V15a1 1 0 0 1-2 0V7', 'GR', 1.8)],
+  plug:['green', _r(9, 3.4, 2, 5, .5, 'GR') + _r(13, 3.4, 2, 5, .5, 'GR') + _r(7, 8.4, 10, 8, 2.5, 'W') + _f('M12.8 9.6l-2.4 3.6h2l-.8 2.6 2.6-3.8h-2Z', 'Y') + _s('M12 16.4v2.2c0 2-2 2.4-4 2.4', 'GRD', 1.8)],
+  // ---- weather & symbols
+  rain:['blue', _c(8.2, 9.6, 4, 'W') + _c(13, 7.6, 5, 'W') + _c(17, 10.2, 3.6, 'W') + _r(4.4, 9.6, 16.2, 4.6, 2.3, 'W') + [[8, 17.4], [12, 19.6], [16, 17.4]].map(([x, y]) => _f(`M${x} ${y - 2.4}c.9 1.2 1.4 2 1.4 2.8a1.4 1.4 0 0 1-2.8 0c0-.8.5-1.6 1.4-2.8Z`, 'B')).join('')],
+  storm:['indigo', _c(8.2, 9, 4, 'GR') + _c(13, 7, 5, 'GR') + _c(17, 9.6, 3.6, 'GR') + _r(4.4, 9, 16.2, 4.6, 2.3, 'GR') + _f('M12.6 12.6 9 18h3l-1.4 4.6L16.2 16h-3.2l1.4-3.4Z', 'Y')],
+  xmark:['red', _s('M6.2 6.2l11.6 11.6M17.8 6.2 6.2 17.8', 'R', 3.4)],
+  plus:['green', _s('M12 5v14M5 12h14', 'G', 3.4)],
+  question:['red', _s('M8.6 8.4a3.4 3.4 0 1 1 5 3c-1 .6-1.6 1.4-1.6 2.6v.6', 'R', 2.6) + _c(12, 18.6, 1.6, 'R')],
+  warning:['gold', _f('M10.6 3.4a1.6 1.6 0 0 1 2.8 0l8.2 14.6a1.6 1.6 0 0 1-1.4 2.4H3.8a1.6 1.6 0 0 1-1.4-2.4Z', 'Y') + _s('M12 9v5', 'D', 2) + _c(12, 17, 1.2, 'D')],
 };
 const HICON_GROUPS = [
-  ['Self-care', 'water glass pill heart tooth toothbrush soap lotion shower bath snow bed sleepmask zzz moon sunrise sun alarm scale eye glasses scissors razor comb nailpolish thermometer stethoscope bandage breathe meditate lotus brain floss mirror towel hairdryer vitamins facemask perfume slippers'],
-  ['Fitness', 'dumbbell kettlebell plate muscle pulse battery sneaker run walk steps stretch yogamat bike swim hike rope boxing ball soccer football baseball tennis volleyball golf skate flame zap trophy medal target timer band roller hockey ski surf climb rowing whistle'],
-  ['Food & drink', 'apple banana avocado broccoli carrot strawberry cherries orange grapes watermelon lemon leaf salad egg fish protein steak bread rice cheese burger pizza donut icecream cookie cake coffee tea smoothie milk shaker bottle chef cart nosugar nodrink nosmoke bowl nuts sushi taco corn chili honey juice soup mealprep cutlery'],
-  ['Mind & learning', 'book journal pencil bulb study globe code calculator puzzle chess rocket telescope sparkle star smile phoneoff hourglass clock newspaper sticky language gratitude'],
-  ['People & pets', 'chat call friends mail gift party balloon crown paw cat dog family baby hand'],
-  ['Home & chores', 'home broom laundry washer dishes sponge shirt trash sprout plant cactus watering tree flower sunflower hammer wrench box sofa candle key bell vacuum iron mop recycle fridge'],
-  ['Outdoors', 'rainbow cloud umbrella tent campfire beach wave mushroom butterfly bird maple compass map mountain snowman pumpkin xmastree'],
-  ['Work & money', 'briefcase laptop smartphone money coins card piggy wallet chartup folder inbox receipt calendar checklist presentation printer'],
+  ['Self-care', 'water glass pill heart tooth toothbrush soap lotion shower bath snow bed sleepmask zzz moon sunrise sun alarm scale eye glasses scissors razor comb nailpolish thermometer stethoscope bandage breathe meditate lotus brain floss mirror towel hairdryer vitamins facemask perfume slippers lipstick'],
+  ['Moods', 'grin smile hearteyes cool sleepy thinking sad'],
+  ['Fitness', 'dumbbell kettlebell plate muscle pulse battery sneaker run walk steps stretch yogamat bike swim hike rope boxing ball soccer football baseball tennis volleyball golf skate flame zap trophy medal target timer band roller hockey ski surf climb rowing whistle pingpong badminton frisbee iceskate'],
+  ['Food & drink', 'apple banana avocado broccoli carrot strawberry cherries orange grapes watermelon lemon leaf salad egg fish protein steak bread rice cheese burger pizza donut icecream cookie cake coffee tea smoothie milk shaker bottle chef cart nosugar nodrink nosmoke bowl nuts sushi taco corn chili honey juice soup mealprep cutlery sandwich pancakes ramen peach pineapple blueberries tomato'],
+  ['Mind & learning', 'book journal pencil bulb study globe code calculator puzzle chess rocket telescope sparkle star phoneoff hourglass clock newspaper sticky language gratitude books backpack magnifier'],
+  ['People & pets', 'chat call friends mail gift party balloon crown paw cat dog family baby hand clap hello thanks fist rabbit turtle horse bee owl frog penguin fox'],
+  ['Home & chores', 'home broom laundry washer dishes sponge shirt trash sprout plant cactus watering tree flower sunflower hammer wrench box sofa candle key bell vacuum iron mop recycle fridge toiletpaper shoppingbag plug'],
+  ['Outdoors', 'rainbow cloud umbrella tent campfire beach wave mushroom butterfly bird maple compass map mountain snowman pumpkin xmastree rain storm park'],
+  ['Work & money', 'briefcase laptop smartphone money coins card piggy wallet chartup folder inbox receipt calendar checklist presentation printer watch paperclip office'],
   ['Fun & hobbies', 'music headphones guitar piano drum mic palette brush camera film popcorn ticket tv game dice yarn brick cards bowling fishing kite theater'],
-  ['Travel', 'car bus train plane suitcase pin boat scooter fuel passport'],
-  ['Symbols', 'check gem clover infinity peace lock thumbs flag shield hundred']
+  ['Travel', 'car bus train plane suitcase pin boat scooter fuel passport school hospital'],
+  ['Symbols', 'check gem clover infinity peace lock thumbs flag shield hundred xmark plus question warning']
 ].map(([n, ids]) => [n, ids.split(' ')]);
 const HICON_ORDER = [...new Set([...HICON_GROUPS.flatMap(g => g[1]), ...Object.keys(HICONS)])].filter(i => HICONS[i]);
 const hIcon = (t, sz = '') => { const ic = HICONS[t.i]; if (!ic) return `<span class="hic${sz}" style="--c:${HC.gold}">${esc(t.e || '⭐')}</span>`;
