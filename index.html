@@ -531,12 +531,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.11.03.4"></script>
+<script src="exercises.js?v=2026.11.03.5"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.11.03.4';
+const APP_VERSION = '2026.11.03.5';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1702,6 +1702,13 @@ function openBwHistory(){
     ${[...state.bwLog].reverse().map(l => `<div class="prow"><span>${dstr(l.date)}</span><span class="row gap"><b>${l.w} lb</b><button class="icon-btn sm" data-act="bwDel" data-d="${l.date}">✕</button></span></div>`).join('') || '<p class="mute">No weigh-ins yet.</p>'}`);
 }
 
+// Keep the bounty banner in a live workout in step with the sets as you type them
+function refreshBountyLive(){
+  const els = document.querySelectorAll('.bty-mini'); if (!els.length) return;
+  const was = els[0].classList.contains('ready'), html = bountyCard(true);
+  els.forEach(el => { el.outerHTML = html; });
+  if (!was && document.querySelector('.bty-mini.ready')){ toast('🎯 Bounty done! Finish your workout to claim it'); if (navigator.vibrate) navigator.vibrate(30); }
+}
 function livePR(i, j){
   const e = state.active.entries[i], ex = EX[e.ex], s = e.sets[j], pb = bestBefore(e.ex);
   const ns = [...document.querySelectorAll(`[data-row="${i}-${j}"] .n`)]; if (!ns.length) return;
@@ -4746,7 +4753,7 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('input', e => {
   const t = e.target, d = t.dataset;
-  if (d.f && state.active){ state.active.entries[+d.e].sets[+d.s][d.f] = t.value; save(); livePR(+d.e, +d.s); }
+  if (d.f && state.active){ state.active.entries[+d.e].sets[+d.s][d.f] = t.value; save(); livePR(+d.e, +d.s); refreshBountyLive(); }
 
   else if (t.id === 'wname' && state.active){ state.active.name = t.value; save(); }
   else if (d.sf && ui.edit){ const day = ui.edit.days[+d.d]; if (d.sf === 'dayName') day.name = t.value; else day.items[+d.i][d.sf] = d.sf === 'sets' ? +t.value || '' : t.value; }
