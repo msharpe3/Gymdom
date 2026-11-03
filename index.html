@@ -531,12 +531,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.11.03.2"></script>
+<script src="exercises.js?v=2026.11.03.3"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.11.03.2';
+const APP_VERSION = '2026.11.03.3';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -3419,7 +3419,7 @@ function nightShiftCard(){
     : nsOpen() ? 'The night shift is on. Finish a workout before 4 AM for a 30% shot at a Cursed Chest.'
     : 'Finish a workout between 9 PM and 4 AM for a 30% shot at a Cursed Chest.';
   return `<div class="card ns-card" data-act="nightShift"><div class="ns-stars"></div><div class="row between"><small class="kick">🌙 NIGHT SHIFT${nsOpen() && !nsFoundTonight() ? ' · OPEN NOW' : ''}</small><small class="mute">${all.length - m.length}/${all.length} found</small></div>
-    <div class="season-next"><div class="door-ico ns-chest">${CANDY_BUCKET}</div><div style="flex:1;min-width:0"><h3 style="margin:0">${m.length} event item${m.length === 1 ? '' : 's'} still out there</h3><small class="mute">${msg}</small></div></div></div>`;
+    <div class="season-next"><div class="door-ico ns-chest">${SCYTHE}</div><div style="flex:1;min-width:0"><h3 style="margin:0">${m.length} event item${m.length === 1 ? '' : 's'} still out there</h3><small class="mute">${msg}</small></div></div></div>`;
 }
 function openNightShift(){
   const all = nsAll(), t = muscleTotals(), sk = equippedSkin(); all.sort((a, b) => a.got - b.got);
@@ -3459,6 +3459,17 @@ const GIFT_BOX = `<svg viewBox="0 0 100 100" class="bucket" aria-hidden="true"><
   <rect x="44" y="30" width="12" height="60" fill="#f8fafc"/><rect x="16" y="40" width="68" height="5" fill="#000" opacity=".15"/>
   <path d="M50,30 C40,14 24,16 28,26 C31,32 42,31 50,30 C58,31 69,32 72,26 C76,16 60,14 50,30Z" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
   ${[[26, 62], [72, 74], [30, 82], [70, 54]].map(([x, y]) => `<path d="M${x},${y - 4} V${y + 4} M${x - 4},${y} H${x + 4} M${x - 3},${y - 3} L${x + 3},${y + 3} M${x + 3},${y - 3} L${x - 3},${y + 3}" stroke="#bfdbfe" stroke-width="1.6" stroke-linecap="round"/>`).join('')}</svg>`;
+// Night Shift: the reaper's scythe (curved wooden snath, two grips, steel blade sweeping left)
+const SCYTHE = `<svg viewBox="0 0 100 100" class="bucket" aria-hidden="true"><defs><linearGradient id="scyB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f1f4fa"/><stop offset="1" stop-color="#9aa3b8"/></linearGradient></defs>
+    <path d="M27,94 C35,64 48,36 63,12" fill="none" stroke="#3b2818" stroke-width="8.4" stroke-linecap="round"/>
+  <path d="M27,94 C35,64 48,36 63,12" fill="none" stroke="#8a5a32" stroke-width="5.6" stroke-linecap="round"/>
+  <path d="M29.6,86 C33,74 37,64 41,55" fill="none" stroke="#b07a48" stroke-width="1.6" stroke-linecap="round" opacity=".7"/>
+  <path d="M37,68 L52,73" stroke="#3b2818" stroke-width="7" stroke-linecap="round"/><path d="M37,68 L52,73" stroke="#a06a3c" stroke-width="4.4" stroke-linecap="round"/>
+  <path d="M48,42 L61,46" stroke="#3b2818" stroke-width="6.4" stroke-linecap="round"/><path d="M48,42 L61,46" stroke="#a06a3c" stroke-width="4" stroke-linecap="round"/>
+  <path d="M68,12 C48,-3 12,4 1,48 C8,42 15,37 22,33 C32,21 47,16 62,22 Z" fill="url(#scyB)" stroke="#5b6378" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M7,36 C17,14 38,5 60,9" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".85"/>
+  <rect x="56" y="10" width="13" height="10" rx="2.4" transform="rotate(32 62.5 15)" fill="#2b2f3a" stroke="#0b0a12" stroke-width="1.4"/>
+  <circle cx="62.5" cy="15" r="2" fill="#c9a227"/></svg>`;
 const seasonMystery = se => se && se.gift ? GIFT_BOX : CANDY_BUCKET;
 const CANDY_BUCKET = `<svg viewBox="0 0 100 100" class="bucket" aria-hidden="true"><path d="M20,44 C20,10 80,10 80,44" fill="none" stroke="#1c1a22" stroke-width="5.5" stroke-linecap="round"/>
   <path d="M50,30 C66,28 84,32 88,52 C92,72 84,90 66,93 C60,94 55,92 50,92 C45,92 40,94 34,93 C16,90 8,72 12,52 C16,32 34,28 50,30Z" fill="#f7931e"/>
