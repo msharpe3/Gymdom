@@ -531,12 +531,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.11.03.3"></script>
+<script src="exercises.js?v=2026.11.03.4"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.11.03.3';
+const APP_VERSION = '2026.11.03.4';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1434,7 +1434,8 @@ function bountyFor(dk, roll){
       if (!last[e.ex]){ const top = Math.max(...e.sets.map(x => +x.w || 0)); if (top > 0) last[e.ex] = {w:top, reps:e.sets.filter(x => (+x.w || 0) >= top).reduce((a, x) => a + +x.r, 0), ton:e.sets.reduce((a, x) => a + (+x.w || 0) * +x.r, 0)}; } } }
   const lifts = Object.keys(freq).filter(id => freq[id] >= 2 && last[id]).sort((a, b) => freq[b] - freq[a]).slice(0, 8);
   const t = pick(lifts.length ? ['reps', 'heavy', 'tonnage', 'fresh', 'pr'] : ['fresh', 'fresh', 'pr']);
-  if (t === 'fresh' || (t === 'pr' && !state.workouts.length)){ const hit = lastHit(), rec = recovery(dk + 12 * 36e5);
+  if (t === 'fresh' || (t === 'pr' && !state.workouts.length)){ const hit = {}, rec = recovery(dk); // only workouts before today, so the target can't change once you start on it
+    state.workouts.forEach(w => { if (w.date < dk) for (const m in w.xp) if (w.xp[m] > 0 && !(hit[m] > w.date)) hit[m] = w.date; });
     const ms = Object.keys(MUSCLES).filter(m => rec[m].pct >= 1).sort((a, b) => (hit[a] || 0) - (hit[b] || 0)).slice(0, 4), m = pick(ms.length ? ms : Object.keys(MUSCLES));
     return {t:'fresh', m, n:6, icon:'🎯', title:`Do 6 sets for ${MUSCLES[m]}`, sub:`It's fully recovered and${hit[m] ? ` hasn't been trained since ${dstr(hit[m])}` : ' waiting for its first session'}`}; }
   if (t === 'pr') return {t:'pr', n:1, icon:'🏆', title:'Set a PR on any lift', sub:'Beat your best estimated 1-rep max on anything'};
