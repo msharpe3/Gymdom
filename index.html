@@ -531,12 +531,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.11.03.5"></script>
+<script src="exercises.js?v=2026.11.03.6"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.11.03.5';
+const APP_VERSION = '2026.11.03.6';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -751,16 +751,16 @@ X('dead_bug','Dead Bug','bw','core',['abs'],['obliques'],'Lower back pressed dow
 X('knee_raise','Hanging Knee Raise','bw','core',['abs'],['obliques'],'Dead hang|Knees to chest|No swinging',.25),
 X('decline_situp','Decline Sit-Up','bw','core',['abs'],['obliques'],'Feet hooked|Curl up to knees|Lower with control',.4),
 // ---- machines ----
-X('hs_chest','Plate-Loaded Chest Press','mc','push_h',['chest'],['triceps','shoulders'],'Handles at mid-chest|Press out and slightly together|Control the stretch'),
+X('hs_chest','Iso-Lateral Chest Press (Hammer Strength)','mc','push_h',['chest'],['triceps','shoulders'],'Handles at mid-chest|Press out and slightly together|Control the stretch'),
 X('decline_machine','Decline Machine Press','mc','push_h',['chest'],['triceps'],'Handles at lower chest|Press down and out|Slow return'),
 X('smith_incline','Smith Machine Incline Press','mc','push_h2',['chest'],['shoulders','triceps'],'Bench at 30°|Bar to upper chest|Press straight up'),
 X('seated_dip','Seated Dip Machine','mc','push_h2',['triceps','chest'],['shoulders'],'Sit tall, grip handles at sides|Press down to full lockout|Let handles rise to ~90° elbows'),
 X('fly_machine','Chest Fly Machine','mc','chest_iso',['chest'],['shoulders'],'Elbows slightly bent|Bring handles together in front|Stretch back with control'),
 X('smith_ohp','Smith Machine Shoulder Press','mc','push_v',['shoulders'],['triceps'],'Bench upright, bar in front of face|Press to just short of lockout|Lower to chin height'),
-X('hs_shoulder','Plate-Loaded Shoulder Press','mc','push_v',['shoulders'],['triceps'],'Handles at shoulder height|Press up and slightly in|Back flat on pad'),
+X('hs_shoulder','Iso-Lateral Shoulder Press (Hammer Strength)','mc','push_v',['shoulders'],['triceps'],'Handles at shoulder height|Press up and slightly in|Back flat on pad'),
 X('machine_pd','Plate-Loaded Pulldown','mc','pull_v',['lats'],['biceps'],'Thighs locked under pads|Pull handles to upper chest|Let arms stretch fully'),
 X('high_row','Machine High Row','mc','pull_v',['lats','traps'],['biceps'],'Chest on pad|Pull down and back to chest|Squeeze shoulder blades'),
-X('hs_row','Plate-Loaded Row','mc','pull_h',['lats','traps'],['biceps'],'Chest on pad|Row elbows past your torso|Pause and squeeze'),
+X('hs_row','Iso-Lateral Row (Hammer Strength)','mc','pull_h',['lats','traps'],['biceps'],'Chest on pad|Row elbows past your torso|Pause and squeeze'),
 X('low_row','Machine Low Row','mc','pull_h',['lats'],['biceps','traps'],'Sit tall|Pull handles to lower ribs|Elbows close to body'),
 X('pullover_machine','Pullover Machine','mc','lat_iso',['lats'],['chest','triceps'],'Elbows on pads|Sweep arms down to stomach|Big stretch overhead'),
 X('machine_shrug','Machine Shrug','mc','traps',['traps'],['forearms'],'Arms straight|Shrug straight up|Hold a second at the top'),
@@ -774,6 +774,27 @@ X('standing_curl','Standing Leg Curl','mc','ham_iso',['hamstrings'],[],'One leg 
 X('hip_thrust_machine','Hip Thrust Machine','mc','glute',['glutes'],['hamstrings'],'Pad across hips|Drive hips up through heels|Squeeze hard at the top'),
 X('kickback_machine','Glute Kickback Machine','mc','glute',['glutes'],['hamstrings'],'Chest on pad|Push platform back with heel|Don\'t arch your lower back'),
 X('abductor','Hip Abduction Machine','mc','glute',['glutes'],[],'Sit tall or lean forward slightly|Push knees out against pads|Control them back in'),
+// ---- more machines (assist:1 = counterweight machine: the weight you log is the help, so less is harder)
+X('assist_pullup','Assisted Pull-Up Machine','mc','pull_v',['lats'],['biceps','forearms'],'Kneel or stand on the pad|More weight on the stack = more help|Pull your chest toward the bar, full hang at the bottom',1),
+X('assist_dip','Assisted Dip Machine','mc','push_h2',['chest','triceps'],['shoulders'],'Kneel on the pad, lean slightly forward|More weight on the stack = more help|Lower until shoulders dip below elbows',1),
+X('seated_lp','Seated Leg Press','mc','squat',['quads','glutes'],['hamstrings'],'Back flat against the pad|Feet shoulder width, mid-platform|Lower to about 90° at the knee, don\'t lock out'),
+X('linear_hack','Linear Hack Press','mc','squat',['quads'],['glutes'],'Shoulders under the pads, back flat|Feet low on the platform for more quads|Deep, controlled descent'),
+X('kneel_curl','Kneeling Leg Curl','mc','ham_iso',['hamstrings'],['calves'],'Knee on the pad, hips square|Curl the heel to your glute|Slow on the way back'),
+X('tibia_raise','Tibia Raise Machine','mc','calf',['calves'],[],'Heels on the platform, pad over your feet|Pull toes up toward your shins|Pause at the top, lower slowly'),
+X('chest_row_mc','Chest-Supported Row Machine','mc','pull_h',['lats','traps'],['biceps'],'Chest stays on the pad|Pull elbows back past your ribs|Squeeze shoulder blades together'),
+X('multi_hip','Multi-Hip Machine','mc','glute',['glutes'],['hamstrings'],'Stand tall, hold the handles|Drive the working leg back against the pad|Control the return, no swinging'),
+X('hs_incline','Iso-Lateral Incline Press (Hammer Strength)','mc','push_h2',['chest'],['shoulders','triceps'],'Handles at upper-chest height|Press up and slightly in|Shoulder blades back on the pad'),
+X('hs_decline','Iso-Lateral Decline Press (Hammer Strength)','mc','push_h',['chest'],['triceps'],'Handles at lower chest|Press down and out|Slow on the way back'),
+X('hs_widechest','Iso-Lateral Wide Chest (Hammer Strength)','mc','push_h',['chest'],['shoulders','triceps'],'Wide grip, elbows out|Press in a wide arc|Big stretch at the bottom'),
+X('hs_frontpd','Iso-Lateral Front Pulldown (Hammer Strength)','mc','pull_v',['lats'],['biceps'],'Thighs locked under the pads|Pull handles to upper chest|Drive elbows down to your sides'),
+X('hs_widepd','Iso-Lateral Wide Pulldown (Hammer Strength)','mc','pull_v',['lats'],['biceps','traps'],'Wide grip|Pull elbows down and back|Full stretch at the top'),
+X('hs_lowrow','Iso-Lateral Low Row (Hammer Strength)','mc','pull_h',['lats'],['biceps','traps'],'Sit tall, chest up|Pull low toward your hips|Let shoulders reach forward on the return'),
+X('hs_highrow','Iso-Lateral High Row (Hammer Strength)','mc','pull_h',['lats','traps'],['shoulders','biceps'],'Handles above head height|Pull down and back to your chest|Squeeze upper back'),
+X('hs_dyrow','D.Y. Row (Hammer Strength)','mc','pull_h',['lats'],['biceps','traps'],'Chest on the pad, neutral grip|Pull elbows back toward hips|Pause, then lower slowly'),
+X('hs_legpress','Iso-Lateral Leg Press (Hammer Strength)','mc','squat',['quads','glutes'],['hamstrings'],'Back flat on the pad|Press through the whole foot|Each leg can work on its own'),
+X('hs_legext','Iso-Lateral Leg Extension (Hammer Strength)','mc','quad_iso',['quads'],[],'Knee lined up with the pivot|Extend fully, squeeze|Slow lowering'),
+X('hs_kneelcurl','Iso-Lateral Kneeling Leg Curl (Hammer Strength)','mc','ham_iso',['hamstrings'],['calves'],'Knee on the pad|Curl heel toward glute|Control the return'),
+X('hs_squatlunge','Ground Base Squat/Lunge (Hammer Strength)','mc','squat',['quads','glutes'],['hamstrings'],'Shoulders under the pads|Squat or step back into a lunge|Drive up through the whole foot'),
 X('adductor','Hip Adduction Machine','mc','quad_iso',['quads'],[],'Inner thighs against pads|Squeeze knees together|Counts toward Quads (inner thigh)'),
 X('donkey_calf','Donkey Calf Raise Machine','mc','calf',['calves'],[],'Hips under pad, slight hinge|Deep stretch at bottom|Rise onto big toes'),
 X('machine_curl','Machine Biceps Curl','mc','bi',['biceps'],[],'Elbows lined up with pivot|Curl all the way up|Slow lowering'),
@@ -786,9 +807,15 @@ X('captains_chair','Captain\'s Chair Leg Raise','bw','core',['abs'],['obliques']
 const IMG_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
 const LEVELS = {b:'Beginner', i:'Intermediate', e:'Expert'};
 const CATS = {str:'Strength', stretch:'Stretching', cardio:'Cardio', plyo:'Plyometrics', power:'Powerlifting', oly:'Olympic', strong:'Strongman'};
+const ASSIST = ['assist_pullup', 'assist_dip'];
+const BORROW = {assist_pullup:'pullup', assist_dip:'dip', seated_lp:'leg_press', linear_hack:'hack', kneel_curl:'leg_curl', chest_row_mc:'fx_Lying_T-Bar_Row',
+  hs_chest:'fx_Leverage_Chest_Press', hs_incline:'fx_Leverage_Incline_Chest_Press', hs_decline:'fx_Leverage_Decline_Chest_Press', hs_widechest:'fx_Leverage_Chest_Press', hs_shoulder:'fx_Leverage_Shoulder_Press',
+  hs_frontpd:'lat_pd', hs_widepd:'lat_pd', hs_row:'fx_Leverage_Iso_Row', hs_lowrow:'cable_row', hs_highrow:'fx_Leverage_Iso_Row', hs_dyrow:'fx_Leverage_Iso_Row', hs_legpress:'leg_press', hs_legext:'leg_ext', hs_kneelcurl:'leg_curl'};
 for (const [id, [img, steps, level, n]] of Object.entries(window.FX_MATCH || {})){ const e = EXL.find(x => x.id === id); if (e){ if (n) e.img = img; e.steps = steps; e.level = level; } }
+ASSIST.forEach(id => { const e = EXL.find(x => x.id === id); if (e) e.assist = 1; });
 for (const [id, name, eq, cat, level, p, s, steps, n, bw, nx] of (window.FX_EXTRA || []))
   EXL.push({id:'fx_' + id, name, eq, pat:'x', p, s, cue:'', bw, cat, level, steps, img: n ? id : null, nx: !!nx});
+for (const [id, src] of Object.entries(BORROW)){ const e = EXL.find(x => x.id === id), f = EXL.find(x => x.id === src); if (e && f && f.img && !e.img) e.img = f.img; }
 const EX = Object.fromEntries(EXL.map(e => [e.id, e]));
 const EQN = {bb:'Barbell',db:'Dumbbell',mc:'Machine',cb:'Cable',bw:'Bodyweight',kb:'Kettlebell',ez:'EZ Bar',band:'Bands',mb:'Medicine Ball',sball:'Stability Ball',foam:'Foam Roller',other:'Other',none:'No equipment'};
 // Full-screen start/finish photo: tap Start/Finish (or swipe) to flip, tap outside or ✕ to close
@@ -1245,7 +1272,7 @@ function save(){
 function saveLocal(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){} }
 
 /* ============ XP MATH ============ */
-const effW = (ex, s) => (+s.w || 0) + (ex.bw ? state.profile.bw * ex.bw : 0);
+const effW = (ex, s) => ex.assist ? Math.max(0, state.profile.bw - (+s.w || 0)) : (+s.w || 0) + (ex.bw ? state.profile.bw * ex.bw : 0);
 function workoutXP(w){
   const xp = {};
   for (const e of w.entries){
@@ -1318,6 +1345,9 @@ function tipFor(e){
   const m = String(e.target || '').match(/×\s*(\d+)(?:\s*-\s*(\d+))?/), hi = m ? +(m[2] || m[1]) : 12;
   const top = x => Math.max(...x.map(s => +s.w || 0)), repsAt = (x, w) => x.filter(s => (+s.w || 0) === w).map(s => +s.r);
   const maxW = top(ss[0]), rs = repsAt(ss[0], maxW);
+  if (ex.assist){ if (!maxW) return {text:`Last: ${rs.join('/')} reps unassisted — aim for ${Math.max(...rs) + 1}`};
+    const lo = Math.min(...ss[0].map(s => +s.w || 0)), lr = ss[0].filter(s => (+s.w || 0) === lo).map(s => +s.r);
+    return lr.every(r => r >= hi) ? {text:`Top of range hit — drop the assist to ${Math.max(0, lo - 10)} lb`, w:Math.max(0, lo - 10), kind:'up'} : {text:`Last: ${lo} lb assist ×${lr.join('/')} — aim for ×${Math.min(...lr) + 1}`, w:lo, kind:'hold'}; }
   if (ex.bw && !maxW) return {text:`Last: ${rs.join('/')} reps — aim for ${Math.max(...rs) + 1}`};
   const inc = ex.eq === 'db' || ex.eq === 'cb' ? 5 : ex.p.some(x => LOWER.includes(x)) ? 10 : 5;
   if (rs.every(r => r >= hi)) return {text:`Top of range hit — try ${maxW + inc} lb`, w:maxW + inc, kind:'up'};
@@ -4067,14 +4097,14 @@ function renderTrain(){
     const lastW = [...e.sets].reverse().find(s => +s.w)?.w || prev[0]?.w || '';
     h += `<div class="card${ssl[i] ? ' ss' : ''}">${ssl[i] ? `<div class="ss-tag">SUPERSET ${ssl[i]}</div>` : ''}<div class="ex-head"><button class="ex-open" data-act="exFocus" data-i="${i}" aria-label="Open ${esc(ex.name)}">${thumb(ex)}<i>⤢</i></button><div class="info"><b data-act="exFocus" data-i="${i}">${ex.name}</b><small class="mute">${e.target ? 'Target ' + esc(e.target) + ' · ' : ''}${EQN[ex.eq]}</small></div><button class="icon-btn sm" data-act="rmEntry" data-i="${i}">✕</button></div>
       ${tipRow(e, i)}${warmupRow(e, i)}
-      <div class="set-row hdr"><span>SET</span><span style="text-align:center">PREV</span><span style="text-align:center">${ex.bw?'+LB':'LB'}</span><span style="text-align:center">REPS</span><span></span></div>
+      <div class="set-row hdr"><span>SET</span><span style="text-align:center">PREV</span><span style="text-align:center">${ex.assist ? 'ASSIST' : ex.bw ? '+LB' : 'LB'}</span><span style="text-align:center">REPS</span><span></span></div>
       ${e.sets.map((s, j) => { const p = prev[j], isPR = pb !== null && +s.r > 0 && e1rm(ex, s) > pb + .01;
         return `<div class="set-row" data-row="${i}-${j}"><span class="n">${isPR ? '🏆' : j+1}</span><span class="prev">${p ? (ex.bw && !p.w ? 'BW' : p.w) + '×' + p.r : '—'}</span>
         <input type="number" inputmode="decimal" data-e="${i}" data-s="${j}" data-f="w" value="${esc(s.w)}" placeholder="${p ? p.w : ex.bw ? '0' : ''}">
         <input type="number" inputmode="numeric" data-e="${i}" data-s="${j}" data-f="r" value="${esc(s.r)}" placeholder="${p ? p.r : ''}">
         <button class="icon-btn sm" data-act="rmSet" data-i="${i}" data-s="${j}">−</button></div>`; }).join('')}
       <div class="ex-actions"><button class="btn ghost sm" data-act="addSet" data-i="${i}">+ Add set</button><button class="btn ghost sm" data-act="replaceEx" data-i="${i}">⇄ Replace</button>
-      ${ex.eq === 'bb' || ex.eq === 'ez' || ex.eq === 'mc' ? `<button class="btn ghost sm" data-act="plates" data-i="${i}">🏋 Plates</button>` : ''}
+      ${(ex.eq === 'bb' || ex.eq === 'ez' || ex.eq === 'mc') && !ex.assist ? `<button class="btn ghost sm" data-act="plates" data-i="${i}">🏋 Plates</button>` : ''}
       ${i < a.entries.length - 1 ? `<button class="btn ghost sm" data-act="ssToggle" data-i="${i}">${e.ss ? 'Unlink superset' : '⛓ Superset with next'}</button>` : ''}</div></div>`;
   });
   h += `<button class="btn ghost block" data-act="addEx">+ Add exercise</button>
@@ -4207,11 +4237,11 @@ function renderExf(top){
     ${ex.cue ? `<h3 class="exf-h">Form</h3><ol class="exf-cues">${ex.cue.split('|').map(c => `<li>${esc(c)}</li>`).join('')}</ol>` : ''}
     ${ex.steps && ex.steps.length ? `<details class="steps"${ex.cue ? '' : ' open'}><summary>Step-by-step instructions</summary><ol class="cues">${ex.steps.map(c => `<li>${esc(c)}</li>`).join('')}</ol></details>` : ''}
     <h3 class="exf-h">Your sets</h3><div class="hint" style="margin-bottom:8px">↑ ${esc(overloadHint(e))}</div>
-    <div class="set-row hdr"><span>SET</span><span style="text-align:center">PREV</span><span style="text-align:center">${ex.bw ? '+LB' : 'LB'}</span><span style="text-align:center">REPS</span><span></span></div>
+    <div class="set-row hdr"><span>SET</span><span style="text-align:center">PREV</span><span style="text-align:center">${ex.assist ? 'ASSIST' : ex.bw ? '+LB' : 'LB'}</span><span style="text-align:center">REPS</span><span></span></div>
     ${e.sets.map((s, j) => { const p = prev[j]; return `<div class="set-row" data-row="${f.i}-${j}"><span class="n">${j + 1}</span><span class="prev">${p ? (ex.bw && !p.w ? 'BW' : p.w) + '×' + p.r : '—'}</span>
       <input type="number" inputmode="decimal" data-e="${f.i}" data-s="${j}" data-f="w" value="${esc(s.w)}" placeholder="${p ? p.w : ex.bw ? '0' : ''}">
       <input type="number" inputmode="numeric" data-e="${f.i}" data-s="${j}" data-f="r" value="${esc(s.r)}" placeholder="${p ? p.r : ''}"><span></span></div>`; }).join('')}
-    <div class="row gap" style="margin-top:6px"><button class="btn ghost sm" data-act="exfAddSet">+ Add set</button>${ex.eq === 'bb' || ex.eq === 'ez' || ex.eq === 'mc' ? `<button class="btn ghost sm" data-act="plates" data-i="${f.i}">🏋 Plates</button>` : ''}<button class="btn ghost sm" data-act="exInfo" data-id="${ex.id}">Progress & details</button></div>
+    <div class="row gap" style="margin-top:6px"><button class="btn ghost sm" data-act="exfAddSet">+ Add set</button>${(ex.eq === 'bb' || ex.eq === 'ez' || ex.eq === 'mc') && !ex.assist ? `<button class="btn ghost sm" data-act="plates" data-i="${f.i}">🏋 Plates</button>` : ''}<button class="btn ghost sm" data-act="exInfo" data-id="${ex.id}">Progress & details</button></div>
     ${f.i < n - 1 ? `<button class="btn gold block" style="margin-top:14px" data-act="exfGo" data-v="1">Next: ${esc(EX[a.entries[f.i + 1].ex].name)} ›</button>` : `<button class="btn ghost block" style="margin-top:14px" data-act="closeSheet">Back to workout</button>`}`);
   $('#sheet').classList.add('exf'); $('#sheet').scrollTop = y;
 }
