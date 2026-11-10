@@ -85,6 +85,7 @@ svg.body .snow-fx{pointer-events:none}.aurora-fx{pointer-events:none}
 .ev-slider::-webkit-scrollbar{display:none}.ev-slide{flex:0 0 100%;scroll-snap-align:start;display:flex;padding:0 1px;box-sizing:border-box}.ev-slide>.card{flex:1;margin:0}
 .ev-dots{display:flex;justify-content:center;gap:7px;margin-top:8px}.ev-dots button{width:7px;height:7px;border-radius:50%;border:0;padding:0;background:var(--line);cursor:pointer;transition:all .2s}
 .ev-dots button.on{width:18px;border-radius:4px;background:var(--teal)}
+.me-tot{display:flex;align-items:baseline;gap:10px;margin:14px 0 6px}.me-tot b{font:700 20px 'Chakra Petch'}
 .map-seg{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:2px}
 .map-seg button{background:none;border:0;color:var(--mute);font:600 12px Inter;padding:6px 11px;border-radius:8px;cursor:pointer}.map-seg button.on{background:var(--teal);color:#06231f}
 .rec-line{display:flex;align-items:center;gap:8px;margin-top:10px;padding:9px 12px;border-radius:10px;background:color-mix(in srgb,var(--c) 12%,var(--panel2));font-size:13px}
@@ -531,12 +532,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.11.03.6"></script>
+<script src="exercises.js?v=2026.11.09.1"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.11.03.6';
+const APP_VERSION = '2026.11.09.1';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -2157,9 +2158,10 @@ async function backfillNutrition(){
 function openAddFood(meal, mode){
   stopScan();
   ui.foodMeal = meal; ui.foodMode = mode || ui.foodMode || 'search'; ui.foodEditRef = null;
-  const mn = MEALS.find(x => x[0] === meal)[1];
-  openSheet(`<div class="row between"><h3 style="margin:0">Add to ${mn}</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
-    <div class="chips" style="margin:12px 0">${[['search','Search'],['scan','Scan barcode'],['label','Scan label'],['meals','Saved meals'],['recent','Recent'],['manual','Manual']].map(([k, v]) => `<button class="chip${ui.foodMode === k ? ' on' : ''}" data-act="foodMode" data-v="${k}">${v}</button>`).join('')}</div>
+  const sm = ui.mealEdit != null && state.savedMeals[ui.mealEdit], mn = sm ? sm.name || 'saved meal' : MEALS.find(x => x[0] === meal)[1];
+  if (sm && ui.foodMode === 'meals') ui.foodMode = 'search';
+  openSheet(`<div class="row between"><h3 style="margin:0">Add to ${esc(mn)}</h3><button class="icon-btn" data-act="closeSheet">${sm ? '‹' : '✕'}</button></div>
+    <div class="chips" style="margin:12px 0">${[['search','Search'],['scan','Scan barcode'],['label','Scan label'],['meals','Saved meals'],['recent','Recent'],['manual','Manual']].filter(([k]) => !(sm && k === 'meals')).map(([k, v]) => `<button class="chip${ui.foodMode === k ? ' on' : ''}" data-act="foodMode" data-v="${k}">${v}</button>`).join('')}</div>
     <div id="foodArea"></div>`);
   ({search:foodSearchUI, scan:startScan, label:labelUI, meals:savedMealsUI, manual:() => manualUI(), recent:recentUI})[ui.foodMode]();
 }
@@ -2239,7 +2241,7 @@ function openAmount(food, edit, last){
     <div class="mgrid" style="margin-top:12px"><div><label class="lbl">Amount</label><input id="amtQ" type="number" inputmode="decimal" value="${ui.amt.qty}"></div>
     <div><label class="lbl">Unit</label><select id="amtU">${opts.map(([v, l]) => `<option value="${v}"${v === ui.amt.unit ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></div></div>
     <div id="amtPrev" style="margin-top:14px"></div>
-    <button class="btn gold block" style="margin-top:14px" data-act="amtSave">${edit ? 'Save changes' : 'Add to ' + MEALS.find(x => x[0] === ui.foodMeal)[1]}</button>
+    <button class="btn gold block" style="margin-top:14px" data-act="amtSave">${edit ? 'Save changes' : 'Add to ' + (ui.mealEdit != null && state.savedMeals[ui.mealEdit] ? esc(state.savedMeals[ui.mealEdit].name || 'meal') : MEALS.find(x => x[0] === ui.foodMeal)[1])}</button>
     ${food.code && !edit ? `<div class="row between" style="align-items:center">${food.saved ? '<small class="code-note" style="margin:10px 0 0">📌 Saved barcode · your usual amount</small>' : '<span></span>'}<button class="link-btn" data-act="codeFix">✏️ Fix numbers</button></div>` : ''}
     ${edit ? `<button class="btn danger block" style="margin-top:8px" data-act="foodDel">Delete</button>` : ''}
     <div id="amtLabel" style="margin-top:14px"></div>
@@ -2431,11 +2433,27 @@ function openTargets(){
 }
 function readTp(){ const fp = ui.tp; fp.age = $('#tpAge').value; fp.lb = $('#tpLb').value; fp.ft = $('#tpFt').value; fp.inch = $('#tpIn').value; return fp; }
 /* ============ SAVED MEALS ============ */
+const fBucket = m => { if (ui.mealEdit != null && state.savedMeals[ui.mealEdit]) return state.savedMeals[ui.mealEdit].items; const day = foodDay(); return day[m] = day[m] || []; };
+const foodDone = () => { if (ui.mealEdit != null) openMealEdit(); else closeSheet(); render(); };
+function openMealEdit(){
+  const i = ui.mealEdit, m = state.savedMeals[i]; if (!m){ ui.mealEdit = null; return; }
+  stopScan(); ui.foodEditRef = null; const t = sumEntries(m.items);
+  openSheet(`<div class="meal-ed"><div class="row between"><h3 style="margin:0">Edit saved meal</h3><button class="icon-btn" data-act="mealEditDone">✓</button></div>
+    <label class="lbl">Name</label><input id="meName" value="${esc(m.name)}" placeholder="Meal name">
+    <div class="me-tot"><b>${fmt(t.k)} Cal</b><small class="mute">${Math.round(t.p)}P · ${Math.round(t.c)}C · ${Math.round(t.f)}F · ${m.items.length} item${m.items.length === 1 ? '' : 's'}</small></div>
+    ${m.items.length ? m.items.map((e, j) => `<div class="frow" data-act="mealItemEdit" data-i="${j}"><span><b>${esc(e.n)}</b><br><small class="mute">${esc(e.a || '')}</small></span>
+      <span class="row gap"><span class="fk">${fmt(e.k)}<small> Cal</small><br><small class="mute">${Math.round(e.p)}P · ${Math.round(e.c)}C · ${Math.round(e.f)}F</small></span><button class="icon-btn sm" data-act="mealItemDel" data-i="${j}" aria-label="Remove">✕</button></span></div>`).join('')
+      : '<p class="mute">No foods in this meal yet.</p>'}
+    ${m.items.length ? '<small class="mute h-hint">Tap a food to change the amount</small>' : ''}
+    <button class="btn ghost block" style="margin-top:12px" data-act="mealItemAdd">+ Add food</button>
+    <button class="btn gold block" style="margin-top:8px" data-act="mealEditDone">Done</button></div>`);
+  $('#meName').addEventListener('input', e => { m.name = e.target.value; save(); });
+}
 function savedMealsUI(){
   const ms = state.savedMeals;
   $('#foodArea').innerHTML = ms.length ? ms.map((m, i) => { const t = sumEntries(m.items);
     return `<div class="frow meal" data-act="mealUse" data-i="${i}"><span><b>${esc(m.name)}</b><br><small class="mute">${m.items.length} item${m.items.length === 1 ? '' : 's'} · ${fmt(t.k)} Cal · ${Math.round(t.p)}P ${Math.round(t.c)}C ${Math.round(t.f)}F</small></span>
-      <span class="row gap"><span class="sr">+</span><button class="icon-btn sm" data-act="mealDel" data-i="${i}" aria-label="Delete saved meal">✕</button></span></div>`; }).join('') + (ms.length > 1 ? '<small class="mute h-hint">Hold a meal to move it</small>' : '')
+      <span class="row gap"><span class="sr">+</span><button class="icon-btn sm" data-act="mealEdit" data-i="${i}" aria-label="Edit saved meal">✎</button><button class="icon-btn sm" data-act="mealDel" data-i="${i}" aria-label="Delete saved meal">✕</button></span></div>`; }).join('') + (ms.length > 1 ? '<small class="mute h-hint">Hold a meal to move it</small>' : '')
     : '<p class="mute">No saved meals yet. Log a meal, then tap <b>Save meal</b> on it to reuse it here with one tap.</p>';
 }
 function openSaveMeal(m){
@@ -3982,7 +4000,8 @@ document.addEventListener('mousemove', e => { if (wd) wdMove(e.clientX, e.client
 document.addEventListener('mouseup', wdUp);
 /* ============ UI HELPERS ============ */
 function openSheet(html){ $('#sheet').classList.remove('exf'); $('#sheet').innerHTML = html; $('#sheetWrap').classList.add('open'); $('#sheet').scrollTop = 0; }
-function closeSheet(){ $('#sheetWrap').classList.remove('open'); ui.pick = null; stopScan();
+function closeSheet(){ if (ui.mealEdit != null && !document.querySelector('#sheet .meal-ed')){ stopScan(); return openMealEdit(); }
+  ui.mealEdit = null; $('#sheetWrap').classList.remove('open'); ui.pick = null; stopScan();
   if (ui.exf){ ui.exf = null; clearInterval(ui.exfT); $('#sheet').classList.remove('exf'); if (ui.tab === 'train') render(); } }
 $('#sheetWrap').addEventListener('click', e => { if (e.target.id === 'sheetWrap') closeSheet(); });
 let toastT;
@@ -4581,13 +4600,13 @@ const ACT = {
   foodMore: () => { ui.foodN = (ui.foodN || 30) + 30; renderFoodRes(); },
   facts: d => openFacts(d.v),
   foodPick: d => { const list = d.list === 'usda' ? ui.foodList : d.list === 'local' ? ui.quickList : d.list === 'off' ? ui.offList : ui.recentList; const f = list && list[+d.i]; if (!f) return;
-    if (f.fixed){ const day = foodDay(); (day[ui.foodMeal] = day[ui.foodMeal] || []).push({n:f.name, a:f.a || '', ...f.fixed, ...(f.x ? {x:{...f.x}} : {}), m:1}); rememberFood(f); save(); closeSheet(); render(); toast('Added'); }
+    if (f.fixed){ fBucket(ui.foodMeal).push({n:f.name, a:f.a || '', ...f.fixed, ...(f.x ? {x:{...f.x}} : {}), m:1}); rememberFood(f); save(); foodDone(); toast('Added'); }
     else openAmount(f); },
   amtSave: () => { const {food, edit, tot} = ui.amt; if (!(amtGrams() > 0)) return toast('Enter an amount');
     const e = {n:food.name, a:amtLabel(), q:+ui.amt.qty, u:ui.amt.unit, k:r1(tot.k), p:r1(tot.p), c:r1(tot.c), f:r1(tot.f), ...(food.n ? {x:scaleN(food.n, amtGrams())} : {}), d:{per:food.per, n:food.n, sv:food.sv, src:food.src, code:food.code}};
-    const day = foodDay(); if (edit) day[edit.m][edit.i] = e; else (day[ui.foodMeal] = day[ui.foodMeal] || []).push(e);
+    if (edit) fBucket(edit.m)[edit.i] = e; else fBucket(ui.foodMeal).push(e);
     if (food.code && !edit) state.codes[food.code] = {kind:'off', food:{name:food.name, per:food.per, n:food.n, sv:food.sv, src:food.src, code:food.code}, q:+ui.amt.qty, u:ui.amt.unit, t:Date.now()};
-    rememberFood(food); ui.foodEditRef = null; save(); closeSheet(); render(); toast(edit ? 'Updated' : 'Added'); },
+    rememberFood(food); ui.foodEditRef = null; save(); foodDone(); toast(edit ? 'Updated' : 'Added'); },
   manualSave: () => { const name = $('#mName').value.trim(); const v = id => r1(+$(id).value || 0);
     if (!name) return toast('Give the food a name'); const fixed = {k:v('#mK'), p:v('#mP'), c:v('#mC'), f:v('#mF')}; if (!fixed.k && !fixed.p && !fixed.c && !fixed.f) return toast('Enter at least the calories');
     const x = {}; MANUAL_EXTRA.forEach(([k]) => { const el = $('#mx_' + k), v = el && el.value.trim(); if (v !== '' && v != null && isFinite(+v)) x[k] = +v; });
@@ -4595,10 +4614,10 @@ const ACT = {
     if (ui.manualLabel){ if (!(sv > 0)) return toast('Enter how many servings you had'); // label scan: scale one serving up to what was eaten
       for (const k in fixed) fixed[k] = r1(fixed[k] * sv); for (const k in x) x[k] = r1(x[k] * sv);
       amt = sv === 1 ? amt : !amt || amt === '1 serving' ? `${sv} servings` : `${sv} × ${amt}`; }
-    const e = {n:name, a:amt, ...fixed, ...(Object.keys(x).length ? {x} : {}), m:1}, day = foodDay(), ed = ui.foodEditRef;
-    if (ed) day[ed.m][ed.i] = e; else (day[ui.foodMeal] = day[ui.foodMeal] || []).push(e);
+    const e = {n:name, a:amt, ...fixed, ...(Object.keys(x).length ? {x} : {}), m:1}, ed = ui.foodEditRef;
+    if (ed) fBucket(ed.m)[ed.i] = e; else fBucket(ui.foodMeal).push(e);
     const code = !ed && ui.scanCode; if (code) state.codes[code] = {kind:'man', name, a:perA, per:one, ...(Object.keys(x1).length ? {x:x1} : {}), sv, t:Date.now()};
-    ui.scanCode = null; rememberFood({name, a:e.a, fixed, ...(e.x ? {x:e.x} : {})}); ui.foodEditRef = null; save(); closeSheet(); render(); toast(ed ? 'Updated' : code ? 'Added · barcode saved' : 'Added'); },
+    ui.scanCode = null; rememberFood({name, a:e.a, fixed, ...(e.x ? {x:e.x} : {})}); ui.foodEditRef = null; save(); foodDone(); toast(ed ? 'Updated' : code ? 'Added · barcode saved' : 'Added'); },
   codeForget: () => { const c = ui.scanCode; if (!c) return; delete state.codes[c]; ui.scanCode = null; save(); toast('Barcode forgotten'); openAddFood(ui.foodMeal, 'scan'); },
   codeFix: () => { const {food} = ui.amt, sv = food.sv[0], g = sv ? sv[1] : 100, k = v => r1(v * g / 100);
     ui.scanCode = food.code; ui.foodMode = 'manual';
@@ -4607,7 +4626,7 @@ const ACT = {
   foodEdit: d => { const e = foodDay()[d.m][+d.i]; ui.foodMeal = d.m;
     if (e.m || !e.d){ ui.foodEditRef = {m:d.m, i:+d.i}; openSheet(`<div class="row between"><h3 style="margin:0">Edit food</h3><button class="icon-btn" data-act="closeSheet">✕</button></div><div id="foodArea"></div>`); manualUI({name:e.n, k:e.k, p:e.p, c:e.c, f:e.f, a:e.a, x:e.x, edit:true}); }
     else { ui.foodEditRef = {m:d.m, i:+d.i}; openAmount({name:e.n, ...e.d}, {m:d.m, i:+d.i, q:e.q, u:e.u}); } },
-  foodDel: () => { const ref = ui.foodEditRef || (ui.amt && ui.amt.edit); if (!ref) return; foodDay()[ref.m].splice(ref.i, 1); ui.foodEditRef = null; save(); closeSheet(); render(); toast('Removed'); },
+  foodDel: () => { const ref = ui.foodEditRef || (ui.amt && ui.amt.edit); if (!ref) return; fBucket(ref.m).splice(ref.i, 1); ui.foodEditRef = null; save(); foodDone(); toast('Removed'); },
   codeLookup: () => { const c = $('#codeIn').value; stopScan(); lookupBarcode(c); },
   foodTargets: openTargets,
   tpSet: (d, b) => { readTp(); ui.tp[d.k] = d.k === 'act' ? +d.v : d.v; b.parentNode.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b)); },
@@ -4621,6 +4640,14 @@ const ACT = {
     state.savedMeals.unshift({id:uid(), name, items}); save(); closeSheet(); toast('Meal saved'); },
   mealUse: d => { const m = state.savedMeals[+d.i]; if (!m) return; const day = foodDay();
     (day[ui.foodMeal] = day[ui.foodMeal] || []).push(...JSON.parse(JSON.stringify(m.items))); save(); closeSheet(); render(); toast(`Added ${m.name}`); },
+  mealEdit: d => { ui.mealHost = ui.foodMeal; ui.mealEdit = +d.i; openMealEdit(); },
+  mealEditDone: () => { const m = state.savedMeals[ui.mealEdit]; if (m && !m.name.trim()) m.name = 'Saved meal'; ui.mealEdit = null; save(); openAddFood(ui.mealHost || ui.foodMeal, 'meals'); },
+  mealItemAdd: () => openAddFood(ui.mealHost || ui.foodMeal, 'search'),
+  mealItemDel: d => { const m = state.savedMeals[ui.mealEdit]; if (!m) return; m.items.splice(+d.i, 1); save(); openMealEdit(); },
+  mealItemEdit: d => { const e = state.savedMeals[ui.mealEdit].items[+d.i], ref = {m:'_saved', i:+d.i};
+    ui.foodEditRef = ref;
+    if (e.m || !e.d){ openSheet(`<div class="row between"><h3 style="margin:0">Edit food</h3><button class="icon-btn" data-act="closeSheet">‹</button></div><div id="foodArea"></div>`); manualUI({name:e.n, k:e.k, p:e.p, c:e.c, f:e.f, a:e.a, x:e.x, edit:true}); }
+    else openAmount({name:e.n, ...e.d}, {...ref, q:e.q, u:e.u}); },
   mealDel: async d => { const m = state.savedMeals[+d.i]; const meal = ui.foodMeal;
     if (m && await confirmBox(`Delete saved meal "${m.name}"?`, 'Delete')){ state.savedMeals.splice(+d.i, 1); save(); } openAddFood(meal, 'meals'); },
   water: d => { const day = foodDay(); day.water = Math.max(0, r1((day.water || 0) + (+d.v))); save(); render(); },
