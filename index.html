@@ -227,6 +227,14 @@ svg.body .snow-fx{pointer-events:none}.aurora-fx{pointer-events:none}
 .photos img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
 .photos figure{cursor:zoom-in}.ph-zoom{position:absolute;right:6px;top:6px;width:22px;height:22px;border-radius:6px;background:rgba(11,10,18,.7);color:#fff;font-style:normal;font-size:12px;display:grid;place-items:center}
 #photoZoom{position:fixed;inset:0;z-index:60;background:rgba(5,4,10,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:calc(20px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));opacity:0;transition:opacity .18s}
+#charZoom{position:fixed;inset:0;z-index:60;background:rgba(5,4,10,.97);display:flex;flex-direction:column;align-items:center;gap:10px;padding:calc(16px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom));opacity:0;transition:opacity .18s}
+#charZoom.open{opacity:1}#charZoom .pz-name{min-height:40px;display:flex;align-items:center}
+.cz-stage{position:relative;width:100%;max-width:560px;flex:1;min-height:0;border-radius:16px;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,var(--panel2),var(--panel) 75%);border:1px solid var(--line)}
+.cz-stage,.cz-stage *{touch-action:none;-webkit-user-select:none;user-select:none}
+.cz-inner{position:absolute;inset:0;transform-origin:0 0;will-change:transform}.cz-inner.anim{transition:transform .28s ease}.cz-inner svg.body{width:100%;height:100%}
+.cz-zb{position:absolute;right:10px;bottom:10px;display:flex;flex-direction:column;gap:6px}.cz-zb button{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:rgba(20,18,30,.85);color:var(--text);font:600 20px Inter;cursor:pointer}
+#charZoom .pz-seg button{padding:8px 16px}#charZoom small{font-size:12px}
+.cz-wrap{position:relative}.cz-open{position:absolute;right:2px;bottom:2px;width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:rgba(20,18,30,.82);color:var(--text);font-size:17px;line-height:1;cursor:pointer;display:grid;place-items:center}
 #photoZoom.open{opacity:1}.pz-x{position:absolute;top:calc(12px + env(safe-area-inset-top));right:14px;width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:18px;cursor:pointer}
 .pz-name{font:700 16px 'Chakra Petch';letter-spacing:.06em;color:var(--text);text-align:center;padding:0 50px}
 .pz-img{position:relative;width:100%;max-width:560px;aspect-ratio:4/3;background:#fff;border-radius:16px;overflow:hidden}
@@ -532,12 +540,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.11.09.1"></script>
+<script src="exercises.js?v=2026.11.10.1"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.11.09.1';
+const APP_VERSION = '2026.11.10.1';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -833,6 +841,60 @@ function renderPhotoZoom(){
   z.innerHTML = `<button class="pz-x" data-act="pzClose" aria-label="Close">✕</button><div class="pz-name">${esc(ex.name)}</div>
     <div class="pz-img"><img src="${photo(ex, 0)}" alt="Start position" class="${i ? '' : 'on'}"><img src="${photo(ex, 1)}" alt="Finish position" class="${i ? 'on' : ''}"></div>
     <div class="pz-seg"><button class="${i ? '' : 'on'}" data-act="pzPose" data-v="0">Start</button><button class="${i ? 'on' : ''}" data-act="pzPose" data-v="1">Finish</button></div>`;
+}
+// Full-screen character viewer: pinch, drag or double-tap to zoom; Both/Front/Back and Head/Torso/Legs jump to a spot
+const CZ_SIDE = {front:10, back:230}, CZ_PART = {full:[0, 200, -16, 416], head:[58, 84, -20, 88], torso:[0, 200, 38, 170], legs:[25, 150, 180, 222]};
+function czSVG(v){
+  if (v === 'me'){ const t = muscleTotals(); return [state.profile.name || 'Lifter', bodySVG(m => rankOf(lvl(t[m]))[2], {labels:false, skin:equippedSkin()})]; }
+  const p = (ui.lb || []).find(x => x.id === v); if (!p || !p.ml) return null;
+  return [p.name, bodySVG(m => rankOf(p.ml[m] || 0)[2], {labels:false, skin:p.gear && Object.keys(p.gear).length ? p.gear : null})];
+}
+function openCharZoom(v){
+  if (v === state.profile.playerId) v = 'me';
+  const r = czSVG(v); if (!r) return;
+  ui.cz = {s:1, x:0, y:0, side:'both', part:'full'};
+  let z = document.getElementById('charZoom'); if (!z){ z = document.createElement('div'); z.id = 'charZoom'; document.body.appendChild(z); z.addEventListener('click', e => { if (e.target === z) ACT.czClose(); }); }
+  z.innerHTML = `<button class="pz-x" data-act="czClose" aria-label="Close">✕</button><div class="pz-name">${esc(r[0])}</div>
+    <div class="cz-stage" id="czStage"><div class="cz-inner" id="czInner">${r[1]}</div><div class="cz-zb"><button data-act="czStep" data-v="1" aria-label="Zoom in">+</button><button data-act="czStep" data-v="-1" aria-label="Zoom out">−</button></div></div>
+    <div class="pz-seg" id="czSide">${[['both', 'Both'], ['front', 'Front'], ['back', 'Back']].map(([k, l]) => `<button data-act="czSide" data-v="${k}">${l}</button>`).join('')}</div>
+    <div class="pz-seg" id="czPart">${[['full', 'Full'], ['head', 'Head'], ['torso', 'Torso'], ['legs', 'Legs']].map(([k, l]) => `<button data-act="czPart" data-v="${k}">${l}</button>`).join('')}</div>
+    <small class="mute">Pinch, drag or double-tap to zoom</small>`;
+  czWire(); czApply(); czSegs(); requestAnimationFrame(() => z.classList.add('open'));
+}
+function czBox(){ const st = $('#czStage'), vb = st.querySelector('svg').viewBox.baseVal, W = st.clientWidth, H = st.clientHeight, k = Math.min(W / vb.width, H / vb.height);
+  return {st, W, H, k, ox:(W - vb.width * k) / 2 - vb.x * k, oy:(H - vb.height * k) / 2 - vb.y * k}; }
+function czApply(anim){ const c = ui.cz, b = czBox(); c.s = Math.min(8, Math.max(1, c.s));
+  c.x = Math.min(0, Math.max(b.W - b.W * c.s, c.x)); c.y = Math.min(0, Math.max(b.H - b.H * c.s, c.y));
+  const el = $('#czInner'); el.classList.toggle('anim', !!anim); el.style.transform = `translate(${c.x}px,${c.y}px) scale(${c.s})`; }
+function czSegs(manual){ const c = ui.cz;
+  document.querySelectorAll('#czSide button').forEach(b => b.classList.toggle('on', !manual && b.dataset.v === c.side));
+  document.querySelectorAll('#czPart button').forEach(b => b.classList.toggle('on', !manual && b.dataset.v === c.part)); }
+function czView(){ const c = ui.cz, b = czBox();
+  if (c.side === 'both' && c.part === 'full'){ c.s = 1; c.x = c.y = 0; }
+  else { if (c.side === 'both') c.side = 'front'; const [x0, w, y0, h] = CZ_PART[c.part], vx = CZ_SIDE[c.side] + x0;
+    const s = Math.min(b.W / (w * b.k), b.H / (h * b.k)), cx = b.ox + (vx + w / 2) * b.k, cy = b.oy + (y0 + h / 2) * b.k;
+    c.s = s; c.x = b.W / 2 - cx * s; c.y = b.H / 2 - cy * s; }
+  czApply(true); czSegs(); }
+function czZoomAt(px, py, s, anim){ const c = ui.cz, r = $('#czStage').getBoundingClientRect(), mx = px - r.left, my = py - r.top;
+  s = Math.min(8, Math.max(1, s)); const ux = (mx - c.x) / c.s, uy = (my - c.y) / c.s; c.s = s; c.x = mx - ux * s; c.y = my - uy * s; czApply(anim); czSegs(true); }
+function czWire(){
+  const st = $('#czStage'), pts = new Map(); let g0 = null, lastTap = 0, moved = false;
+  const snap = () => { const a = [...pts.values()], r = st.getBoundingClientRect();
+    return a.length > 1 ? {d:Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y), mx:(a[0].x + a[1].x) / 2 - r.left, my:(a[0].y + a[1].y) / 2 - r.top} : {d:0, mx:a[0].x - r.left, my:a[0].y - r.top}; };
+  const begin = () => { g0 = {...snap(), s:ui.cz.s, x:ui.cz.x, y:ui.cz.y}; };
+  st.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; e.preventDefault(); try { st.setPointerCapture(e.pointerId); } catch(_){}
+    if (!pts.size) moved = false; pts.set(e.pointerId, {x:e.clientX, y:e.clientY}); begin(); });
+  st.addEventListener('pointermove', e => { if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    const g = snap(), c = ui.cz; let s = pts.size > 1 && g0.d ? g0.s * g.d / g0.d : g0.s; s = Math.min(8, Math.max(1, s));
+    const ux = (g0.mx - g0.x) / g0.s, uy = (g0.my - g0.y) / g0.s;
+    if (pts.size > 1 || Math.hypot(g.mx - g0.mx, g.my - g0.my) > 6) moved = true;
+    if (!moved) return; c.s = s; c.x = g.mx - ux * s; c.y = g.my - uy * s; czApply(); czSegs(true); });
+  const end = e => { if (!pts.has(e.pointerId)) return; pts.delete(e.pointerId);
+    if (!pts.size && !moved && e.type === 'pointerup'){ const now = Date.now();
+      if (now - lastTap < 320){ lastTap = 0; if (ui.cz.s > 1.3){ ui.cz.side = 'both'; ui.cz.part = 'full'; czView(); } else czZoomAt(e.clientX, e.clientY, 3, true); } else lastTap = now; }
+    if (pts.size) begin(); };
+  st.addEventListener('pointerup', end); st.addEventListener('pointercancel', end);
+  st.addEventListener('wheel', e => { e.preventDefault(); czZoomAt(e.clientX, e.clientY, ui.cz.s * (e.deltaY < 0 ? 1.15 : 1 / 1.15)); }, {passive:false});
 }
 const photo = (ex, i = 0) => ex.img ? IMG_BASE + ex.img + '/' + i + '.jpg' : '';
 
@@ -2660,7 +2722,7 @@ function openPlayer(id){
   const muscles = ml ? Object.keys(MUSCLES).sort((a, b) => (ml[b] || 0) - (ml[a] || 0)) : [];
   openSheet(`<div class="row between"><h2 style="margin:0">${esc(p.name)}${isMe ? ' <small class="mute" style="font-size:14px">(you)</small>' : ''}</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
     <div class="pp-head" style="--acc:${acc}"><div class="lvl-badge"><small>LV</small><b>${p.level ?? 0}</b></div><div><span class="title-tag">${esc(p.title || '')}</span><small class="mute" style="display:block;margin-top:4px">${fmt(p.xp || 0)} XP${p.gearCount != null ? ` · ${p.gearCount} gear collected` : ''}</small></div></div>
-    ${ml ? `<div class="pp-map">${bodySVG(m => rankOf(ml[m] || 0)[2], {labels:true, skin:Object.keys(gear).length ? gear : null})}</div>`
+    ${ml ? `<div class="pp-map cz-wrap">${bodySVG(m => rankOf(ml[m] || 0)[2], {labels:true, skin:Object.keys(gear).length ? gear : null})}<button class="cz-open" data-act="charZoom" data-v="${esc(id)}" aria-label="Zoom in on character">⤢</button></div>`
       : `<div class="card empty" style="margin:12px 0"><p class="mute" style="margin:0">${esc(p.name)}'s muscle map will show up here once they open the latest version of Gymdom.</p></div>`}
     <div class="stats"><div class="stat"><b>${p.streak ?? 0}🔥</b><small>Week streak</small></div><div class="stat"><b>${p.week ?? 0}</b><small>This week</small></div><div class="stat"><b>${p.workouts ?? 0}</b><small>Workouts</small></div></div>
     <div class="stats s4" style="margin-top:8px"><div class="stat"><b>${p.lifted != null ? lbLb(p.lifted) : '—'}</b><small>Lb lifted</small></div><div class="stat"><b>${p.trophies ?? 0}</b><small>Trophies</small></div><div class="stat"><b>${p.habits ?? '—'}</b><small>Habits done</small></div><div class="stat"><b>${p.hstreak != null ? p.hstreak + '🌱' : '—'}</b><small>Habit streak</small></div></div>
@@ -3609,7 +3671,7 @@ function openArmory(){
   const L = curLevel(), t = muscleTotals(), sk = equippedSkin(), cur = myTitle(L);
   const tl = titleList(L), got = tl.filter(x => x[2]);
   openSheet(`<div class="row between"><h2 style="margin:0">Armory</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
-    <div style="max-width:250px;margin:4px auto 0">${bodySVG(m => rankOf(lvl(t[m]))[2], {labels:false, skin:sk})}</div>
+    <div class="cz-wrap" style="max-width:250px;margin:4px auto 0">${bodySVG(m => rankOf(lvl(t[m]))[2], {labels:false, skin:sk})}<button class="cz-open" data-act="charZoom" data-v="me" aria-label="Zoom in on character">⤢</button></div>
     <label class="lbl">Title</label><div class="chips wrap">${got.map(([n]) => `<button class="chip${n === cur ? ' on' : ''}" data-act="eqTitle" data-v="${esc(n)}">${esc(n)}</button>`).join('')}</div>
     <small class="mute">${tl.length - got.length} more to unlock through levels, trophies, loot${nsMissed().length ? ' and the night shift' : ''}</small>
     <label class="lbl">Theme</label><div class="themes">${THEMES.map(([id, n, u, c]) => { const ok = isUnlocked(id, u, L), on = (state.cosmetics.theme || 'classic') === id;
@@ -4052,7 +4114,7 @@ function renderBody(){
     <div class="stats"><div class="stat"><b>${state.workouts.length}</b><small>Workouts</small></div><div class="stat"><b>${week}</b><small>Last 7 days</small></div><div class="stat"><b>${weekStreak()}🔥</b><small>Week streak</small></div></div>`;
   const recMode = ui.mapMode === 'rec', rec = recMode ? recovery() : null;
   h += `<div class="card"><div class="row between"><h3 style="margin:0">Muscle Map</h3><div class="map-seg"><button class="${recMode ? '' : 'on'}" data-act="mapMode" data-v="rank">Ranks</button><button class="${recMode ? 'on' : ''}" data-act="mapMode" data-v="rec">Recovery</button></div></div>
-    ${bodySVG(recMode ? m => recState(rec[m].pct)[2] : m => { const c = rankOf(lvl(t[m]))[2]; return t[m] > 0 ? [c, decayOf(hit[m]).op] : c; }, {tap:true, skin:equippedSkin()})}
+    <div class="cz-wrap">${bodySVG(recMode ? m => recState(rec[m].pct)[2] : m => { const c = rankOf(lvl(t[m]))[2]; return t[m] > 0 ? [c, decayOf(hit[m]).op] : c; }, {tap:true, skin:equippedSkin()})}<button class="cz-open" data-act="charZoom" data-v="me" aria-label="Zoom in on character">⤢</button></div>
     <div class="legend">${recMode ? REC_ST.map(r => `<span><i style="background:${r[2]}"></i>${r[1]}</span>`).join('') : RANKS.map(r => `<span><i style="background:${r[2]}"></i>${r[1]}</span>`).join('')}</div>
     <p class="mute" style="font-size:11px;text-align:center;margin:6px 0 0">${recMode ? 'Based on the sets you did in the last few days · tap a muscle' : 'Faded = not trained in 7+ days · tap a muscle'}</p>
     <button class="btn ghost block" style="margin-top:10px" data-act="trainToday">🎯 What should I train today?</button></div>`;
@@ -4594,6 +4656,11 @@ const ACT = {
   lblZoom: (d, b) => b.classList.toggle('big'),
   photoZoom: d => openPhotoZoom(EX[d.id], +d.v),
   pzPose: d => { ui.pz = +d.v; renderPhotoZoom(); },
+  charZoom: d => openCharZoom(d.v),
+  czClose: () => { const z = document.getElementById('charZoom'); if (z){ z.classList.remove('open'); setTimeout(() => z.remove(), 180); } },
+  czSide: d => { ui.cz.side = d.v; if (d.v === 'both') ui.cz.part = 'full'; czView(); },
+  czPart: d => { ui.cz.part = d.v; czView(); },
+  czStep: d => { const r = $('#czStage').getBoundingClientRect(); czZoomAt(r.left + r.width / 2, r.top + r.height / 2, ui.cz.s * (+d.v > 0 ? 1.6 : 1 / 1.6), true); },
   pzClose: () => { const z = document.getElementById('photoZoom'); if (z){ z.classList.remove('open'); setTimeout(() => z.remove(), 180); } },
   foodMode: d => { stopScan(); if (d.v !== 'label') ui.scanCode = null; ui.foodMode = d.v; openAddFood(ui.foodMeal, d.v); },
   offSearch: () => offSearch(),
