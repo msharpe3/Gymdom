@@ -541,12 +541,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.11.10.2"></script>
+<script src="exercises.js?v=2026.11.11.1"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.11.10.2';
+const APP_VERSION = '2026.11.11.1';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -805,6 +805,44 @@ X('hs_legpress','Iso-Lateral Leg Press (Hammer Strength)','mc','squat',['quads',
 X('hs_legext','Iso-Lateral Leg Extension (Hammer Strength)','mc','quad_iso',['quads'],[],'Knee lined up with the pivot|Extend fully, squeeze|Slow lowering'),
 X('hs_kneelcurl','Iso-Lateral Kneeling Leg Curl (Hammer Strength)','mc','ham_iso',['hamstrings'],['calves'],'Knee on the pad|Curl heel toward glute|Control the return'),
 X('hs_squatlunge','Ground Base Squat/Lunge (Hammer Strength)','mc','squat',['quads','glutes'],['hamstrings'],'Shoulders under the pads|Squat or step back into a lunge|Drive up through the whole foot'),
+// ---- Life Fitness: Insignia Series selectorized + Signature Series plate-loaded
+X('lf_chest','Chest Press (Life Fitness)','mc','push_h',['chest'],['triceps','shoulders'],'Handles at mid-chest|Press out without slamming lockout|Control the return'),
+X('lf_dachest','Dual Axis Chest Press (Life Fitness)','mc','push_h',['chest'],['triceps','shoulders'],'Handles at mid-chest|Press out and let the arms converge|Slow on the way back'),
+X('lf_shoulder','Shoulder Press (Life Fitness)','mc','push_v',['shoulders'],['triceps'],'Handles at shoulder height|Press up without locking hard|Back against the pad'),
+X('lf_latraise','Lateral Raise (Life Fitness)','mc','delt_side',['shoulders'],[],'Pads on outer arms|Lead with your elbows|Pause at the top'),
+X('lf_pecfly','Pectoral Fly (Life Fitness)','mc','chest_iso',['chest'],[],'Handles at chest height|Squeeze arms together|Slow on the way back'),
+X('lf_reardelt','Rear Deltoid (Life Fitness)','mc','rear_delt',['shoulders'],['traps'],'Chest against the pad|Sweep arms back wide|Squeeze rear delts'),
+X('lf_pulldown','Pulldown (Life Fitness)','mc','pull_v',['lats'],['biceps'],'Thighs under the pads|Pull handles to upper chest|Drive elbows down to your sides'),
+X('lf_dapulldown','Dual Axis Pulldown (Life Fitness)','mc','pull_v',['lats'],['biceps','traps'],'Thighs under the pads|Pull down and in toward your chest|Full stretch at the top'),
+X('lf_row','Row (Life Fitness)','mc','pull_h',['lats','traps'],['biceps'],'Chest on the pad|Pull handles to your ribs|Squeeze shoulder blades'),
+X('lf_curl','Biceps Curl (Life Fitness)','mc','bi',['biceps'],[],'Elbows lined up with the pivot|Curl all the way up|Slow lowering'),
+X('lf_triext','Triceps Extension (Life Fitness)','mc','tri',['triceps'],[],'Elbows on the pad, lined up with the pivot|Extend fully|Control the return'),
+X('lf_tripress','Triceps Press (Life Fitness)','mc','push_h2',['triceps'],['chest','shoulders'],'Sit tall, grip handles at your sides|Press down to full lockout|Let handles rise to ~90° elbows'),
+X('lf_chin','Assist Chin-Up (Life Fitness)','mc','pull_v',['lats'],['biceps','forearms'],'Kneel on the pad|More weight on the stack = more help|Pull your chest toward the handles'),
+X('lf_dip','Assist Dip (Life Fitness)','mc','push_h2',['chest','triceps'],['shoulders'],'Kneel on the pad, lean slightly forward|More weight on the stack = more help|Lower until shoulders dip below elbows'),
+X('lf_abs','Abdominal (Life Fitness)','mc','core',['abs'],[],'Hold the handles, feet locked|Crunch ribs toward hips|Don\'t pull with your arms'),
+X('lf_torso','Torso Rotation (Life Fitness)','mc','obliq',['obliques'],['abs'],'Hips locked in place|Rotate from your torso|Each side = 1 rep'),
+X('lf_backext','Back Extension (Life Fitness)','mc','hinge',['lowerback'],['glutes','hamstrings'],'Pad across your upper back|Extend until upright|Slow on the way forward'),
+X('lf_legpress','Arc Leg Press (Life Fitness)','mc','squat',['quads','glutes'],['hamstrings'],'Back flat against the pad|Feet shoulder width|Press through the whole foot, don\'t lock out'),
+X('lf_legext','Leg Extension (Life Fitness)','mc','quad_iso',['quads'],[],'Knee lined up with the pivot|Extend fully, squeeze|Slow lowering'),
+X('lf_legcurl','Leg Curl (Life Fitness)','mc','ham_iso',['hamstrings'],['calves'],'Pad just above your heels, hips down|Curl to your glutes|Slow negative'),
+X('lf_seatcurl','Seated Leg Curl (Life Fitness)','mc','ham_iso',['hamstrings'],['calves'],'Pad locked over your thighs|Curl heels under the seat|Slow on the way up'),
+X('lf_calf','Calf Extension (Life Fitness)','mc','calf',['calves'],[],'Balls of feet on the platform edge|Press through your big toe|Full range'),
+X('lf_glute','Glute (Life Fitness)','mc','glute',['glutes'],['hamstrings'],'Chest on the pad|Push the pad back with your heel|Don\'t arch your lower back'),
+X('lf_glutebridge','Glute Bridge (Life Fitness)','mc','glute',['glutes'],['hamstrings'],'Pad across your hips|Drive hips up through your heels|Squeeze hard at the top'),
+X('lf_abductor','Hip Abductor (Life Fitness)','mc','glute',['glutes'],[],'Sit tall or lean forward slightly|Push knees out against the pads|Control them back in'),
+X('lf_adductor','Hip Adductor (Life Fitness)','mc','quad_iso',['quads'],[],'Inner thighs against the pads|Squeeze knees together|Counts toward Quads (inner thigh)'),
+X('lfp_incline','Plate-Loaded Incline Press (Life Fitness)','mc','push_h2',['chest'],['shoulders','triceps'],'Handles at upper-chest height|Press up and slightly in|Shoulder blades back on the pad'),
+X('lfp_decline','Plate-Loaded Decline Press (Life Fitness)','mc','push_h',['chest'],['triceps'],'Handles at lower chest|Press down and out|Slow on the way back'),
+X('lfp_shoulder','Plate-Loaded Shoulder Press (Life Fitness)','mc','push_v',['shoulders'],['triceps'],'Handles at ear level|Press straight up|Don\'t arch off the pad'),
+X('lfp_pulldown','Plate-Loaded Pulldown (Life Fitness)','mc','pull_v',['lats'],['biceps'],'Thighs locked under the pads|Pull handles to upper chest|Full stretch at the top'),
+X('lfp_highrow','Plate-Loaded High Row (Life Fitness)','mc','pull_h',['lats','traps'],['shoulders','biceps'],'Handles above head height|Pull down and back to your chest|Squeeze upper back'),
+X('lfp_row','Plate-Loaded Row (Life Fitness)','mc','pull_h',['lats','traps'],['biceps'],'Chest on the pad|Pull handles to your sides|Squeeze shoulder blades'),
+X('lfp_dip','Plate-Loaded Seated Dip (Life Fitness)','mc','push_h2',['triceps','chest'],['shoulders'],'Sit tall, grip handles at your sides|Press down to full lockout|Control the way up'),
+X('lfp_legpress','Plate-Loaded Linear Leg Press (Life Fitness)','mc','squat',['quads','glutes'],['hamstrings'],'Back flat on the pad|Lower to ~90° knees|Don\'t lock the knees'),
+X('lfp_legext','Plate-Loaded Leg Extension (Life Fitness)','mc','quad_iso',['quads'],[],'Knee lined up with the pivot|Extend fully, squeeze|Slow lowering'),
+X('lfp_kneelcurl','Plate-Loaded Kneeling Leg Curl (Life Fitness)','mc','ham_iso',['hamstrings'],['calves'],'Knee on the pad|Curl heel toward glute|Control the return'),
+X('lfp_calf','Plate-Loaded Calf Raise (Life Fitness)','mc','calf',['calves'],[],'Shoulders under the pads|Rise high onto your toes|Full stretch at the bottom'),
 X('adductor','Hip Adduction Machine','mc','quad_iso',['quads'],[],'Inner thighs against pads|Squeeze knees together|Counts toward Quads (inner thigh)'),
 X('donkey_calf','Donkey Calf Raise Machine','mc','calf',['calves'],[],'Hips under pad, slight hinge|Deep stretch at bottom|Rise onto big toes'),
 X('machine_curl','Machine Biceps Curl','mc','bi',['biceps'],[],'Elbows lined up with pivot|Curl all the way up|Slow lowering'),
@@ -817,10 +855,11 @@ X('captains_chair','Captain\'s Chair Leg Raise','bw','core',['abs'],['obliques']
 const IMG_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
 const LEVELS = {b:'Beginner', i:'Intermediate', e:'Expert'};
 const CATS = {str:'Strength', stretch:'Stretching', cardio:'Cardio', plyo:'Plyometrics', power:'Powerlifting', oly:'Olympic', strong:'Strongman'};
-const ASSIST = ['assist_pullup', 'assist_dip'];
+const ASSIST = ['assist_pullup', 'assist_dip', 'lf_chin', 'lf_dip'];
 const BORROW = {assist_pullup:'pullup', assist_dip:'dip', seated_lp:'leg_press', linear_hack:'hack', kneel_curl:'leg_curl', chest_row_mc:'fx_Lying_T-Bar_Row',
   hs_chest:'fx_Leverage_Chest_Press', hs_incline:'fx_Leverage_Incline_Chest_Press', hs_decline:'fx_Leverage_Decline_Chest_Press', hs_widechest:'fx_Leverage_Chest_Press', hs_shoulder:'fx_Leverage_Shoulder_Press',
-  hs_frontpd:'lat_pd', hs_widepd:'lat_pd', hs_row:'fx_Leverage_Iso_Row', hs_lowrow:'cable_row', hs_highrow:'fx_Leverage_Iso_Row', hs_dyrow:'fx_Leverage_Iso_Row', hs_legpress:'leg_press', hs_legext:'leg_ext', hs_kneelcurl:'leg_curl'};
+  hs_frontpd:'lat_pd', hs_widepd:'lat_pd', hs_row:'fx_Leverage_Iso_Row', hs_lowrow:'cable_row', hs_highrow:'fx_Leverage_Iso_Row', hs_dyrow:'fx_Leverage_Iso_Row', hs_legpress:'leg_press', hs_legext:'leg_ext', hs_kneelcurl:'leg_curl',
+  lf_chest:'machine_press', lf_dachest:'machine_press', lf_shoulder:'machine_ohp', lf_latraise:'fx_Seated_Side_Lateral_Raise', lf_pecfly:'pec_deck', lf_reardelt:'reverse_pec', lf_pulldown:'lat_pd', lf_dapulldown:'lat_pd', lf_row:'fx_Leverage_Iso_Row', lf_curl:'machine_curl', lf_triext:'machine_tri', lf_tripress:'seated_dip', lf_chin:'pullup', lf_dip:'dip', lf_abs:'ab_machine', lf_torso:'torso_rotation', lf_backext:'back_ext', lf_legpress:'leg_press', lf_legext:'leg_ext', lf_legcurl:'lying_curl', lf_seatcurl:'seated_curl', lf_calf:'lp_calf', lf_glute:'kickback_machine', lf_glutebridge:'hip_thrust', lf_abductor:'fx_Thigh_Abductor', lf_adductor:'adductor', lfp_incline:'fx_Leverage_Incline_Chest_Press', lfp_decline:'fx_Leverage_Decline_Chest_Press', lfp_shoulder:'fx_Leverage_Shoulder_Press', lfp_pulldown:'lat_pd', lfp_highrow:'fx_Leverage_Iso_Row', lfp_row:'fx_Leverage_Iso_Row', lfp_dip:'seated_dip', lfp_legpress:'leg_press', lfp_legext:'leg_ext', lfp_kneelcurl:'leg_curl', lfp_calf:'calf_raise'};
 for (const [id, [img, steps, level, n]] of Object.entries(window.FX_MATCH || {})){ const e = EXL.find(x => x.id === id); if (e){ if (n) e.img = img; e.steps = steps; e.level = level; } }
 ASSIST.forEach(id => { const e = EXL.find(x => x.id === id); if (e) e.assist = 1; });
 for (const [id, name, eq, cat, level, p, s, steps, n, bw, nx] of (window.FX_EXTRA || []))
