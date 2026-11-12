@@ -70,6 +70,9 @@ svg.body.has-bg text{fill:#fff;letter-spacing:.2em}svg.body .lab-bg{fill:rgba(8,
 .bty-ico{width:46px;height:46px;border-radius:12px;background:#f2c94c1f;display:grid;place-items:center;font-size:24px;flex:none}.bty-rw{color:#f2c94c;font-weight:600}
 .bty-mini{display:flex;align-items:center;gap:10px;background:linear-gradient(160deg,#2b2113,var(--panel));border:1px solid #c9a22755;border-radius:12px;padding:9px 12px;margin:0 0 12px}
 .bty-mini b{font-size:13px;display:block;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bty-mini .bar{height:5px;margin:0}.bty-mini small{color:var(--mute);font-size:11px;flex:none}
+.bty-opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:linear-gradient(160deg,#2b2113,var(--panel2) 75%);border:1px solid #c9a22755;border-radius:14px;padding:12px;margin-top:10px;color:var(--text);font:inherit;cursor:pointer}
+.bty-opt b{display:block;font-size:15px}.bty-opt small{display:block;color:var(--mute);font-size:12px;margin-top:2px}.bty-opt .go{margin-left:auto;font:700 12px 'Chakra Petch';letter-spacing:.08em;color:#f2c94c;flex:none}
+.bty-opt.cur{border-color:#f2c94c}
 .bty-mini.ready small{color:#f2c94c;font-weight:700}.bty-mini.done{opacity:.6}.bty-box{border-color:#c9a22788}.bty-box h4{color:#f2c94c}
 .code-saved{display:flex;align-items:center;gap:10px;background:color-mix(in srgb,var(--teal) 10%,var(--panel2));border:1px solid color-mix(in srgb,var(--teal) 35%,var(--line));border-radius:12px;padding:10px 12px;margin-bottom:10px}
 .code-saved>span{font-size:20px}.code-saved div{flex:1;min-width:0}.code-saved b{display:block;font-size:14px}.code-saved small{font-size:12px}
@@ -550,12 +553,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.11.12.3"></script>
+<script src="exercises.js?v=2026.11.12.4"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.11.12.3';
+const APP_VERSION = '2026.11.12.4';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -852,6 +855,31 @@ X('lfp_legpress','Plate-Loaded Linear Leg Press (Life Fitness)','mc','squat',['q
 X('lfp_legext','Plate-Loaded Leg Extension (Life Fitness)','mc','quad_iso',['quads'],[],'Knee lined up with the pivot|Extend fully, squeeze|Slow lowering'),
 X('lfp_kneelcurl','Plate-Loaded Kneeling Leg Curl (Life Fitness)','mc','ham_iso',['hamstrings'],['calves'],'Knee on the pad|Curl heel toward glute|Control the return'),
 X('lfp_calf','Plate-Loaded Calf Raise (Life Fitness)','mc','calf',['calves'],[],'Shoulders under the pads|Rise high onto your toes|Full stretch at the bottom'),
+// ---- Flex Fitness: selectorized + Leverage plate-loaded
+X('flx_pecdec','Pec Deck (Flex Fitness)','mc','chest_iso',['chest'],[],'Elbows on the pads at chest height|Squeeze arms together|Slow on the way back'),
+X('flx_reardelt','Rear Delt Fly (Flex Fitness)','mc','rear_delt',['shoulders'],['traps'],'Chest against the pad|Sweep arms back wide|Squeeze rear delts'),
+X('flx_delt','Deltoid Raise (Flex Fitness)','mc','delt_side',['shoulders'],[],'Pads on outer arms|Lead with your elbows|Pause at the top'),
+X('flx_shoulder','Shoulder Press (Flex Fitness)','mc','push_v',['shoulders'],['triceps'],'Handles at shoulder height|Press up without locking hard|Back against the pad'),
+X('flx_latpd','Lat Pulldown (Flex Fitness)','mc','pull_v',['lats'],['biceps'],'Thighs under the pads|Pull the bar to upper chest|Drive elbows down to your sides'),
+X('flx_row','Seated Row (Flex Fitness)','mc','pull_h',['lats','traps'],['biceps'],'Chest on the pad|Pull handles to your ribs|Squeeze shoulder blades'),
+X('flx_bicep','Biceps Curl (Flex Fitness)','mc','bi',['biceps'],[],'Elbows lined up with the pivot|Curl all the way up|Slow lowering'),
+X('flx_tricep','Triceps Extension (Flex Fitness)','mc','tri',['triceps'],[],'Elbows on the pad, lined up with the pivot|Extend fully|Control the return'),
+X('flx_dip','Seated Dip (Flex Fitness)','mc','push_h2',['triceps','chest'],['shoulders'],'Sit tall, grip handles at your sides|Press down to full lockout|Control the way up'),
+X('flx_legext','Leg Extension (Flex Fitness)','mc','quad_iso',['quads'],[],'Knee lined up with the pivot|Extend fully, squeeze|Slow lowering'),
+X('flx_legcurl','Lying Leg Curl (Flex Fitness)','mc','ham_iso',['hamstrings'],['calves'],'Pad just above your heels, hips down|Curl to your glutes|Slow negative'),
+X('flx_seatcurl','Seated Leg Curl (Flex Fitness)','mc','ham_iso',['hamstrings'],['calves'],'Pad locked over your thighs|Curl heels under the seat|Slow on the way up'),
+X('flx_lowback','Low Back Extension (Flex Fitness)','mc','hinge',['lowerback'],['glutes','hamstrings'],'Pad across your upper back|Extend until upright|Slow on the way forward'),
+X('flx_abs','Ab Crunch (Flex Fitness)','mc','core',['abs'],[],'Hold the handles, feet locked|Crunch ribs toward hips|Don\'t pull with your arms'),
+X('flx_chest','Leverage Chest Press (Flex Fitness)','mc','push_h',['chest'],['triceps','shoulders'],'Handles at mid-chest|Press out, stop short of lockout|Slow on the way back'),
+X('flx_incline','Leverage Incline Press (Flex Fitness)','mc','push_h2',['chest'],['shoulders','triceps'],'Handles at upper-chest height|Press up and slightly in|Shoulder blades back on the pad'),
+X('flx_decline','Leverage Decline Press (Flex Fitness)','mc','push_h',['chest'],['triceps'],'Handles at lower chest|Press down and out|Slow on the way back'),
+X('flx_lrow','Leverage Row (Flex Fitness)','mc','pull_h',['lats','traps'],['biceps'],'Chest on the pad|Pull handles to your sides|Squeeze shoulder blades'),
+X('flx_tbar','T-Bar Row (Flex Fitness)','mc','pull_h',['lats','traps'],['biceps'],'Chest on the pad|Pull the handles to your chest|Squeeze at the top'),
+X('flx_squat','Leverage Power Squat (Flex Fitness)','mc','squat',['quads','glutes'],['hamstrings'],'Shoulders under the pads|Sit back and down|Drive up through the whole foot'),
+X('flx_hack','Hack Squat (Flex Fitness)','mc','squat',['quads'],['glutes'],'Shoulders under the pads, back flat|Feet low on the platform for more quads|Deep, controlled descent'),
+X('flx_legpress','45° Leg Press (Flex Fitness)','mc','squat',['quads','glutes'],['hamstrings'],'Back flat on the pad|Lower to ~90° knees|Don\'t lock the knees'),
+X('flx_calf','Standing Calf Raise (Flex Fitness)','mc','calf',['calves'],[],'Shoulders under the pads|Rise high onto your toes|Full stretch at the bottom'),
+X('flx_seatcalf','Seated Calf Raise (Flex Fitness)','mc','calf',['calves'],[],'Pad snug on your knees|Rise high onto your toes|Pause at the bottom stretch'),
 X('adductor','Hip Adduction Machine','mc','quad_iso',['quads'],[],'Inner thighs against pads|Squeeze knees together|Counts toward Quads (inner thigh)'),
 X('donkey_calf','Donkey Calf Raise Machine','mc','calf',['calves'],[],'Hips under pad, slight hinge|Deep stretch at bottom|Rise onto big toes'),
 X('machine_curl','Machine Biceps Curl','mc','bi',['biceps'],[],'Elbows lined up with pivot|Curl all the way up|Slow lowering'),
@@ -868,7 +896,8 @@ const ASSIST = ['assist_pullup', 'assist_dip', 'lf_chin', 'lf_dip'];
 const BORROW = {assist_pullup:'pullup', assist_dip:'dip', seated_lp:'leg_press', linear_hack:'hack', kneel_curl:'leg_curl', chest_row_mc:'fx_Lying_T-Bar_Row',
   hs_chest:'fx_Leverage_Chest_Press', hs_incline:'fx_Leverage_Incline_Chest_Press', hs_decline:'fx_Leverage_Decline_Chest_Press', hs_widechest:'fx_Leverage_Chest_Press', hs_shoulder:'fx_Leverage_Shoulder_Press',
   hs_frontpd:'lat_pd', hs_widepd:'lat_pd', hs_row:'fx_Leverage_Iso_Row', hs_lowrow:'cable_row', hs_highrow:'fx_Leverage_Iso_Row', hs_dyrow:'fx_Leverage_Iso_Row', hs_legpress:'leg_press', hs_legext:'leg_ext', hs_kneelcurl:'leg_curl',
-  lf_chest:'machine_press', lf_dachest:'machine_press', lf_shoulder:'machine_ohp', lf_latraise:'fx_Seated_Side_Lateral_Raise', lf_pecfly:'pec_deck', lf_reardelt:'reverse_pec', lf_pulldown:'lat_pd', lf_dapulldown:'lat_pd', lf_row:'fx_Leverage_Iso_Row', lf_curl:'machine_curl', lf_triext:'machine_tri', lf_tripress:'seated_dip', lf_chin:'pullup', lf_dip:'dip', lf_abs:'ab_machine', lf_torso:'torso_rotation', lf_backext:'back_ext', lf_legpress:'leg_press', lf_legext:'leg_ext', lf_legcurl:'lying_curl', lf_seatcurl:'seated_curl', lf_calf:'lp_calf', lf_glute:'kickback_machine', lf_glutebridge:'hip_thrust', lf_abductor:'fx_Thigh_Abductor', lf_adductor:'adductor', lfp_incline:'fx_Leverage_Incline_Chest_Press', lfp_decline:'fx_Leverage_Decline_Chest_Press', lfp_shoulder:'fx_Leverage_Shoulder_Press', lfp_pulldown:'lat_pd', lfp_highrow:'fx_Leverage_Iso_Row', lfp_row:'fx_Leverage_Iso_Row', lfp_dip:'seated_dip', lfp_legpress:'leg_press', lfp_legext:'leg_ext', lfp_kneelcurl:'leg_curl', lfp_calf:'calf_raise'};
+  lf_chest:'machine_press', lf_dachest:'machine_press', lf_shoulder:'machine_ohp', lf_latraise:'fx_Seated_Side_Lateral_Raise', lf_pecfly:'pec_deck', lf_reardelt:'reverse_pec', lf_pulldown:'lat_pd', lf_dapulldown:'lat_pd', lf_row:'fx_Leverage_Iso_Row', lf_curl:'machine_curl', lf_triext:'machine_tri', lf_tripress:'seated_dip', lf_chin:'pullup', lf_dip:'dip', lf_abs:'ab_machine', lf_torso:'torso_rotation', lf_backext:'back_ext', lf_legpress:'leg_press', lf_legext:'leg_ext', lf_legcurl:'lying_curl', lf_seatcurl:'seated_curl', lf_calf:'lp_calf', lf_glute:'kickback_machine', lf_glutebridge:'hip_thrust', lf_abductor:'fx_Thigh_Abductor', lf_adductor:'adductor', lfp_incline:'fx_Leverage_Incline_Chest_Press', lfp_decline:'fx_Leverage_Decline_Chest_Press', lfp_shoulder:'fx_Leverage_Shoulder_Press', lfp_pulldown:'lat_pd', lfp_highrow:'fx_Leverage_Iso_Row', lfp_row:'fx_Leverage_Iso_Row', lfp_dip:'seated_dip', lfp_legpress:'leg_press', lfp_legext:'leg_ext', lfp_kneelcurl:'leg_curl', lfp_calf:'calf_raise',
+  flx_pecdec:'pec_deck', flx_reardelt:'reverse_pec', flx_delt:'fx_Seated_Side_Lateral_Raise', flx_shoulder:'machine_ohp', flx_latpd:'lat_pd', flx_row:'cable_row', flx_bicep:'machine_curl', flx_tricep:'machine_tri', flx_dip:'seated_dip', flx_legext:'leg_ext', flx_legcurl:'lying_curl', flx_seatcurl:'seated_curl', flx_lowback:'back_ext', flx_abs:'ab_machine', flx_chest:'fx_Leverage_Chest_Press', flx_incline:'fx_Leverage_Incline_Chest_Press', flx_decline:'fx_Leverage_Decline_Chest_Press', flx_lrow:'fx_Leverage_Iso_Row', flx_tbar:'fx_Lying_T-Bar_Row', flx_squat:'hack', flx_hack:'hack', flx_legpress:'leg_press', flx_calf:'calf_raise', flx_seatcalf:'seated_calf'};
 for (const [id, [img, steps, level, n]] of Object.entries(window.FX_MATCH || {})){ const e = EXL.find(x => x.id === id); if (e){ if (n) e.img = img; e.steps = steps; e.level = level; } }
 ASSIST.forEach(id => { const e = EXL.find(x => x.id === id); if (e) e.assist = 1; });
 for (const [id, name, eq, cat, level, p, s, steps, n, bw, nx] of (window.FX_EXTRA || []))
@@ -1626,7 +1655,48 @@ function bountyFor(dk, roll){
   const T = Math.round(L.ton * 1.1 / 100) * 100;
   return {t:'tonnage', ex:id, n:T, icon:'⚖️', title:`Move ${fmt(T)} lb on ${ex.name}`, sub:'Weight × reps across all sets — 10% more than last time'};
 }
-const todayBounty = () => { const b = bountyState(); return {...bountyFor(b.d, b.roll), done:b.done, roll:b.roll}; };
+/* ---- Bounty board: start a split day and pick 1 of 3 bounties built from that day's exercises ---- */
+function lastSession(id){ for (const w of state.workouts){ if (w.date >= bountyState().d) continue; const e = w.entries.find(x => x.ex === id && x.sets.some(s => +s.r > 0)); if (!e) continue;
+    const ss = e.sets.filter(s => +s.r > 0), top = Math.max(...ss.map(x => +x.w || 0));
+    return {w:top, reps:ss.filter(x => (+x.w || 0) >= top).reduce((a, x) => a + +x.r, 0), all:ss.reduce((a, x) => a + +x.r, 0), ton:ss.reduce((a, x) => a + (+x.w || 0) * +x.r, 0), date:w.date}; }
+  return null; }
+function boardOptions(day){
+  const ids = [...new Set(day.items.map(it => it.ex))].filter(id => EX[id] && !EX[id].nx), c = [], R = Math.random, plan = {};
+  for (const id of ids){ const ex = EX[id], L = lastSession(id), it = day.items.find(x => x.ex === id), sets = Math.max(1, +it.sets || 3);
+    ex.p.forEach(m => plan[m] = (plan[m] || 0) + sets);
+    if (!L){ c.push({t:'exsets', ex:id, n:sets, icon:'🆕', title:`Log ${sets} sets of ${ex.name}`, sub:'No history on this one yet. Set your baseline'}); continue; }
+    if (ex.bw && !L.w){ c.push({t:'reps', ex:id, w:0, n:L.all + 3, icon:'🔁', title:`${L.all + 3} total reps of ${ex.name}`, sub:`3 more than last time (${L.all})`}); continue; }
+    if (ex.assist){ c.push({t:'exsets', ex:id, n:sets + 1, icon:'➕', title:`${sets + 1} sets of ${ex.name}`, sub:'One more set than the plan'}); continue; }
+    if (!L.w) continue;
+    const inc = ex.eq === 'db' ? 5 : (ex.p.some(x => LOWER.includes(x)) ? 10 : 5) * (R() < .3 ? 2 : 1), T = Math.round(L.ton * (R() < .5 ? 1.1 : 1.15) / 100) * 100;
+    c.push({t:'heavy', ex:id, w:L.w + inc, n:1, icon:'🏋️', title:`${ex.name}: ${L.w + inc} lb for 3+ reps`, sub:`One set, ${inc} lb above your last top set (${L.w} lb)`});
+    c.push({t:'reps', ex:id, w:L.w, n:L.reps + 2, icon:'🔁', title:`${L.reps + 2} total reps of ${ex.name}`, sub:`At ${L.w} lb or heavier, 2 more than last time`});
+    if (T > 0) c.push({t:'tonnage', ex:id, n:T, icon:'⚖️', title:`Move ${fmt(T)} lb on ${ex.name}`, sub:`Weight × reps across all sets, ${Math.round(T / L.ton * 100 - 100)}% more than last time`});
+    c.push({t:'prx', ex:id, n:1, icon:'🏆', title:`Set a PR on ${ex.name}`, sub:'Beat your best estimated 1-rep max on it'}); }
+  const top = Object.entries(plan).sort((a, b) => b[1] - a[1])[0];
+  if (top) c.push({t:'fresh', m:top[0], n:top[1] + 2, icon:'🎯', title:`Do ${top[1] + 2} sets for ${MUSCLES[top[0]]}`, sub:`2 more than today's plan`});
+  for (let i = c.length - 1; i > 0; i--){ const j = Math.floor(R() * (i + 1)); [c[i], c[j]] = [c[j], c[i]]; }
+  const out = [], tk = new Set(), ek = new Set();
+  for (const pass of [0, 1, 2]) for (const q of c){ if (out.length >= 3 || out.includes(q)) continue;
+    if (pass < 2 && q.ex && ek.has(q.ex)) continue; if (pass < 1 && tk.has(q.t)) continue; out.push(q); tk.add(q.t); if (q.ex) ek.add(q.ex); }
+  return out;
+}
+function openBoard(){
+  const g = ui.board, b = bountyState(), cur = b.pick;
+  openSheet(`<div class="row between"><span class="bty-tag">BOUNTY BOARD</span><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    <h3 style="margin:14px 0 2px">${esc(g.name)}</h3><small class="mute">Pick a bounty for today's workout · +${BOUNTY_XP} XP and a Rare-or-better chest</small>
+    ${g.opts.map((q, i) => `<button class="bty-opt" data-act="btyPick" data-i="${i}"><div class="bty-ico">${q.icon}</div><div style="min-width:0"><b>${esc(q.title)}</b><small>${esc(q.sub)}</small></div><span class="go">TAKE IT</span></button>`).join('')}
+    <div class="row gap" style="margin-top:12px">${g.rolled ? '' : '<button class="btn ghost" style="flex:1" data-act="btyRoll">↻ New bounties</button>'}
+      <button class="btn ghost" style="flex:1" data-act="btyNone">${cur ? 'Keep my bounty' : 'No bounty'}</button></div>
+    ${cur ? `<small class="mute" style="display:block;margin-top:8px">Current: ${esc(cur.title)}</small>` : ''}`);
+}
+function beginDay(sid, did){
+  const s = state.splits.find(x => x.id === sid), day = s && s.days.find(x => x.id === did); if (!day) return;
+  if ($('#sheetWrap').classList.contains('open')) closeSheet();
+  startWorkout(day.name, day.items.map(it => ({...newEntry(it.ex, Math.max(1, +it.sets || 3), `${it.sets}×${it.reps}`), ss:!!it.ss})));
+  state.active.sp = {s:s.id, d:day.id}; save();
+}
+const todayBounty = () => { const b = bountyState(); return b.pick ? {...b.pick, done:b.done, roll:1, mine:1} : {...bountyFor(b.d, b.roll), done:b.done, roll:b.roll}; };
 function bountyProgress(q, live){
   const sets = [];
   state.workouts.filter(w => w.date >= bountyState().d).forEach(w => w.entries.forEach(e => e.sets.forEach(x => sets.push({ex:e.ex, w:+x.w || 0, r:+x.r || 0, pr:false}))));
@@ -1634,23 +1704,28 @@ function bountyProgress(q, live){
   if (q.t === 'pr'){ let n = state.workouts.filter(w => w.date >= bountyState().d).reduce((a, w) => a + (w.prs ? w.prs.length : 0), 0);
     if (live && state.active) state.active.entries.forEach(e => { const pb = bestBefore(e.ex), ex = EX[e.ex]; if (pb !== null && e.sets.some(x => +x.r > 0 && e1rm(ex, x) > pb + .01)) n++; });
     return n; }
+  if (q.t === 'prx'){ let n = state.workouts.filter(w => w.date >= bountyState().d && w.prs && w.prs.some(p => p.ex === q.ex)).length;
+    if (live && state.active) state.active.entries.forEach(e => { if (e.ex !== q.ex) return; const pb = bestBefore(e.ex), ex = EX[e.ex]; if (pb !== null && e.sets.some(x => +x.r > 0 && e1rm(ex, x) > pb + .01)) n++; });
+    return Math.min(n, 1); }
   if (q.t === 'fresh') return sets.filter(x => EX[x.ex] && EX[x.ex].p.includes(q.m)).length;
+  if (q.t === 'exsets') return sets.filter(x => x.ex === q.ex && x.r > 0).length;
   const mine = sets.filter(x => x.ex === q.ex);
   if (q.t === 'reps') return mine.filter(x => x.w >= q.w).reduce((a, x) => a + x.r, 0);
   if (q.t === 'heavy') return mine.some(x => x.w >= q.w && x.r >= 3) ? 1 : 0;
   return Math.round(mine.reduce((a, x) => a + x.w * x.r, 0));
 }
-function claimBounty(){ const b = bountyState(); if (b.done) return null; const q = bountyFor(b.d, b.roll); if (bountyProgress(q) < q.n) return null;
+function claimBounty(){ const b = bountyState(); if (b.done) return null; const q = b.pick || bountyFor(b.d, b.roll); if (bountyProgress(q) < q.n) return null;
   b.done = true; state.bountiesDone = (state.bountiesDone || 0) + 1; state.bonusXP += BOUNTY_XP; return q; }
 function bountyCard(compact){
   const q = todayBounty(), prog = q.done ? q.n : bountyProgress(q, true), pct = Math.min(1, prog / q.n), ready = !q.done && prog >= q.n;
   const num = v => q.t === 'tonnage' ? fmt(v) : v;
   if (compact) return `<div class="bty-mini${q.done ? ' done' : ready ? ' ready' : ''}"><span>${q.icon}</span><div style="flex:1;min-width:0"><b>${esc(q.title)}</b><div class="bar"><i style="width:${pct * 100}%"></i></div></div><small>${q.done ? '✓' : ready ? 'Finish to claim' : `${num(Math.min(prog, q.n))}/${num(q.n)}`}</small></div>`;
-  return `<div class="card bounty${q.done ? ' done' : ''}"><div class="row between"><span class="bty-tag">WANTED</span><small class="mute">Daily bounty · new one at midnight</small></div>
+  return `<div class="card bounty${q.done ? ' done' : ''}"><div class="row between"><span class="bty-tag">WANTED</span><small class="mute">${q.mine ? 'Your pick for today' : 'Daily bounty · new one at midnight'}</small></div>
     <div class="bty-body"><div class="bty-ico">${q.icon}</div><div style="min-width:0"><b>${esc(q.title)}</b><small>${esc(q.sub)}</small></div></div>
     <div class="bar"><i style="width:${pct * 100}%"></i></div>
     <div class="row between" style="margin-top:6px"><small class="mute">${q.done ? 'Claimed ✓ — come back tomorrow' : ready ? 'Done! Finish your workout to claim it' : `${num(Math.min(prog, q.n))} / ${num(q.n)}`}</small><small class="bty-rw">+${BOUNTY_XP} XP · Rare+ chest</small></div>
-    ${!q.done && !q.roll && !prog ? '<button class="btn ghost xs" style="margin-top:8px" data-act="bountyReroll">↻ Different bounty (1 free swap)</button>' : ''}</div>`;
+    ${!q.done && !q.roll && !prog ? '<button class="btn ghost xs" style="margin-top:8px" data-act="bountyReroll">↻ Different bounty (1 free swap)</button>' : ''}
+    ${!q.done && !q.mine ? '<small class="mute" style="display:block;margin-top:8px">Or start a split day to pick a bounty from that workout</small>' : ''}</div>`;
 }
 function questProgress(q){
   const ws = state.workouts.filter(w => w.date >= q.start);
@@ -4660,10 +4735,13 @@ const ACT = {
   startDay: async d => {
     if (state.active && !(await confirmBox('Replace the workout in progress?', 'Replace'))) return;
     const s = state.splits.find(x => x.id === d.s), day = s && s.days.find(x => x.id === d.d); if (!day) return;
-    if ($('#sheetWrap').classList.contains('open')) closeSheet();
-    startWorkout(day.name, day.items.map(it => ({...newEntry(it.ex, Math.max(1, +it.sets || 3), `${it.sets}×${it.reps}`), ss:!!it.ss})));
-    state.active.sp = {s:s.id, d:day.id}; save();
+    const opts = bountyState().done ? [] : boardOptions(day);
+    if (!opts.length) return beginDay(s.id, day.id);
+    ui.board = {s:s.id, d:day.id, name:day.name, opts, rolled:false}; openBoard();
   },
+  btyPick: d => { const g = ui.board, q = g && g.opts[+d.i]; if (!q) return; const b = bountyState(); b.pick = q; save(); toast(`🎯 Bounty accepted`); beginDay(g.s, g.d); },
+  btyRoll: () => { const g = ui.board; if (!g || g.rolled) return; const day = state.splits.find(x => x.id === g.s).days.find(x => x.id === g.d); g.opts = boardOptions(day); g.rolled = true; openBoard(); },
+  btyNone: () => { const g = ui.board; if (g) beginDay(g.s, g.d); },
   replaceEx: d => openReplace(+d.i),
   repEq: (d, b) => { ui.rep.eq = d.v; ui.rep.n = 25; b.parentNode.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b)); renderRepList(); },
   repMore: () => { ui.rep.n += 25; renderRepList(); },
