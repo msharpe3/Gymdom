@@ -324,7 +324,7 @@ svg.body .aura.flame,svg.body .aura.ghostfire{animation:flick .5s ease-in-out in
 .coach-card svg{width:30px;height:30px;flex:none;fill:none;stroke:var(--teal);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .coach-card span{flex:1;display:flex;flex-direction:column;gap:2px}.coach-card small{color:var(--mute);font-size:12px}.coach-card i{font-style:normal;font-size:22px;color:var(--mute)}
 .kick{font:700 10px 'Chakra Petch';letter-spacing:.2em;color:var(--teal)}
-.rot-card .rot-next{font:700 26px 'Chakra Petch';color:var(--c);line-height:1.1}
+.rot-card{margin-top:12px}.rot-card .rot-next{font:700 26px 'Chakra Petch';color:var(--c);line-height:1.1}
 .rot-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:12px;text-align:center}
 .rot-cal .h{font:600 10px Inter;color:var(--mute);letter-spacing:.04em;padding-bottom:2px}
 .rot-cal .c{position:relative;height:40px;border-radius:8px;background:var(--panel2);display:flex;flex-direction:column;align-items:center;justify-content:center;font:700 10px Inter;color:var(--mute);overflow:hidden;padding:0 2px;white-space:nowrap;border:1px solid transparent}
@@ -549,12 +549,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.11.12.1"></script>
+<script src="exercises.js?v=2026.11.12.2"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.11.12.1';
+const APP_VERSION = '2026.11.12.2';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -4252,8 +4252,8 @@ function muscleInfo(m){
 function renderTrain(){
   const a = state.active;
   if (ui.edit) return renderSplits();
-  if (!a) return `<h2>Train</h2>${rotCard()}<button class="btn gold block" data-act="startEmpty" style="margin-bottom:12px">+ Start empty workout</button>
-    <button class="card coach-card" data-act="tab" data-tab="coach"><svg viewBox="0 0 24 24"><path d="M3 14a6 6 0 0 0 12 0v-2h6V8H9a6 6 0 0 0-6 6Z"/><circle cx="9" cy="14" r="2"/><path d="M5.5 9.5 3.5 6.5"/><circle cx="3" cy="5.5" r="1.2"/></svg><span><b>Coach</b><small>Build a split from your goal, schedule and equipment</small></span><i>›</i></button>` + renderSplits();
+  if (!a) return `<h2>Train</h2><button class="btn gold block" data-act="startEmpty" style="margin-bottom:12px">+ Start empty workout</button>
+    <button class="card coach-card" data-act="tab" data-tab="coach"><svg viewBox="0 0 24 24"><path d="M3 14a6 6 0 0 0 12 0v-2h6V8H9a6 6 0 0 0-6 6Z"/><circle cx="9" cy="14" r="2"/><path d="M5.5 9.5 3.5 6.5"/><circle cx="3" cy="5.5" r="1.2"/></svg><span><b>Coach</b><small>Build a split from your goal, schedule and equipment</small></span><i>›</i></button>` + renderSplits() + rotCard();
   const pz = !!a.paused;
   let h = `<div class="card live${pz ? ' paused' : ''}"><div class="row between" style="margin-bottom:10px">${pz ? '<span class="pz-tag">❚❚ PAUSED</span>' : '<span class="pulse">● LIVE</span>'}<span class="row gap" style="align-items:center">${pz ? '' : '<button class="btn ghost xs" data-act="restStart">⏱ Rest</button>'}<button class="btn ${pz ? 'gold' : 'ghost'} xs" data-act="pauseW">${pz ? '▶ Resume' : '❚❚ Pause'}</button><span id="elapsed">${mmss(workoutSecs(a))}</span></span></div><input id="wname" value="${esc(a.name)}" placeholder="Workout name"></div>`;
   h += bountyCard(true);
