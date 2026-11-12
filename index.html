@@ -330,7 +330,8 @@ svg.body .aura.flame,svg.body .aura.ghostfire{animation:flick .5s ease-in-out in
 .rot-cal .c{position:relative;height:40px;border-radius:8px;background:var(--panel2);display:flex;flex-direction:column;align-items:center;justify-content:center;font:700 10px Inter;color:var(--mute);overflow:hidden;padding:0 2px;white-space:nowrap;border:1px solid transparent}
 .rot-cal .c i{font:500 9px Inter;font-style:normal;opacity:.7}.rot-cal .c.w{background:color-mix(in srgb,var(--c) 20%,var(--panel2));color:var(--c);border-color:color-mix(in srgb,var(--c) 45%,transparent)}
 .rot-cal .c.t{border-color:var(--text)}.rot-cal .c.nx{background:transparent;border:1px dashed var(--c);color:var(--c)}.rot-cal .c.f{opacity:.4}
-.rot-days{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:10px;font-size:12px;color:var(--mute)}.rot-days span{display:flex;align-items:center;gap:5px}.rot-days i{width:9px;height:9px;border-radius:3px;background:var(--c)}.rot-days b{color:var(--text)}
+.rot-days{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;font-size:13px;color:var(--mute)}.rot-days button{display:flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line);color:inherit;font:inherit;padding:6px 11px;border-radius:99px;cursor:pointer}.rot-days button.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 16%,var(--panel2))}
+.rot-sp{display:flex;gap:6px;overflow-x:auto;margin:10px 0 2px}.rot-sp .chip{flex:none}.rot-days i{width:9px;height:9px;border-radius:3px;background:var(--c)}.rot-days b{color:var(--text)}
 .icon-btn.rot-on{background:color-mix(in srgb,var(--teal) 22%,var(--panel2));border-color:var(--teal)}
 .reward-card{display:flex;gap:14px;align-items:center;cursor:pointer;background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 10%,var(--panel)),var(--panel) 65%)}
 .arm-hd{display:flex;align-items:baseline;justify-content:space-between}.arm-hd small{font-size:11px}
@@ -549,12 +550,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.11.12.2"></script>
+<script src="exercises.js?v=2026.11.12.3"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.11.12.2';
+const APP_VERSION = '2026.11.12.3';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1543,8 +1544,8 @@ function rotInfo(){
   const lw = done.find(x => x.dk === addDays(target, -7));
   if (lw && lw.i === next){ next = (next + 1) % n; why = `Skipped ${s.days[lw.i].name}: you did it last ${WDAY[new Date(target).getDay()]}`; }
   const sk = state.rotSkip, at = last ? last.w.id : '-', k = sk && sk.at === at ? sk.k % n : 0;
-  if (k){ next = (next + k) % n; why = 'You skipped ahead'; }
-  return {s, n, next, why, k, at, target, doneToday, done};
+  if (k){ next = (next + k) % n; why = sk.pick ? 'You picked this one' : 'You skipped ahead'; }
+  return {s, n, next, why, k, at, target, doneToday, done, base:(next - k + n) % n};
 }
 function rotCard(){
   const r = rotInfo(); if (!r) return '';
@@ -1558,11 +1559,13 @@ function rotCard(){
     else cal += `<span class="c${t}${k > today ? ' f' : ''}"><i>${dn}</i>${k > today ? '' : '–'}</span>`; }
   const c = ROT_C[next % ROT_C.length];
   return `<div class="card rot-card"><div class="row between"><span class="kick">🔁 ROTATION · ${esc(s.name.toUpperCase())}</span><small class="mute">Day ${next + 1} of ${r.n}</small></div>
+    ${(sps => sps.length > 1 ? `<div class="rot-sp">${sps.map(x => `<button class="chip${x === s ? ' on' : ''}" data-act="rotSet" data-id="${x.id}" data-keep="1">${esc(x.name)}</button>`).join('')}</div>` : '')(state.splits.filter(x => x.days.length > 1))}
     <div class="row between gap" style="margin-top:8px;align-items:flex-end"><div style="min-width:0"><small class="mute">Up next${r.doneToday ? ' (tomorrow)' : ''}</small><div class="rot-next" style="--c:${c}">${esc(d.name)}</div><small class="mute">${esc(r.why)}</small></div>
       <button class="btn ghost sm" data-act="rotSkip">Skip ›</button></div>
     <button class="btn gold block" style="margin-top:10px" data-act="startDay" data-s="${s.id}" data-d="${d.id}">Start ${esc(d.name)}</button>
     <div class="rot-cal">${cal}</div>
-    <div class="rot-days">${s.days.map((x, i) => `<span style="--c:${ROT_C[i % ROT_C.length]}"><i></i>${i === next ? `<b>${esc(x.name)}</b>` : esc(x.name)}</span>`).join('')}</div></div>`;
+    <div class="rot-days">${s.days.map((x, i) => `<button class="${i === next ? 'on' : ''}" style="--c:${ROT_C[i % ROT_C.length]}" data-act="rotPick" data-i="${i}"><i></i>${i === next ? `<b>${esc(x.name)}</b>` : esc(x.name)}</button>`).join('')}</div>
+    <small class="mute h-hint">Tap a day to make it next</small></div>`;
 }
 function openTrainToday(){
   const rec = recovery(), opts = trainOptions().slice(0, 3);
@@ -4646,7 +4649,8 @@ const ACT = {
   mapMode: d => { ui.mapMode = d.v; render(); },
   trainToday: openTrainToday,
   rotSkip: () => { const r = rotInfo(); if (!r) return; state.rotSkip = {at:r.at, k:(r.k || 0) + 1}; save(); render(); },
-  rotSet: d => { const on = rotSplit(); if (on && on.id === d.id){ state.rotSplit = 'off'; toast('Rotation off'); } else { state.rotSplit = d.id; const s = state.splits.find(x => x.id === d.id); toast(`Rotating through ${s ? s.name : 'this split'}`); } save(); render(); },
+  rotPick: d => { const r = rotInfo(); if (!r) return; state.rotSkip = {at:r.at, k:(+d.i - r.base + r.n) % r.n, pick:1}; save(); render(); },
+  rotSet: d => { const on = rotSplit(); if (on && on.id === d.id){ if (d.keep) return; state.rotSplit = 'off'; toast('Rotation off'); } else { state.rotSplit = d.id; const s = state.splits.find(x => x.id === d.id); toast(`Rotating through ${s ? s.name : 'this split'}`); } save(); render(); },
   trainTpl: async d => {
     if (state.active && !(await confirmBox('Replace the workout in progress?', 'Replace'))) return;
     const [name, ms] = TRAIN_TPL[+d.g], picks = [];
