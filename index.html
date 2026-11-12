@@ -566,12 +566,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.11.12.5"></script>
+<script src="exercises.js?v=2026.11.12.6"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.11.12.5';
+const APP_VERSION = '2026.11.12.6';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1720,15 +1720,21 @@ function scopeWander(){
     requestAnimationFrame(step); };
   requestAnimationFrame(step);
 }
-// Bullet hole: dark hole, torn paper rim, random cracks
+// Bullet hole: punched metal look: jagged silver shards, a shaded dimple, black hole slightly off-center
 function holeSVG(){
-  let cr = ''; const n = 7 + Math.floor(Math.random() * 4);
-  for (let i = 0; i < n; i++){ let a = i / n * Math.PI * 2 + Math.random() * .5, r = 6, pts = [];
-    const L = 13 + Math.random() * 15; while (r < L){ pts.push(`${(Math.cos(a) * r).toFixed(1)},${(Math.sin(a) * r).toFixed(1)}`); r += 3 + Math.random() * 4; a += (Math.random() - .5) * .5; }
-    cr += `<polyline points="${pts.join(' ')}"/>`; }
-  let rim = ''; for (let i = 0; i < 14; i++){ const a = i / 14 * Math.PI * 2, r = 5.6 + Math.random() * 2.2; rim += `${(Math.cos(a) * r).toFixed(1)},${(Math.sin(a) * r).toFixed(1)} `; }
-  return `<svg viewBox="-32 -32 64 64"><circle r="12" fill="#000" opacity=".28"/><g stroke="#e9d6a8" stroke-opacity=".8" stroke-width="1.1" fill="none" stroke-linejoin="round">${cr}</g>
-    <polygon points="${rim}" fill="#e9d6a8" opacity=".85"/><circle r="5.2" fill="#07060c"/><circle r="5.2" fill="none" stroke="#000" stroke-width="1.4" opacity=".6"/></svg>`;
+  const id = 'bh' + Math.random().toString(36).slice(2, 7), n = 15 + Math.floor(Math.random() * 6), pts = [], f = v => v.toFixed(1);
+  for (let i = 0; i < n * 2; i++){ const a = i / (n * 2) * Math.PI * 2 + (Math.random() - .5) * .18;
+    const r = i % 2 ? 11.5 + Math.random() * 1.5 : (Math.random() < .22 ? 22 + Math.random() * 8 : 14 + Math.random() * 6); pts.push(`${f(Math.cos(a) * r)},${f(Math.sin(a) * r)}`); }
+  const P = pts.join(' '), hx = (Math.random() - .5) * 1.6, hy = (Math.random() - .5) * 1.6;
+  return `<svg viewBox="-32 -32 64 64"><defs>
+    <linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#e3e4e8"/><stop offset="1" stop-color="#a9adb5"/></linearGradient>
+    <linearGradient id="${id}r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fdfdfe"/><stop offset="1" stop-color="#7d828b"/></linearGradient>
+    <linearGradient id="${id}c" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5c616a"/><stop offset=".55" stop-color="#b9bcc3"/><stop offset="1" stop-color="#f2f3f5"/></linearGradient>
+    <radialGradient id="${id}h"><stop offset="0" stop-color="#000"/><stop offset=".8" stop-color="#101114"/><stop offset="1" stop-color="#2a2c31"/></radialGradient></defs>
+    <polygon points="${P}" transform="translate(1.2 1.8)" fill="#000" opacity=".35"/>
+    <polygon points="${P}" fill="url(#${id}s)" stroke="#8e939c" stroke-width=".5" stroke-linejoin="round"/>
+    <circle r="11.2" fill="url(#${id}r)"/><circle r="8.6" fill="url(#${id}c)"/>
+    <ellipse cx="${f(hx)}" cy="${f(hy)}" rx="5.4" ry="5" fill="url(#${id}h)"/><path d="M-6.2-6.6a9 9 0 0 1 8.2-2.1" stroke="#fff" stroke-width="1.1" fill="none" stroke-linecap="round" opacity=".8"/></svg>`;
 }
 function beginDay(sid, did){
   const s = state.splits.find(x => x.id === sid), day = s && s.days.find(x => x.id === did); if (!day) return;
@@ -4785,7 +4791,7 @@ const ACT = {
     const xh = $('#btyXh'); xh.classList.add('fire', 'lock'); xh.style.transform = `translate(${x - fr.left}px,${y - fr.top}px)`;
     setTimeout(() => {
       const fl = document.createElement('i'); fl.className = 'bty-flash'; fl.style.left = (x - fr.left) + 'px'; fl.style.top = (y - fr.top) + 'px'; f.appendChild(fl);
-      const h = document.createElement('i'); h.className = 'bty-hole'; h.innerHTML = holeSVG(); h.style.left = (x - br.left) + 'px'; h.style.top = (y - br.top) + 'px'; h.style.transform = `rotate(${Math.random() * 360}deg)`; el.appendChild(h);
+      const h = document.createElement('i'); h.className = 'bty-hole'; h.innerHTML = holeSVG(); h.style.left = (x - br.left) + 'px'; h.style.top = (y - br.top) + 'px'; el.appendChild(h);
       el.classList.add('hit'); xh.style.opacity = '0'; xh.style.transition = 'opacity .25s'; if (navigator.vibrate) navigator.vibrate([18, 30, 12]);
       el.querySelector('.go').textContent = 'TAKEN';
     }, 110);
