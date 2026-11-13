@@ -37,6 +37,17 @@ h2{font-size:22px}h3{font-size:16px}
 .icon-btn.sm{width:30px;height:30px;font-size:12px;border-radius:8px}
 input,select{font:16px Inter;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;width:100%;outline:none}
 input:focus{border-color:var(--teal)}
+.prep-sec{margin-top:16px;border-top:1px solid var(--line);padding-top:6px}.prep-cook{margin:16px 0 4px}
+.prep-rec{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:8px}.prep-rec h4{margin:2px 0 0;font-size:16px}
+.prep-mac{font-size:13px;margin:6px 0 4px}
+.prep-it{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:6px 0;border-top:1px dashed var(--line)}.prep-it b{white-space:nowrap}.prep-it small{color:var(--mute)}
+.prep-week{display:grid;gap:4px;font-size:11px;text-align:center}.prep-week .h{color:var(--mute);font-weight:600}.prep-week .d{color:var(--mute);text-align:left;align-self:center;font-weight:600}
+.prep-week .c{background:var(--panel2);border-radius:8px;padding:8px 3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.prep-week .c.b1{background:color-mix(in srgb,var(--teal) 16%,var(--panel2))}
+.prep-buy{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-top:1px solid var(--line);color:var(--text);font:inherit;font-size:14px;padding:10px 2px;text-align:left;cursor:pointer}
+.prep-buy i{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line);display:grid;place-items:center;font-style:normal;font-size:12px;color:#06231f;flex:none}.prep-buy.got i{background:var(--teal);border-color:var(--teal)}.prep-buy.got span{text-decoration:line-through;color:var(--mute)}.prep-buy b{margin-left:auto;white-space:nowrap}
+.pc-row{display:grid;grid-template-columns:minmax(0,1fr) 62px 70px 34px;gap:6px;margin-top:6px;align-items:center}.pc-row select,.pc-row input{padding:10px 6px;min-width:0}
+.pc-n{display:flex;justify-content:space-between;align-items:center;margin:12px 0 4px}.pc-big{font:700 34px 'Chakra Petch';line-height:1.1}.pc-big span{font:500 15px Inter;color:var(--mute)}.pc-step{display:flex;gap:8px}
+.pc-warn{font-size:13px;color:var(--gold);margin:8px 0 0}.pc-tot{margin-top:10px}
 label.lbl{display:block;font:600 12px Inter;color:var(--mute);letter-spacing:.06em;text-transform:uppercase;margin:14px 0 6px}
 .row{display:flex;align-items:center}.gap{gap:10px}.between{justify-content:space-between}.wrap{flex-wrap:wrap}
 .bar{height:8px;border-radius:99px;background:var(--panel2);overflow:hidden}.bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--teal),var(--gold));transition:width .6s}
@@ -565,12 +576,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.11.12.7"></script>
+<script src="exercises.js?v=2026.11.12.8"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.11.12.7';
+const APP_VERSION = '2026.11.12.8';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -1408,6 +1419,8 @@ function migrate(s){
   s.habits.tasks.forEach(t => { if (!t.i){ const p = HABIT_PRESETS.find(x => x[0] === t.id); t.i = p ? p[1] : EMOJI_ICON[t.e] || 'star'; } delete t.e; if (!t.g) t.g = t.id.startsWith('p:') ? presetSec(t.id) : 'anytime'; });
   s.restSec = s.restSec || 90;
   if (!s.notes || !s.notes.lists || !s.notes.lists.length) s.notes = {lists:[{id:'groc', name:'Groceries', items:[]}, {id:'notes', name:'Notes', items:[]}], cur:'groc'};
+  s.prep = s.prep || {}; s.prep.opts = s.prep.opts || {days:5, meals:['l', 'd'], skip:[]};
+  s.prep.calc = s.prep.calc || {rows:[{ing:'chicken_breast', amt:'3', unit:'lb'}, {ing:'white_rice', amt:'2', unit:'cup'}, {ing:'broccoli', amt:'2', unit:'lb'}, {ing:'olive_oil', amt:'2', unit:'tbsp'}], n:null, size:'l'};
   s.savedMeals = s.savedMeals || []; s.waterGoal = s.waterGoal || 64; s.friends = s.friends || [];
   if (!s.profile.playerId) s.profile.playerId = newPlayerId();
   s.food = s.food || {}; s.foodRecent = s.foodRecent || []; s.foodTargets = s.foodTargets || null;
@@ -2260,6 +2273,239 @@ const FOODS_RAW = [
 ["Grilled cheese sandwich",330,12,28,19,"1 sandwich:120"],
 ["Peanut butter & jelly sandwich",363,12,45,16,"1 sandwich:108"]];
 const FOODS = FOODS_RAW.map(([name, k, p, c, f, sv]) => ({name, per:{k, p, c, f}, sv: sv.split('|').map(x => { const i = x.lastIndexOf(':'); return [x.slice(0, i), +x.slice(i + 1)]; }), src:'local'}));
+/* ---- Meal prep: weekly plans sized to your targets, and a raw-ingredient calculator ---- */
+// [id, name, group, food (cooked / as-eaten, per 100 g) or [Cal,P,C,F], cooked g per raw g, extra units (raw g each), shopping unit]
+const PREP_RAW = [
+  ['chicken_breast','Chicken breast','Protein','Chicken breast, cooked',.75,{},'lb'],
+  ['chicken_thigh','Chicken thighs, boneless','Protein','Chicken thigh, cooked',.72,{},'lb'],
+  ['ground_turkey','Ground turkey 93/7','Protein','Ground turkey 93/7, cooked',.75,{},'lb'],
+  ['ground_beef','Ground beef 90/10','Protein','Ground beef 90/10, cooked',.72,{},'lb'],
+  ['ground_chicken','Ground chicken','Protein','Ground chicken, cooked',.75,{},'lb'],
+  ['sirloin','Sirloin steak','Protein','Sirloin steak, cooked',.75,{},'lb'],
+  ['pork_tender','Pork tenderloin','Protein','Pork tenderloin, cooked',.75,{},'lb'],
+  ['salmon','Salmon','Protein','Salmon, cooked',.8,{},'lb'],
+  ['tilapia','Tilapia','Protein','Tilapia, cooked',.8,{},'lb'],
+  ['cod','Cod','Protein','Cod, cooked',.8,{},'lb'],
+  ['shrimp','Shrimp, peeled','Protein','Shrimp, cooked',.85,{},'lb'],
+  ['tofu','Tofu, firm','Protein','Tofu, firm',1,{block:396},'block'],
+  ['eggs','Eggs','Protein','Egg, whole',1,{each:50, dozen:600},'each'],
+  ['egg_whites','Liquid egg whites','Protein','Egg whites',1,{cup:243, carton:454},'cup'],
+  ['greek_yog','Greek yogurt, nonfat','Protein','Greek yogurt, nonfat plain',1,{cup:245, tub:907},'cup'],
+  ['white_rice','White rice (dry)','Carbs','White rice, cooked',3,{cup:185},'cup'],
+  ['brown_rice','Brown rice (dry)','Carbs','Brown rice, cooked',2.8,{cup:190},'cup'],
+  ['pasta','Pasta (dry)','Carbs','Pasta, cooked',2.4,{box:454, cup:100},'box'],
+  ['quinoa','Quinoa (dry)','Carbs','Quinoa, cooked',2.75,{cup:170},'cup'],
+  ['couscous','Couscous (dry)','Carbs','Couscous, cooked',2.5,{cup:173},'cup'],
+  ['lentils','Lentils (dry)','Carbs','Lentils, cooked',2.5,{cup:192},'cup'],
+  ['potato','Potatoes','Carbs','Potato, baked',.85,{each:213},'lb'],
+  ['sweet_potato','Sweet potatoes','Carbs','Sweet potato, baked',.85,{each:180},'lb'],
+  ['black_beans','Black beans, canned','Carbs','Black beans, cooked',1,{can:240},'can'],
+  ['oats','Oats','Carbs','Oats, dry',1,{cup:81},'cup'],
+  ['tortilla','Flour tortillas','Carbs','Flour tortilla',1,{each:49},'each'],
+  ['broccoli','Broccoli','Veggies','Broccoli, cooked',.9,{head:300, cup:91},'lb'],
+  ['green_beans','Green beans','Veggies','Green beans, cooked',.9,{cup:100},'lb'],
+  ['asparagus','Asparagus','Veggies',[22,2.4,4.1,.2],.85,{bunch:450},'bunch'],
+  ['peppers','Bell peppers','Veggies','Bell pepper',.85,{each:150},'each'],
+  ['zucchini','Zucchini','Veggies',[17,1.2,3.1,.3],.85,{each:200},'each'],
+  ['spinach','Spinach','Veggies','Spinach, raw',1,{bag:283, cup:30},'bag'],
+  ['carrots','Carrots','Veggies','Carrots',.9,{each:61, cup:128},'lb'],
+  ['onion','Onion','Veggies','Onion',.85,{each:150},'each'],
+  ['mixed_veg','Frozen mixed vegetables','Veggies',[65,2.9,13,.4],1,{bag:340, cup:134},'bag'],
+  ['cauliflower','Cauliflower','Veggies',[23,1.8,4.1,.5],.9,{head:575, cup:107},'head'],
+  ['brussels','Brussels sprouts','Veggies',[36,2.6,7.1,.5],.9,{cup:88},'lb'],
+  ['corn','Corn, frozen','Veggies','Corn, cooked',1,{bag:340, cup:145},'bag'],
+  ['olive_oil','Olive oil','Fats & sauces','Olive oil',1,{tbsp:13.5, tsp:4.5},'tbsp'],
+  ['butter','Butter','Fats & sauces','Butter',1,{tbsp:14},'tbsp'],
+  ['cheddar','Shredded cheddar','Fats & sauces','Cheddar cheese',1,{cup:113, bag:226},'cup'],
+  ['avocado','Avocado','Fats & sauces','Avocado',1,{each:150},'each'],
+  ['pb','Peanut butter','Fats & sauces','Peanut butter',1,{tbsp:16},'tbsp'],
+  ['salsa','Salsa','Fats & sauces','Salsa',1,{tbsp:16, cup:260, jar:454},'jar'],
+  ['marinara','Marinara sauce','Fats & sauces','Marinara sauce',1,{cup:250, jar:680},'jar'],
+  ['teriyaki','Teriyaki sauce','Fats & sauces',[89,5.9,15.6,0],1,{tbsp:18},'tbsp'],
+  ['bbq','BBQ sauce','Fats & sauces',[172,.8,41,.6],1,{tbsp:17},'tbsp'],
+  ['soy','Soy sauce','Fats & sauces',[53,8,4.9,.6],1,{tbsp:16},'tbsp'],
+];
+const PREP = {};
+PREP_RAW.forEach(([id, name, grp, food, y, units, buy]) => {
+  const f = Array.isArray(food) ? {per:{k:food[0], p:food[1], c:food[2], f:food[3]}} : FOODS.find(x => x.name === food);
+  PREP[id] = {id, name, grp, y, buy, per:f ? f.per : {k:0, p:0, c:0, f:0}, cooked:Array.isArray(food) ? name : food, units:{...units, g:1, oz:28.35, lb:453.6, kg:1000}};
+});
+const PREP_UNITS = id => { const u = PREP[id].units, own = Object.keys(u).filter(k => !['g', 'oz', 'lb', 'kg'].includes(k)), wt = ['lb', 'oz', 'g', 'kg'];
+  return ['each', 'dozen', 'can', 'block'].some(k => u[k]) ? [...own, ...wt] : PREP[id].buy === 'lb' ? [...wt, ...own] : [...own, ...wt]; };
+const prepMac = (id, g) => { const p = PREP[id].per, m = g / 100; return {k:p.k * m, p:p.p * m, c:p.c * m, f:p.f * m}; };
+const addMac = (a, b) => ({k:a.k + b.k, p:a.p + b.p, c:a.c + b.c, f:a.f + b.f});
+const Z = {k:0, p:0, c:0, f:0};
+const ozs = g => (g / 28.35).toFixed(1).replace(/\.0$/, '');
+// how much of one ingredient goes in a container, in words
+function portionTxt(id, g){
+  const P = PREP[id], u = P.units;
+  if (u.each && ['eggs', 'tortilla'].includes(id)){ const n = Math.round(g / u.each * 4) / 4; return `${n} ${id === 'eggs' ? (n === 1 ? 'egg' : 'eggs') : (n === 1 ? 'tortilla' : 'tortillas')}`; }
+  if (u.tbsp){ const t = g / u.tbsp; return t < 1 ? `${Math.max(1, Math.round(g / (u.tsp || u.tbsp / 3)))} tsp` : `${Math.round(t * 2) / 2} tbsp`; }
+  return `${Math.round(g)} g (${ozs(g)} oz)`;
+}
+// shopping amount from raw grams
+function buyTxt(id, g){
+  const P = PREP[id], b = P.buy, u = P.units;
+  if (b === 'lb') return `${(Math.ceil(g / 453.6 * 10) / 10).toFixed(1)} lb`;
+  const n = g / u[b];
+  if (['cup', 'tbsp'].includes(b)){ const q = Math.ceil(n * 4) / 4; return `${q} ${b}${q > 1 && b === 'cup' ? 's' : ''}` + (b === 'cup' ? ` (${Math.round(g)} g)` : ''); }
+  const c = Math.max(1, Math.ceil(n - .05)); return `${c} ${b === 'each' ? '' : b + (c > 1 ? (b === 'box' ? 'es' : b === 'bunch' ? 'es' : 's') : '')}`.trim();
+}
+const prepTarget = share => { const g = state.foodTargets || {kcal:2400, p:180}; return {k:g.kcal * share, p:g.p * share, def:!state.foodTargets}; };
+
+/* recipes: [id, name, meals (b/l/d/s), tag (beef/pork/fish/meatless/''), [[ingredient, cooked g, role]]]
+   role p = protein (sized to your protein), c = carbs (fill the rest of the calories), v/x = fixed veggies/extras */
+const PREP_RECIPES = [
+  ['teri_chicken','Teriyaki chicken & rice','ld','',[['chicken_breast',150,'p'],['white_rice',180,'c'],['broccoli',100,'v'],['teriyaki',25,'x']]],
+  ['taco_bowl','Turkey taco bowls','ld','',[['ground_turkey',140,'p'],['white_rice',150,'c'],['black_beans',60,'c'],['peppers',60,'v'],['onion',30,'v'],['salsa',40,'x'],['cheddar',15,'x']]],
+  ['beef_sweet','Beef & sweet potato bowls','ld','beef',[['ground_beef',140,'p'],['sweet_potato',200,'c'],['green_beans',100,'v']]],
+  ['salmon_quinoa','Salmon, quinoa & asparagus','ld','fish',[['salmon',140,'p'],['quinoa',160,'c'],['asparagus',100,'v'],['olive_oil',5,'x']]],
+  ['chicken_pasta','Chicken marinara pasta','ld','',[['chicken_breast',140,'p'],['pasta',180,'c'],['marinara',100,'x'],['spinach',40,'v']]],
+  ['steak_potato','Steak & potatoes','ld','beef',[['sirloin',150,'p'],['potato',220,'c'],['broccoli',100,'v'],['butter',5,'x']]],
+  ['shrimp_rice','Shrimp fried rice','ld','fish',[['shrimp',150,'p'],['white_rice',190,'c'],['mixed_veg',100,'v'],['eggs',50,'x'],['soy',15,'x'],['olive_oil',5,'x']]],
+  ['pork_brussels','Pork tenderloin & Brussels','ld','pork',[['pork_tender',150,'p'],['sweet_potato',180,'c'],['brussels',100,'v'],['olive_oil',5,'x']]],
+  ['bbq_thigh','BBQ chicken thighs','ld','',[['chicken_thigh',140,'p'],['brown_rice',170,'c'],['corn',60,'v'],['green_beans',80,'v'],['bbq',25,'x']]],
+  ['chicken_veg','Chicken & roasted veggies','ld','',[['chicken_breast',160,'p'],['potato',180,'c'],['cauliflower',100,'v'],['carrots',60,'v'],['olive_oil',7,'x']]],
+  ['cod_couscous','Lemon cod & couscous','ld','fish',[['cod',170,'p'],['couscous',170,'c'],['zucchini',100,'v'],['olive_oil',7,'x']]],
+  ['tofu_stirfry','Tofu stir-fry','ld','meatless',[['tofu',180,'p'],['white_rice',180,'c'],['broccoli',80,'v'],['peppers',60,'v'],['soy',15,'x']]],
+  ['lentil_bowl','Lentil & quinoa bowls','ld','meatless',[['lentils',200,'p'],['quinoa',110,'c'],['zucchini',80,'v'],['spinach',30,'v'],['olive_oil',7,'x']]],
+  ['burrito','Breakfast burritos','b','meatless',[['eggs',100,'p'],['egg_whites',80,'p'],['potato',100,'c'],['tortilla',49,'x'],['cheddar',15,'x'],['salsa',30,'x']]],
+  ['egg_cups','Egg muffin cups & oats','b','meatless',[['eggs',100,'p'],['egg_whites',100,'p'],['oats',40,'c'],['spinach',30,'v'],['peppers',40,'v'],['cheddar',15,'x']]],
+  ['oats','Protein overnight oats','b','meatless',[['greek_yog',170,'p'],['oats',50,'c'],['pb',16,'x']]],
+  ['parfait','Greek yogurt oat cups','s','meatless',[['greek_yog',200,'p'],['oats',30,'c']]],
+  ['snack_box','Egg & veggie snack boxes','s','meatless',[['eggs',100,'p'],['carrots',80,'v'],['cheddar',20,'x']]],
+];
+const PREP_MEALS = [['b', 'Breakfast', .25], ['l', 'Lunch', .3], ['d', 'Dinner', .3], ['s', 'Snack', .15]];
+// size one container of a recipe to a calorie + protein target
+function sizeRecipe(r, T){
+  const items = r[4]; let sp = 1, sc = 1;
+  const g = (it) => it[1] * (it[2] === 'p' ? sp : it[2] === 'c' ? sc : 1);
+  const sum = (fn, k) => items.filter(fn).reduce((a, it) => a + prepMac(it[0], g(it))[k], 0);
+  for (let i = 0; i < 6; i++){
+    const pP = sum(it => it[2] === 'p', 'p') / sp, pO = sum(it => it[2] !== 'p', 'p');
+    if (pP > 0) sp = Math.min(2.4, Math.max(.5, (T.p - pO) / pP));
+    const kC = sum(it => it[2] === 'c', 'k') / sc, kO = sum(it => it[2] !== 'c', 'k');
+    if (kC > 0) sc = Math.min(2.2, Math.max(.25, (T.k - kO) / kC));
+  }
+  const out = items.map(it => { let gr = g(it); const u = PREP[it[0]].units;
+    gr = ['eggs', 'tortilla'].includes(it[0]) ? Math.max(1, Math.round(gr / u.each)) * u.each : u.tbsp ? Math.max(u.tsp || 4, Math.round(gr / (u.tbsp / 2)) * (u.tbsp / 2)) : Math.max(5, Math.round(gr / 5) * 5);
+    return [it[0], gr]; });
+  return {items:out, mac:out.reduce((a, [id, gr]) => addMac(a, prepMac(id, gr)), Z)};
+}
+function makePlan(){
+  const o = state.prep.opts, days = o.days, meals = PREP_MEALS.filter(m => o.meals.includes(m[0]));
+  if (!meals.length) return null;
+  const ok = r => !(o.skip.includes(r[3]) || (o.skip.includes('meat') && r[3] !== 'meatless'));
+  const batches = days > 4 ? [Math.ceil(days / 2), Math.floor(days / 2)] : [days];
+  const used = new Set(), shuffle = a => { for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const plan = {at:Date.now(), days, batches:[], start:dayKey(Date.now())};
+  let d0 = 0;
+  for (const n of batches){
+    const b = {from:d0, n, slots:[]};
+    for (const [m, name, share] of meals){
+      let pool = shuffle(PREP_RECIPES.filter(r => r[2].includes(m) && ok(r)));
+      if (!pool.length) pool = shuffle(PREP_RECIPES.filter(r => r[2].includes(m)));
+      const r = pool.find(x => !used.has(x[0])) || pool[0]; used.add(r[0]);
+      b.slots.push({m, rid:r[0], ...sizeRecipe(r, prepTarget(share))});
+    }
+    plan.batches.push(b); d0 += n;
+  }
+  return plan;
+}
+function planShopping(plan){
+  const raw = {};
+  for (const b of plan.batches) for (const s of b.slots) for (const [id, g] of s.items) raw[id] = (raw[id] || 0) + g * b.n / PREP[id].y;
+  return Object.entries(raw).sort((a, b) => PREP_RAW.findIndex(x => x[0] === a[0]) - PREP_RAW.findIndex(x => x[0] === b[0]));
+}
+const recipeOf = id => PREP_RECIPES.find(r => r[0] === id);
+const dayLbl = (start, i) => new Date(addDays(start, i)).toLocaleDateString(undefined, {weekday:'short'});
+function macLine(m){ return `<b>${fmt(Math.round(m.k))} Cal</b> · ${Math.round(m.p)}P · ${Math.round(m.c)}C · ${Math.round(m.f)}F`; }
+
+function prepPlanUI(){
+  const o = state.prep.opts, plan = state.prep.plan;
+  let h = `<label class="lbl">Days</label><div class="chips">${[3, 4, 5, 6, 7].map(n => `<button class="chip${o.days === n ? ' on' : ''}" data-act="prepOpt" data-k="days" data-v="${n}">${n}</button>`).join('')}</div>
+    <label class="lbl">Meals to prep</label><div class="chips">${PREP_MEALS.map(([m, n]) => `<button class="chip${o.meals.includes(m) ? ' on' : ''}" data-act="prepOpt" data-k="meals" data-v="${m}">${n}</button>`).join('')}</div>
+    <label class="lbl">Leave out</label><div class="chips">${[['beef', 'Beef'], ['pork', 'Pork'], ['fish', 'Fish & seafood'], ['meat', 'All meat']].map(([k, n]) => `<button class="chip${o.skip.includes(k) ? ' on' : ''}" data-act="prepOpt" data-k="skip" data-v="${k}">${n}</button>`).join('')}</div>
+    <button class="btn gold block" style="margin-top:14px" data-act="prepMake">${plan ? '↻ Make a new plan' : 'Make my plan'}</button>`;
+  if (!plan) return h + `<p class="mute" style="font-size:13px;margin-top:10px">Portions are sized to your calorie and protein targets.${state.foodTargets ? '' : ' Set your daily targets on the Food tab first for the best fit.'} More than 4 days is split into two cook days so nothing sits in the fridge too long.</p>`;
+  const tgtNote = state.foodTargets ? '' : '<p class="mute" style="font-size:12px">No daily targets set, so this assumes 2,400 Cal and 180 g protein. Set targets on the Food tab for a better fit.</p>';
+  h += `<div class="prep-sec">${tgtNote}`;
+  plan.batches.forEach((b, bi) => {
+    h += `<div class="prep-cook"><div class="kick">🍳 COOK DAY ${bi + 1}${plan.batches.length > 1 ? ` · ${dayLbl(plan.start, b.from)}–${dayLbl(plan.start, b.from + b.n - 1)}` : ''}</div><small class="mute">${b.n} days · ${b.slots.length * b.n} containers</small></div>`;
+    b.slots.forEach((s, si) => { const r = recipeOf(s.rid), M = PREP_MEALS.find(x => x[0] === s.m), T = prepTarget(M[2]);
+      h += `<div class="prep-rec"><div class="row between"><div><small class="mute">${M[1]} × ${b.n}</small><h4>${esc(r[1])}</h4></div><button class="btn ghost xs" data-act="prepSwap" data-b="${bi}" data-s="${si}">↻ Swap</button></div>
+        <div class="prep-mac">${macLine(s.mac)} <small class="mute">per container · target ${fmt(Math.round(T.k))} Cal, ${Math.round(T.p)}P</small></div>
+        ${s.items.map(([id, g]) => `<div class="prep-it"><span>${esc(PREP[id].name.replace(/ \((dry)\)$/, ''))}</span><b>${portionTxt(id, g)}</b></div>`).join('')}</div>`; });
+  });
+  // week at a glance
+  const meals = PREP_MEALS.filter(m => plan.batches[0].slots.some(s => s.m === m[0]));
+  h += `<label class="lbl">Week at a glance</label><div class="prep-week" style="grid-template-columns:42px repeat(${meals.length},1fr)"><span></span>${meals.map(m => `<span class="h">${m[1]}</span>`).join('')}`;
+  for (let i = 0; i < plan.days; i++){ const b = plan.batches.find(x => i >= x.from && i < x.from + x.n), bi = plan.batches.indexOf(b);
+    h += `<span class="d">${dayLbl(plan.start, i)}</span>` + meals.map(m => { const s = b.slots.find(x => x.m === m[0]); return `<span class="c b${bi}">${esc(recipeOf(s.rid)[1].split(/[ ,&]+/).slice(0, 2).join(' '))}</span>`; }).join(''); }
+  h += `</div>`;
+  // shopping list
+  const got = state.prep.got || {};
+  h += `<div class="row between" style="margin-top:6px"><label class="lbl">Shopping list</label><button class="btn ghost xs" data-act="prepCopy">Copy list</button></div>`;
+  h += planShopping(plan).map(([id, g]) => `<button class="prep-buy${got[id] ? ' got' : ''}" data-act="prepGot" data-id="${id}"><i>${got[id] ? '✓' : ''}</i><span>${esc(PREP[id].name)}</span><b>${buyTxt(id, g)}</b></button>`).join('');
+  h += `<button class="btn ghost block" style="margin-top:14px" data-act="prepSaveMeals">Save these as Saved meals</button><small class="mute h-hint">Then log a container from Add food › Saved meals</small></div>`;
+  return h;
+}
+
+function prepCalcRows(){
+  return state.prep.calc.rows.map((r, i) => `<div class="pc-row">
+    <select data-pc="ing" data-i="${i}">${[...new Set(PREP_RAW.map(x => x[2]))].map(gp => `<optgroup label="${gp}">${PREP_RAW.filter(x => x[2] === gp).map(x => `<option value="${x[0]}"${x[0] === r.ing ? ' selected' : ''}>${esc(x[1])}</option>`).join('')}</optgroup>`).join('')}</select>
+    <input type="number" inputmode="decimal" min="0" step="any" value="${r.amt}" data-pc="amt" data-i="${i}">
+    <select data-pc="unit" data-i="${i}">${PREP_UNITS(r.ing).map(u => `<option${u === r.unit ? ' selected' : ''}>${u}</option>`).join('')}</select>
+    <button class="icon-btn sm" data-act="pcDel" data-i="${i}" aria-label="Remove">✕</button></div>`).join('');
+}
+function prepCalcOut(){
+  const c = state.prep.calc, rows = c.rows.filter(r => PREP[r.ing] && +r.amt > 0);
+  if (!rows.length) return '<p class="mute">Add what you bought to see how many containers it makes.</p>';
+  const sz = PREP_MEALS.find(m => m[0] === c.size) || PREP_MEALS[1], T = prepTarget(c.size === 'big' ? .4 : sz[2]);
+  const ck = rows.map(r => { const g = +r.amt * PREP[r.ing].units[r.unit] * PREP[r.ing].y; return [r.ing, g]; });
+  const tot = ck.reduce((a, [id, g]) => addMac(a, prepMac(id, g)), Z), sug = Math.max(1, Math.round(tot.k / T.k));
+  ui.pcSug = sug; const n = c.n || sug, per = {k:tot.k / n, p:tot.p / n, c:tot.c / n, f:tot.f / n};
+  const low = per.p < T.p * .8, hi = per.k > T.k * 1.15, lo = per.k < T.k * .85;
+  return `<div class="pc-tot"><small class="mute">Everything cooked: ${macLine(tot)}</small></div>
+    <div class="pc-n"><div><small class="mute">Makes</small><div class="pc-big">${n} <span>container${n === 1 ? '' : 's'}</span></div><small class="mute">${c.n ? `You set this · fits your target at ${sug}` : `Sized to ${fmt(Math.round(T.k))} Cal per container`}</small></div>
+      <div class="pc-step"><button class="icon-btn" data-act="pcN" data-v="-1">−</button><button class="icon-btn" data-act="pcN" data-v="1">+</button></div></div>
+    ${c.n ? '<button class="btn ghost xs" data-act="pcN" data-v="0">Reset to my targets</button>' : ''}
+    <label class="lbl">In each container</label>
+    ${ck.map(([id, g]) => `<div class="prep-it"><span>${esc(PREP[id].name.replace(/ \((dry)\)$/, ''))}<small>${PREP[id].y !== 1 ? ' (cooked)' : ''}</small></span><b>${portionTxt(id, g / n)}</b></div>`).join('')}
+    <div class="prep-mac" style="margin-top:8px">${macLine(per)} <small class="mute">per container</small></div>
+    ${low ? `<p class="pc-warn">Protein is a little low for your target (${Math.round(T.p)} g). Add more of a protein to fix it.</p>` : ''}
+    ${!c.n && (hi || lo) ? '' : c.n && (hi || lo) ? `<p class="pc-warn">${hi ? 'Bigger' : 'Smaller'} than your ${fmt(Math.round(T.k))} Cal target per container.</p>` : ''}
+    <button class="btn gold block" style="margin-top:12px" data-act="pcSave">Save as a Saved meal</button>`;
+}
+function prepCalcUI(){
+  const c = state.prep.calc;
+  return `<p class="mute" style="font-size:13px;margin:12px 0 4px">Enter what you bought, raw or dry. I'll work out the cooked amounts.</p>
+    <div id="pcRows">${prepCalcRows()}</div><button class="btn ghost sm" style="margin-top:8px" data-act="pcAdd">+ Add ingredient</button>
+    <label class="lbl">Container size</label><div class="chips">${[['s', 'Snack'], ['l', 'Meal'], ['big', 'Big meal']].map(([k, n]) => `<button class="chip${c.size === k ? ' on' : ''}" data-act="pcSize" data-v="${k}">${n}</button>`).join('')}</div>
+    <div id="pcOut" class="prep-sec">${prepCalcOut()}</div>`;
+}
+function openPrep(tab, keep){
+  if (tab) ui.prepTab = tab; const t = ui.prepTab || 'plan', sc = keep ? $('#sheet').scrollTop : 0;
+  openSheet(`<div class="row between"><h3 style="margin:0">🥡 Meal prep</h3><button class="icon-btn" data-act="closeSheet">✕</button></div>
+    <div class="chips" style="margin-top:12px">${[['plan', 'Plan my week'], ['calc', 'Ingredient calculator']].map(([k, n]) => `<button class="chip${t === k ? ' on' : ''}" data-act="prepTab" data-v="${k}">${n}</button>`).join('')}</div>
+    <div id="prepBody">${t === 'plan' ? prepPlanUI() : prepCalcUI()}</div>`);
+  if (t === 'calc') wirePrepCalc();
+  if (sc) $('#sheet').scrollTop = sc;
+}
+function wirePrepCalc(){
+  const box = $('#prepBody'); if (!box) return;
+  const upd = e => { const el = e.target, k = el.dataset.pc; if (!k) return; const r = state.prep.calc.rows[+el.dataset.i]; if (!r) return;
+    if (k === 'amt') r.amt = el.value;
+    if (k === 'unit') r.unit = el.value;
+    if (k === 'ing'){ r.ing = el.value; r.unit = PREP_UNITS(r.ing)[0]; $('#pcRows').innerHTML = prepCalcRows(); }
+    save(); $('#pcOut').innerHTML = prepCalcOut(); };
+  box.addEventListener('input', upd); box.addEventListener('change', e => { if (e.target.dataset.pc !== 'amt') upd(e); });
+}
+function prepCard(){
+  const p = state.prep.plan, live = p && dayKey(Date.now()) < addDays(p.start, p.days);
+  return `<div class="card prep-card"><div class="row between"><div><h3 style="margin:0">🥡 Meal prep</h3><small class="mute">${live ? esc([...new Set(p.batches.flatMap(b => b.slots.map(s => recipeOf(s.rid)[1])))].slice(0, 3).join(' · ')) : 'Plan the week or size containers from what you bought'}</small></div></div>
+    <div class="ex-actions" style="margin-top:10px"><button class="btn ghost sm" data-act="prepOpen" data-v="plan">${live ? 'This week’s plan' : 'Plan my week'}</button><button class="btn ghost sm" data-act="prepOpen" data-v="calc">Ingredient calculator</button></div></div>`;
+}
 const MEALS = [['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['snacks','Snacks']];
 const MAC = [['p','Protein','#4fd1c5',4],['c','Carbs','#f2c94c',4],['f','Fat','#a78bfa',9]];
 const dkey = ts => { const d = new Date(ts); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
@@ -2293,6 +2539,7 @@ function renderFood(){
   }
   h += `${t.k ? macroSplit(t) : ''}${all.length ? `<button class="btn ghost sm" style="margin-top:10px" data-act="facts" data-v="day">Nutrition facts</button>` : ''}</div>`;
   h += waterCard();
+  if (isToday) h += prepCard();
   for (const [m, name] of MEALS){
     const list = day[m] || [], mt = sumEntries(list);
     h += `<div class="card"><div class="row between"><h3 style="margin:0">${name}</h3>${list.length ? `<span class="xp" style="color:var(--text)">${fmt(mt.k)} Cal</span>` : ''}</div>
@@ -4775,6 +5022,33 @@ const ACT = {
   evGo: d => { const el = $('.ev-slider'); ui.evIdx = +d.v; if (el) el.scrollTo({left:+d.v * el.clientWidth, behavior:'smooth'}); },
   mapMode: d => { ui.mapMode = d.v; render(); },
   trainToday: openTrainToday,
+  prepOpen: d => openPrep(d.v),
+  prepTab: d => openPrep(d.v),
+  prepOpt: d => { const o = state.prep.opts; if (d.k === 'days') o.days = +d.v; else { const a = o[d.k], i = a.indexOf(d.v); i >= 0 ? a.splice(i, 1) : a.push(d.v); } save(); openPrep(null, true); },
+  prepMake: () => { const p = makePlan(); if (!p) return toast('Pick at least one meal to prep'); state.prep.plan = p; state.prep.got = {}; save(); render(); openPrep('plan');
+    setTimeout(() => { const el = document.querySelector('#sheet .prep-sec'); if (el) $('#sheet').scrollTo({top:el.offsetTop - 20, behavior:'smooth'}); }, 50); },
+  prepSwap: d => { const p = state.prep.plan, b = p.batches[+d.b], s = b && b.slots[+d.s]; if (!s) return; const o = state.prep.opts, M = PREP_MEALS.find(x => x[0] === s.m);
+    const ok = r => r[2].includes(s.m) && r[0] !== s.rid && !(o.skip.includes(r[3]) || (o.skip.includes('meat') && r[3] !== 'meatless')), taken = p.batches.flatMap(x => x.slots.map(y => y.rid));
+    let pool = PREP_RECIPES.filter(r => ok(r) && !taken.includes(r[0])); if (!pool.length) pool = PREP_RECIPES.filter(ok); if (!pool.length) return toast('No other recipes for that meal');
+    const r = pool[Math.floor(Math.random() * pool.length)]; Object.assign(s, {rid:r[0], ...sizeRecipe(r, prepTarget(M[2]))}); state.prep.got = {}; save(); render(); openPrep('plan', true); },
+  prepGot: d => { const g = state.prep.got = state.prep.got || {}; g[d.id] = !g[d.id]; save(); openPrep('plan', true); },
+  prepCopy: async () => { const p = state.prep.plan; if (!p) return; const text = 'Meal prep shopping list\n' + planShopping(p).map(([id, g]) => `- ${PREP[id].name}: ${buyTxt(id, g)}`).join('\n');
+    if (navigator.share){ try { await navigator.share({text}); return; } catch(e){ return; } } try { await navigator.clipboard.writeText(text); toast('Shopping list copied'); } catch(e){ toast('Could not copy'); } },
+  prepSaveMeals: () => { const p = state.prep.plan; if (!p) return; let n = 0;
+    for (const b of p.batches) for (const s of b.slots){ const name = 'Prep: ' + recipeOf(s.rid)[1];
+      const items = s.items.map(([id, g]) => { const m = prepMac(id, g); return {n:PREP[id].name.replace(/ \((dry)\)$/, '') + (PREP[id].y !== 1 ? ', cooked' : ''), a:portionTxt(id, g), k:Math.round(m.k), p:r1(m.p), c:r1(m.c), f:r1(m.f), m:1}; });
+      const ex = state.savedMeals.find(x => x.name === name); if (ex) ex.items = items; else { state.savedMeals.push({id:uid(), name, items}); } n++; }
+    save(); toast(`Saved ${n} prep meal${n === 1 ? '' : 's'}. Find them in Add food › Saved meals`); },
+  pcAdd: () => { state.prep.calc.rows.push({ing:'chicken_breast', amt:'', unit:'lb'}); save(); openPrep('calc', true); },
+  pcDel: d => { state.prep.calc.rows.splice(+d.i, 1); save(); openPrep('calc', true); },
+  pcSize: d => { const c = state.prep.calc; c.size = d.v; c.n = null; save(); openPrep('calc', true); },
+  pcN: d => { const c = state.prep.calc; c.n = +d.v === 0 ? null : Math.max(1, (c.n || ui.pcSug || 1) + +d.v); save(); $('#pcOut').innerHTML = prepCalcOut(); },
+  pcSave: () => { const c = state.prep.calc, rows = c.rows.filter(r => PREP[r.ing] && +r.amt > 0); if (!rows.length) return; prepCalcOut(); const n = c.n || ui.pcSug || 1;
+    const items = rows.map(r => { const id = r.ing, g = +r.amt * PREP[id].units[r.unit] * PREP[id].y / n, m = prepMac(id, g);
+      return {n:PREP[id].name.replace(/ \((dry)\)$/, '') + (PREP[id].y !== 1 ? ', cooked' : ''), a:portionTxt(id, g), k:Math.round(m.k), p:r1(m.p), c:r1(m.c), f:r1(m.f), m:1}; });
+    const name = 'Prep: ' + rows.slice(0, 2).map(r => PREP[r.ing].name.replace(/ \((dry)\)$/, '').replace(/,.*$/, '')).join(' & ');
+    const ex = state.savedMeals.find(x => x.name === name); if (ex) ex.items = items; else state.savedMeals.push({id:uid(), name, items});
+    save(); toast('Saved. Find it in Add food › Saved meals'); },
   rotSkip: () => { const r = rotInfo(); if (!r) return; state.rotSkip = {at:r.at, k:(r.k || 0) + 1}; save(); render(); },
   rotPick: d => { const r = rotInfo(); if (!r) return; state.rotSkip = {at:r.at, k:(+d.i - r.base + r.n) % r.n, pick:1}; save(); render(); },
   rotSet: d => { const on = rotSplit(); if (on && on.id === d.id){ if (d.keep) return; state.rotSplit = 'off'; toast('Rotation off'); } else { state.rotSplit = d.id; const s = state.splits.find(x => x.id === d.id); toast(`Rotating through ${s ? s.name : 'this split'}`); } save(); render(); },
