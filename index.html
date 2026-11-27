@@ -598,12 +598,12 @@ body.resting main{padding-bottom:170px}
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" hidden>
 
-<script src="exercises.js?v=2026.11.25.1"></script>
+<script src="exercises.js?v=2026.11.27.1"></script>
 <script>
 /* ============ VERSION ============
    Bump APP_VERSION and version.json together on every release. The app checks version.json
    (bypassing the cache) on launch and whenever it comes back to the foreground, and offers to reload. */
-const APP_VERSION = '2026.11.25.1';
+const APP_VERSION = '2026.11.27.1';
 /* ============ CONFIG ============
    Paste your Firebase web config here to turn on cross-device sync (same setup as The Archive).
    Set it to null to keep everything on this device only. */
@@ -680,21 +680,58 @@ const BACK2 = [
 ];
 
 const MIR = 'transform="translate(200 0) scale(-1 1)"';
+/* Female model: everything (muscles, outline and every piece of gear) is drawn on the male frame, then each x is
+   re-proportioned around the centre line: narrower shoulders and waist, wider hips. Head and lower legs stay put. */
+const mkW = y => y <= 120 ? WIDEN : y >= 195 ? 1 : WIDEN - (WIDEN - 1) * (y - 120) / 75;
+const lerp = (a, b, t) => a + (b - a) * Math.max(0, Math.min(1, t));
+function fTorso(y){ return y <= 112 ? 1 : y <= 160 ? lerp(1, .86, (y - 112) / 48) : y <= 212 ? lerp(.86, 1.18, (y - 160) / 52) : y <= 245 ? 1.18 : lerp(1.18, 1, (y - 245) / 50); }
+function fArm(y){ return 1; }
+function warpX(x, y){
+  if (y < 50) return x;
+  const dd = Math.abs(100 - x), head = y < 58 ? (y - 50) / 8 : 1;
+  const rt = fTorso(y) / mkW(y), ra = fArm(y) / mkW(y), r = lerp(rt, ra, (dd - 33) / 7), k = lerp(1, r, head);
+  return R1(100 - (100 - x) * k);
+}
+const warpD = d => d.replace(/(-?\d*\.?\d+),(-?\d*\.?\d+)/g, (_, x, y) => `${warpX(+x, +y)},${y}`);
+const warpSVG = h => h.replace(/(\s(?:d|points)=")([^"]*)"/g, (_, a, d) => a + warpD(d) + '"')
+  .replace(/(\scx=")(-?[\d.]+)("\s+cy=")(-?[\d.]+)"/g, (_, a, x, b, y) => a + warpX(+x, +y) + b + y + '"')
+  .replace(/(\sx(1|2)?=")(-?[\d.]+)("\s+y\2=")(-?[\d.]+)"/g, (_, a, n, x, b, y) => a + warpX(+x, +y) + b + y + '"');
+const F_CHEST = spline([[98,77],[97,104],[91,113.5],[82,114.5],[75,108.5],[72.5,96],[74,84],[81,78],[90,75.5]].map(shape));
+const HAIR_C = '#5a3d2b', HAIR_H = '#8f664a';
+// long hair: a fall behind the head/neck (front view), a fringe over the forehead, and a ponytail on the back view
+function hairBehind(front){
+  return front ? `<path d="M100,1 C87,1 79.5,8.5 79.5,21 C79.5,37 80.5,53 82.5,65 Q100,71 117.5,65 C119.5,53 120.5,37 120.5,21 C120.5,8.5 113,1 100,1 Z" fill="${HAIR_C}"/>` : '';
+}
+function hairFront(front){
+  if (front) return `<path d="M100,.8 C89,.8 82.3,6.5 81.8,16 C81.6,24 82.2,32 83.6,40 C85,42 86.6,41 86.7,38.5 C86.5,31 87,24 89,19 C93,14.5 97,13.2 101,13.4 C106,13.2 110.5,15.5 113,20.5 C113.6,27 113.6,33 113.3,38.5 C113.4,41 115,42 116.4,40 C117.8,32 118.4,24 118.2,16 C117.7,6.5 111,.8 100,.8 Z" fill="${HAIR_C}"/>
+    <path d="M99,3 C92,3.5 86.5,8 85,15 M103,3.2 C109,4 113.5,8.5 115,15" fill="none" stroke="${HAIR_H}" stroke-width="1.1" stroke-linecap="round" opacity=".75"/>`;
+  return `<path d="M95,29 C90.5,44 90.5,64 95,82 C96.8,88 103.2,88 105,82 C109.5,64 109.5,44 105,29 Z" fill="${HAIR_C}"/>
+    <path d="M100,.5 C89,.5 81.6,7 81.5,17.5 C81.4,30 83.4,41 88,47.5 Q100,52 112,47.5 C116.6,41 118.6,30 118.5,17.5 C118.4,7 111,.5 100,.5 Z" fill="${HAIR_C}"/>
+    <path d="M100,4 C96,16 95.5,30 97,44 M100,4 C104,16 104.5,30 103,44 M98.5,40 C96.5,55 96.8,68 98.6,81 M101.5,40 C103.5,55 103.2,68 101.4,81" fill="none" stroke="${HAIR_H}" stroke-width=".9" stroke-linecap="round" opacity=".6"/>
+    <rect x="94.3" y="29.5" width="11.4" height="4.2" rx="2.1" fill="#9b7bd8"/>`;
+}
 // precompute muscle paths once: [muscle, path, mirrored]
 const toParts = list => list.map(([m, pts, mir]) => [m, spline(pts.map(shape)), mir]);
 const FRONT = [...toParts(FRONT2), ['abs', ABS, 1]], BACK = toParts(BACK2);
-function fig(parts, x, col, tap, sk, front){
-  let s = `<g transform="translate(${x} 0)">${sk ? skinBehind(sk, front) : ''}<path d="${OUTLINE}" class="base"/>${sk ? skinUnder(sk, front) : ''}`;
-  for (const [m, d, mir] of parts){
+function fig(parts, x, col, tap, sk, front, fem){
+  let s = `${sk ? skinBehind(sk, front) : ''}${fem ? hairBehind(front) : ''}<path d="${OUTLINE}" class="base"/>${sk ? skinUnder(sk, front) : ''}`;
+  for (let [m, d, mir] of parts){
+    if (fem && front && m === 'chest') d = F_CHEST;
     const c = col(m), a = `class="mus" fill="${Array.isArray(c) ? c[0] : c}"${Array.isArray(c) && c[1] < 1 ? ` fill-opacity="${c[1]}"` : ''}${tap ? ` data-act="muscle" data-m="${m}"` : ''}`;
     s += `<path d="${d}" ${a}/>`;
     if (mir) s += `<path d="${d}" ${MIR} ${a}/>`;
   }
-  return s + (sk ? skinFront(sk, front) : '') + '</g>';
+  if (fem) s += hairFront(front);
+  s += sk ? skinFront(sk, front) : '';
+  if (fem) s = warpSVG(s).replace(/url\(#gd(Body|Knit)\)/g, 'url(#gd$1F)');
+  return `<g transform="translate(${x} 0)">${s}</g>`;
 }
-function bodySVG(col, {tap=false, labels=true, skin=null}={}){
-  const sk = skin && Object.keys(skin).length ? skin : null, top = sk ? -14 : 0, H = (labels?426:400) - top;
-  return `<svg class="body${tap?' tap':''}${sk && sk.bg ? ' has-bg' : ''}" viewBox="0 ${top} 440 ${H}" xmlns="http://www.w3.org/2000/svg">${sk ? SKIN_DEFS : ''}${sk && sk.bg ? mapBG(sk.bg, 440, top, H) : ''}${fig(FRONT,10,col,tap,sk,1)}${fig(BACK,230,col,tap,sk,0)}${labels ? (sk && sk.bg ? '<rect class="lab-bg" x="72" y="408" width="76" height="17" rx="8.5"/><rect class="lab-bg" x="298" y="408" width="64" height="17" rx="8.5"/>' : '') + '<text x="110" y="420">FRONT</text><text x="330" y="420">BACK</text>' : ''}</svg>`;
+const femDefs = () => SKIN_DEFS.replace(/<clipPath id="gd(Body|Knit)">([\s\S]*?)<\/clipPath>/g, (_, id, inner) => `<clipPath id="gd${id}F">${warpSVG(inner)}</clipPath>`);
+let femDefsMemo = '';
+function bodySVG(col, {tap=false, labels=true, skin=null, fig:fg=null}={}){
+  const sk = skin && Object.keys(skin).length ? skin : null, fem = (fg || (state && state.profile && state.profile.fig) || 'm') === 'f', top = sk ? -14 : 0, H = (labels?426:400) - top;
+  const defs = sk ? (fem ? (femDefsMemo = femDefsMemo || femDefs()) : SKIN_DEFS) : '';
+  return `<svg class="body${tap?' tap':''}${sk && sk.bg ? ' has-bg' : ''}" viewBox="0 ${top} 440 ${H}" xmlns="http://www.w3.org/2000/svg">${defs}${sk && sk.bg ? mapBG(sk.bg, 440, top, H) : ''}${fig(FRONT,10,col,tap,sk,1,fem)}${fig(BACK,230,col,tap,sk,0,fem)}${labels ? (sk && sk.bg ? '<rect class="lab-bg" x="72" y="408" width="76" height="17" rx="8.5"/><rect class="lab-bg" x="298" y="408" width="64" height="17" rx="8.5"/>' : '') + '<text x="110" y="420">FRONT</text><text x="330" y="420">BACK</text>' : ''}</svg>`;
 }
 const exColor = ex => m => ex.p.includes(m) ? GOLD : ex.s.includes(m) ? TEAL : UNTR;
 
@@ -970,7 +1007,7 @@ const CZ_SIDE = {front:10, back:230}, CZ_PART = {full:[0, 200, -16, 416], head:[
 function czSVG(v){
   if (v === 'me'){ const t = muscleTotals(); return [state.profile.name || 'Lifter', bodySVG(m => rankOf(lvl(t[m]))[2], {labels:false, skin:equippedSkin()})]; }
   const p = (ui.lb || []).find(x => x.id === v); if (!p || !p.ml) return null;
-  return [p.name, bodySVG(m => rankOf(p.ml[m] || 0)[2], {labels:false, skin:p.gear && Object.keys(p.gear).length ? p.gear : null})];
+  return [p.name, bodySVG(m => rankOf(p.ml[m] || 0)[2], {labels:false, skin:p.gear && Object.keys(p.gear).length ? p.gear : null, fig:p.fig || 'm'})];
 }
 function openCharZoom(v){
   if (v === state.profile.playerId) v = 'me';
@@ -3051,7 +3088,7 @@ function myStats(){
     week: state.workouts.filter(w => w.date > Date.now() - 7 * DAY).length, workouts: state.workouts.length,
     trophies: Object.keys(state.achievements).length, lifted: Math.round(liftVolume()), updatedAt: Date.now(),
     // muscle map + gear so friends can see your figure
-    ml: Object.fromEntries(Object.entries(muscleTotals()).map(([m, x]) => [m, lvl(x)])), gear: equippedSkin(), theme: state.cosmetics.theme || 'classic',
+    ml: Object.fromEntries(Object.entries(muscleTotals()).map(([m, x]) => [m, lvl(x)])), gear: equippedSkin(), fig: state.profile.fig || 'm', theme: state.cosmetics.theme || 'classic',
     gearCount: SKINS.filter(s => isUnlocked(s[0], s[3])).length, habits: habitTotal(), hstreak: habitStreak(),
     ...weekNums(), crew: state.crew ? state.crew.id : null};
 }
@@ -3208,11 +3245,11 @@ function openPlayer(id){
   if (!p) return toast('Still loading — try again in a second');
   const th = THEMES.find(t => t[0] === p.theme) || THEMES[0], acc = th[3][0], isMe = id === me;
   const gear = p.gear || {}, gearNames = Object.entries(gear).map(([sl, gid]) => { const it = SKINS.find(x => x[0] === gid); return it ? [SLOTS.find(x => x[0] === sl)?.[1] || sl, it[1]] : null; }).filter(Boolean);
-  const ml = p.ml, mm = mine.ml;
+  const ml = p.ml, mm = mine.ml, pfig = p.fig || 'm';
   const muscles = ml ? Object.keys(MUSCLES).sort((a, b) => (ml[b] || 0) - (ml[a] || 0)) : [];
   openSheet(`<div class="row between"><h2 style="margin:0">${esc(p.name)}${isMe ? ' <small class="mute" style="font-size:14px">(you)</small>' : ''}</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
     <div class="pp-head" style="--acc:${acc}"><div class="lvl-badge"><small>LV</small><b>${p.level ?? 0}</b></div><div><span class="title-tag">${esc(p.title || '')}</span><small class="mute" style="display:block;margin-top:4px">${fmt(p.xp || 0)} XP${p.gearCount != null ? ` · ${p.gearCount} gear collected` : ''}</small></div></div>
-    ${ml ? `<div class="pp-map cz-wrap">${bodySVG(m => rankOf(ml[m] || 0)[2], {labels:true, skin:Object.keys(gear).length ? gear : null})}<button class="cz-open" data-act="charZoom" data-v="${esc(id)}" aria-label="Zoom in on character">⤢</button></div>`
+    ${ml ? `<div class="pp-map cz-wrap">${bodySVG(m => rankOf(ml[m] || 0)[2], {labels:true, skin:Object.keys(gear).length ? gear : null, fig:pfig})}<button class="cz-open" data-act="charZoom" data-v="${esc(id)}" aria-label="Zoom in on character">⤢</button></div>`
       : `<div class="card empty" style="margin:12px 0"><p class="mute" style="margin:0">${esc(p.name)}'s muscle map will show up here once they open the latest version of Gymdom.</p></div>`}
     <div class="stats"><div class="stat"><b>${p.streak ?? 0}🔥</b><small>Week streak</small></div><div class="stat"><b>${p.week ?? 0}</b><small>This week</small></div><div class="stat"><b>${p.workouts ?? 0}</b><small>Workouts</small></div></div>
     <div class="stats s4" style="margin-top:8px"><div class="stat"><b>${p.lifted != null ? lbLb(p.lifted) : '—'}</b><small>Lb lifted</small></div><div class="stat"><b>${p.trophies ?? 0}</b><small>Trophies</small></div><div class="stat"><b>${p.habits ?? '—'}</b><small>Habits done</small></div><div class="stat"><b>${p.hstreak != null ? p.hstreak + '🌱' : '—'}</b><small>Habit streak</small></div></div>
@@ -4237,6 +4274,7 @@ function openArmory(){
   const tl = titleList(L), got = tl.filter(x => x[2]);
   openSheet(`<div class="row between"><h2 style="margin:0">Armory</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
     <div class="cz-wrap" style="max-width:250px;margin:4px auto 0">${bodySVG(m => rankOf(lvl(t[m]))[2], {labels:false, skin:sk})}<button class="cz-open" data-act="charZoom" data-v="me" aria-label="Zoom in on character">⤢</button></div>
+    <div class="chips" style="justify-content:center;margin-top:6px">${[['m', 'Male'], ['f', 'Female']].map(([k, n]) => `<button class="chip${(state.profile.fig || 'm') === k ? ' on' : ''}" data-act="setFig" data-v="${k}" data-from="armory">${n}</button>`).join('')}</div>
     <label class="lbl">Title</label><div class="chips wrap">${got.map(([n]) => `<button class="chip${n === cur ? ' on' : ''}" data-act="eqTitle" data-v="${esc(n)}">${esc(n)}</button>`).join('')}</div>
     <small class="mute">${tl.length - got.length} more to unlock through levels, trophies, loot${nsMissed().length ? ' and the night shift' : ''}</small>
     <label class="lbl">Theme</label><div class="themes">${THEMES.map(([id, n, u, c]) => { const ok = isUnlocked(id, u, L), on = (state.cosmetics.theme || 'classic') === id;
@@ -5101,6 +5139,7 @@ function pushRemote(){ if (fbRef) fbRef.set({data:JSON.stringify(state), updated
 function openSettings(){
   openSheet(`<div class="row between"><h2 style="margin:0">Settings</h2><button class="icon-btn" data-act="closeSheet">✕</button></div>
     <label class="lbl">Display name</label><input id="sName" value="${esc(state.profile.name)}" placeholder="M">
+    <label class="lbl">Body model</label><div class="chips">${[['m', 'Male'], ['f', 'Female']].map(([k, n]) => `<button class="chip${(state.profile.fig || 'm') === k ? ' on' : ''}" data-act="setFig" data-v="${k}" data-from="settings">${n}</button>`).join('')}</div>
     <label class="lbl">Bodyweight (lb) — used for bodyweight-move XP</label><input id="sBw" type="number" inputmode="decimal" value="${esc(state.profile.bw)}">
     <label class="lbl">Sync code</label><input id="sCode" value="${esc(state.profile.syncCode)}" placeholder="Same code on every device"><small class="mute">${esc(syncStatus)}</small>
     <button class="btn block" style="margin-top:14px" data-act="saveSettings">Save</button>
@@ -5114,6 +5153,8 @@ const ACT = {
   tab: d => { ui.tab = d.tab; closeSheet(); render(); scEl().scrollTop = 0; },
   closeSheet,
   settings: openSettings,
+  setFig: d => { state.profile.fig = d.v; save(); publishStats(true); render();
+    if (d.from === 'armory'){ const y = $('#sheet').scrollTop; openArmory(); $('#sheet').scrollTop = y; } else openSettings(); },
   muscle: d => muscleInfo(d.m),
   exInfo: d => exInfo(d.id),
   exFocus: d => exFocus(+d.i),
