@@ -713,16 +713,18 @@ function fig(parts, x, col, tap, sk, front, fem){
   if (fem) s = warpSVG(s).replace(/url\(#gd(Body|Knit)\)/g, 'url(#gd$1F)');
   return `<g transform="translate(${x} 0)">${s}</g>`;
 }
-// Ponytail drawn as part of the silhouette (same colour as the body): swings off the side of the head from the front, hangs down the back
-const PONY_F = 'M112,8 C121,5.5 129.4,11 130.8,22.5 C132.2,34.5 128.4,46.5 122.6,55.6 C121,58.2 118.8,57.4 119.5,54.6 C122.4,45.2 123.4,35.8 121.4,28.2 C120,22.6 116.8,18.8 112.4,17.8 Z';
-const PONY_B = 'M104.6,13.6 C96,9.6 85.6,13.6 81.2,24.8 C77.2,37 79.4,51.2 85.4,61.4 C87,64 89.4,63.2 88.7,60.3 C85.8,50.2 86,39 89.4,31 C92.4,24 98,21 104.6,21 Z';
-const ponyBehind = front => front ? `<path d="${PONY_F}" class="base"/>` : '';
-const ponyFront = front => front ? `<path d="M112.6,9.4 L112.9,17.4" stroke="#07060c" stroke-opacity=".55" stroke-width="1.3" stroke-linecap="round"/>`
-  : `<path d="${PONY_B}" class="base" stroke="#07060c" stroke-opacity=".55" stroke-width="1.1"/><path d="M103.6,14.4 L103.8,20.4" stroke="#07060c" stroke-opacity=".6" stroke-width="1.3" stroke-linecap="round"/>`;
+// Hair as part of the silhouette (same colour as the body): a messy top bun, with a few loose strands
+const BUN = 'M90.6,6.4 C88.4,1.6 89.6,-4.4 94.4,-7.2 C97.2,-8.8 99.6,-9.6 102.6,-8.8 C106.4,-8.4 110,-5.6 110.8,-1.4 C111.6,2.4 110.6,6 107.6,8.2 C102,10.4 95.6,10.2 90.6,6.4 Z';
+const HAIR_TX = 'fill="none" stroke="#07060c" stroke-opacity=".38" stroke-width=".7" stroke-linecap="round"';
+const WISP = 'fill="none" style="stroke:var(--base)" stroke-width="1.2" stroke-linecap="round"';
+const ponyBehind = () => `<path d="${BUN}" class="base"/><path d="M108.4,-5.4 C113.4,-8 115.4,-3.4 111.8,-.8 M91.2,-2.4 C87.2,-4 86.4,.8 89.4,2.8" ${WISP}/>`;
+const ponyFront = front => `<path d="M93.6,3.4 C94.4,-2.6 100.4,-6 105.8,-3.2 M96.4,6.8 C98.4,2.4 104.4,1 108,3.6 M101,-2.6 C99.4,-.6 99.6,2.2 101.6,3.8" ${HAIR_TX}/>` + (front
+  ? `<path d="M84.4,21 C81.4,28.4 81.4,35.6 83.4,41.8 C84.2,44.4 83.2,47.2 81.4,48.6 M115.6,21 C118.6,28.6 118.4,35.8 116.2,42" ${WISP}/>`
+  : `<path d="M93.4,43 C90.2,49.4 90.6,55.6 93.2,60.8 C94,62.8 93.2,64.8 91.6,65.8 M106.8,43.6 C110,49.8 109.6,56.4 107,61.2" ${WISP}/>`);
 const femDefs = () => SKIN_DEFS.replace(/<clipPath id="gd(Body|Knit)">([\s\S]*?)<\/clipPath>/g, (_, id, inner) => `<clipPath id="gd${id}F">${warpSVG(inner)}</clipPath>`);
 let femDefsMemo = '';
 function bodySVG(col, {tap=false, labels=true, skin=null, fig:fg=null}={}){
-  const sk = skin && Object.keys(skin).length ? skin : null, fem = (fg || (state && state.profile && state.profile.fig) || 'm') === 'f', top = sk ? -14 : 0, H = (labels?426:400) - top;
+  const sk = skin && Object.keys(skin).length ? skin : null, fem = (fg || (state && state.profile && state.profile.fig) || 'm') === 'f', top = sk || fem ? -14 : 0, H = (labels?426:400) - top;
   const defs = sk ? (fem ? (femDefsMemo = femDefsMemo || femDefs()) : SKIN_DEFS) : '';
   return `<svg class="body${tap?' tap':''}${sk && sk.bg ? ' has-bg' : ''}" viewBox="0 ${top} 440 ${H}" xmlns="http://www.w3.org/2000/svg">${defs}${sk && sk.bg ? mapBG(sk.bg, 440, top, H) : ''}${fig(FRONT,10,col,tap,sk,1,fem)}${fig(BACK,230,col,tap,sk,0,fem)}${labels ? (sk && sk.bg ? '<rect class="lab-bg" x="72" y="408" width="76" height="17" rx="8.5"/><rect class="lab-bg" x="298" y="408" width="64" height="17" rx="8.5"/>' : '') + '<text x="110" y="420">FRONT</text><text x="330" y="420">BACK</text>' : ''}</svg>`;
 }
