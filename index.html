@@ -697,34 +697,17 @@ const warpSVG = h => h.replace(/(\s(?:d|points)=")([^"]*)"/g, (_, a, d) => a + w
   .replace(/(\scx=")(-?[\d.]+)("\s+cy=")(-?[\d.]+)"/g, (_, a, x, b, y) => a + warpX(+x, +y) + b + y + '"')
   .replace(/(\sx(1|2)?=")(-?[\d.]+)("\s+y\2=")(-?[\d.]+)"/g, (_, a, n, x, b, y) => a + warpX(+x, +y) + b + y + '"');
 const F_CHEST = spline([[98,77],[97,104],[91,113.5],[82,114.5],[75,108.5],[72.5,96],[74,84],[81,78],[90,75.5]].map(shape));
-const HAIR_C = '#5a3d2b', HAIR_H = '#8f664a';
-// hair pulled into a high ponytail that swings off to one side, so it shows from the front as well as the back
-function hairBehind(front){
-  return front ? `<path d="M111,9 C120,6.5 129,12 130.6,23 C132.2,36 128.4,48.5 122.4,57.5 C120.8,60 118.6,59.2 119.4,56.4 C122.6,46.6 123.8,36.6 121.8,28.6 C120.3,22.6 117,18.6 112.6,17.6 Z" fill="${HAIR_C}"/>
-    <path d="M118,11.5 C125,13 128.5,20 128.6,28 M125.5,33 C125.8,42 124,50 121,56" fill="none" stroke="${HAIR_H}" stroke-width="1" stroke-linecap="round" opacity=".7"/>` : '';
-}
-function hairFront(front){
-  if (front) return `<path d="M100,.8 C89,.8 82.3,6.5 81.8,16 C81.6,23 82.1,29 83.3,34.5 C84.6,36.6 86.4,35.8 86.6,33.4 C86.6,27.6 87.2,22.6 89,19 C93,14.5 97,13.2 101,13.4 C106,13.2 110.5,15.5 113,20.5 C113.6,25 113.6,29 113.4,33.4 C113.6,35.8 115.4,36.6 116.7,34.5 C117.9,29 118.4,23 118.2,16 C117.7,6.5 111,.8 100,.8 Z" fill="${HAIR_C}"/>
-    <path d="M99,3 C92,3.5 86.5,8 85,15 M103,3.2 C109,4 113.5,8.5 115,15" fill="none" stroke="${HAIR_H}" stroke-width="1.1" stroke-linecap="round" opacity=".75"/>
-    <rect x="112.2" y="9.6" width="5.4" height="7.6" rx="2.2" transform="rotate(-28 114.9 13.4)" fill="#9b7bd8"/>`;
-  return `<path d="M100,.5 C89,.5 81.6,7 81.5,17.5 C81.4,30 83.4,41 88,47.5 Q100,52 112,47.5 C116.6,41 118.6,30 118.5,17.5 C118.4,7 111,.5 100,.5 Z" fill="${HAIR_C}"/>
-    <path d="M100,4 C97,10 96.5,16 98,22 M100,4 C104,10 106,16 104,22 M107,42 C106,34 104.5,28 102,23 M93,42 C94,34 96,28 98.5,23" fill="none" stroke="${HAIR_H}" stroke-width=".9" stroke-linecap="round" opacity=".6"/>
-    <path d="M105,15.5 C96,11 85,15 80.6,26 C76.4,38 78.6,52.5 84.6,62.4 C86.2,65 88.6,64.2 87.9,61.3 C85,51 85.2,39.8 88.6,31.6 C91.6,24.6 97.4,21.2 104,21.4 Z" fill="${HAIR_C}"/>
-    <path d="M96,15.6 C88,18 83.2,25 82,34 M84.6,41 C84.4,49 85.6,56 87,61" fill="none" stroke="${HAIR_H}" stroke-width="1" stroke-linecap="round" opacity=".7"/>
-    <rect x="99.4" y="14.4" width="6" height="7.6" rx="2.3" transform="rotate(20 102.4 18.2)" fill="#9b7bd8"/>`;
-}
 // precompute muscle paths once: [muscle, path, mirrored]
 const toParts = list => list.map(([m, pts, mir]) => [m, spline(pts.map(shape)), mir]);
 const FRONT = [...toParts(FRONT2), ['abs', ABS, 1]], BACK = toParts(BACK2);
 function fig(parts, x, col, tap, sk, front, fem){
-  let s = `${sk ? skinBehind(sk, front) : ''}${fem ? hairBehind(front) : ''}<path d="${OUTLINE}" class="base"/>${sk ? skinUnder(sk, front) : ''}`;
+  let s = `${sk ? skinBehind(sk, front) : ''}<path d="${OUTLINE}" class="base"/>${sk ? skinUnder(sk, front) : ''}`;
   for (let [m, d, mir] of parts){
     if (fem && front && m === 'chest') d = F_CHEST;
     const c = col(m), a = `class="mus" fill="${Array.isArray(c) ? c[0] : c}"${Array.isArray(c) && c[1] < 1 ? ` fill-opacity="${c[1]}"` : ''}${tap ? ` data-act="muscle" data-m="${m}"` : ''}`;
     s += `<path d="${d}" ${a}/>`;
     if (mir) s += `<path d="${d}" ${MIR} ${a}/>`;
   }
-  if (fem) s += hairFront(front);
   s += sk ? skinFront(sk, front) : '';
   if (fem) s = warpSVG(s).replace(/url\(#gd(Body|Knit)\)/g, 'url(#gd$1F)');
   return `<g transform="translate(${x} 0)">${s}</g>`;
