@@ -698,17 +698,20 @@ const warpSVG = h => h.replace(/(\s(?:d|points)=")([^"]*)"/g, (_, a, d) => a + w
   .replace(/(\sx(1|2)?=")(-?[\d.]+)("\s+y\2=")(-?[\d.]+)"/g, (_, a, n, x, b, y) => a + warpX(+x, +y) + b + y + '"');
 const F_CHEST = spline([[98,77],[97,104],[91,113.5],[82,114.5],[75,108.5],[72.5,96],[74,84],[81,78],[90,75.5]].map(shape));
 const HAIR_C = '#5a3d2b', HAIR_H = '#8f664a';
-// long hair: a fall behind the head/neck (front view), a fringe over the forehead, and a ponytail on the back view
+// hair pulled into a high ponytail that swings off to one side, so it shows from the front as well as the back
 function hairBehind(front){
-  return front ? `<path d="M100,1 C87,1 79.5,8.5 79.5,21 C79.5,37 80.5,53 82.5,65 Q100,71 117.5,65 C119.5,53 120.5,37 120.5,21 C120.5,8.5 113,1 100,1 Z" fill="${HAIR_C}"/>` : '';
+  return front ? `<path d="M111,9 C120,6.5 129,12 130.6,23 C132.2,36 128.4,48.5 122.4,57.5 C120.8,60 118.6,59.2 119.4,56.4 C122.6,46.6 123.8,36.6 121.8,28.6 C120.3,22.6 117,18.6 112.6,17.6 Z" fill="${HAIR_C}"/>
+    <path d="M118,11.5 C125,13 128.5,20 128.6,28 M125.5,33 C125.8,42 124,50 121,56" fill="none" stroke="${HAIR_H}" stroke-width="1" stroke-linecap="round" opacity=".7"/>` : '';
 }
 function hairFront(front){
-  if (front) return `<path d="M100,.8 C89,.8 82.3,6.5 81.8,16 C81.6,24 82.2,32 83.6,40 C85,42 86.6,41 86.7,38.5 C86.5,31 87,24 89,19 C93,14.5 97,13.2 101,13.4 C106,13.2 110.5,15.5 113,20.5 C113.6,27 113.6,33 113.3,38.5 C113.4,41 115,42 116.4,40 C117.8,32 118.4,24 118.2,16 C117.7,6.5 111,.8 100,.8 Z" fill="${HAIR_C}"/>
-    <path d="M99,3 C92,3.5 86.5,8 85,15 M103,3.2 C109,4 113.5,8.5 115,15" fill="none" stroke="${HAIR_H}" stroke-width="1.1" stroke-linecap="round" opacity=".75"/>`;
-  return `<path d="M95,29 C90.5,44 90.5,64 95,82 C96.8,88 103.2,88 105,82 C109.5,64 109.5,44 105,29 Z" fill="${HAIR_C}"/>
-    <path d="M100,.5 C89,.5 81.6,7 81.5,17.5 C81.4,30 83.4,41 88,47.5 Q100,52 112,47.5 C116.6,41 118.6,30 118.5,17.5 C118.4,7 111,.5 100,.5 Z" fill="${HAIR_C}"/>
-    <path d="M100,4 C96,16 95.5,30 97,44 M100,4 C104,16 104.5,30 103,44 M98.5,40 C96.5,55 96.8,68 98.6,81 M101.5,40 C103.5,55 103.2,68 101.4,81" fill="none" stroke="${HAIR_H}" stroke-width=".9" stroke-linecap="round" opacity=".6"/>
-    <rect x="94.3" y="29.5" width="11.4" height="4.2" rx="2.1" fill="#9b7bd8"/>`;
+  if (front) return `<path d="M100,.8 C89,.8 82.3,6.5 81.8,16 C81.6,23 82.1,29 83.3,34.5 C84.6,36.6 86.4,35.8 86.6,33.4 C86.6,27.6 87.2,22.6 89,19 C93,14.5 97,13.2 101,13.4 C106,13.2 110.5,15.5 113,20.5 C113.6,25 113.6,29 113.4,33.4 C113.6,35.8 115.4,36.6 116.7,34.5 C117.9,29 118.4,23 118.2,16 C117.7,6.5 111,.8 100,.8 Z" fill="${HAIR_C}"/>
+    <path d="M99,3 C92,3.5 86.5,8 85,15 M103,3.2 C109,4 113.5,8.5 115,15" fill="none" stroke="${HAIR_H}" stroke-width="1.1" stroke-linecap="round" opacity=".75"/>
+    <rect x="112.2" y="9.6" width="5.4" height="7.6" rx="2.2" transform="rotate(-28 114.9 13.4)" fill="#9b7bd8"/>`;
+  return `<path d="M100,.5 C89,.5 81.6,7 81.5,17.5 C81.4,30 83.4,41 88,47.5 Q100,52 112,47.5 C116.6,41 118.6,30 118.5,17.5 C118.4,7 111,.5 100,.5 Z" fill="${HAIR_C}"/>
+    <path d="M100,4 C97,10 96.5,16 98,22 M100,4 C104,10 106,16 104,22 M107,42 C106,34 104.5,28 102,23 M93,42 C94,34 96,28 98.5,23" fill="none" stroke="${HAIR_H}" stroke-width=".9" stroke-linecap="round" opacity=".6"/>
+    <path d="M105,15.5 C96,11 85,15 80.6,26 C76.4,38 78.6,52.5 84.6,62.4 C86.2,65 88.6,64.2 87.9,61.3 C85,51 85.2,39.8 88.6,31.6 C91.6,24.6 97.4,21.2 104,21.4 Z" fill="${HAIR_C}"/>
+    <path d="M96,15.6 C88,18 83.2,25 82,34 M84.6,41 C84.4,49 85.6,56 87,61" fill="none" stroke="${HAIR_H}" stroke-width="1" stroke-linecap="round" opacity=".7"/>
+    <rect x="99.4" y="14.4" width="6" height="7.6" rx="2.3" transform="rotate(20 102.4 18.2)" fill="#9b7bd8"/>`;
 }
 // precompute muscle paths once: [muscle, path, mirrored]
 const toParts = list => list.map(([m, pts, mir]) => [m, spline(pts.map(shape)), mir]);
