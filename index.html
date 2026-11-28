@@ -715,17 +715,28 @@ function fig(parts, x, col, tap, sk, front, fem){
 }
 // Hair as part of the silhouette (same colour as the body): a messy top bun, with a few loose strands
 const BUN = 'M90.6,6.4 C88.4,1.6 89.6,-4.4 94.4,-7.2 C97.2,-8.8 99.6,-9.6 102.6,-8.8 C106.4,-8.4 110,-5.6 110.8,-1.4 C111.6,2.4 110.6,6 107.6,8.2 C102,10.4 95.6,10.2 90.6,6.4 Z';
-const HAIR_TX = 'fill="none" stroke="#07060c" stroke-opacity=".38" stroke-width=".7" stroke-linecap="round"';
-const WISP = 'fill="none" style="stroke:var(--base)" stroke-width="1.2" stroke-linecap="round"';
-// Hair volume hugging the head (a touch wider than the skull, ragged edge), pulled back into the bun
 const HAIR_CAP_F = 'M100,-1.6 C88.6,-1.6 80.6,5.4 79.8,15.6 C79.4,22 80,27.6 81.6,32.4 L82.6,30.6 L83.4,34.6 L84.6,31 C84.6,25 85.6,19.6 88.6,16 C92.4,12.6 96.4,11.6 100,11.8 C103.6,11.6 107.6,12.6 111.4,16 C114.4,19.6 115.4,25 115.4,31 L116.6,34.6 L117.4,30.6 L118.4,32.4 C120,27.6 120.6,22 120.2,15.6 C119.4,5.4 111.4,-1.6 100,-1.6 Z';
 const HAIR_CAP_B = 'M100,-1.6 C88.6,-1.6 80.6,5.4 79.8,15.8 C79.2,25.4 80.6,34.4 83.8,41.4 L85.4,39.6 L86.6,44.6 L88.6,41.6 L90.6,47.4 L93,43.8 L95.2,49.6 L97.6,45.6 L100,50.6 L102.4,45.6 L104.8,49.6 L107,43.8 L109.4,47.4 L111.4,41.6 L113.4,44.6 L114.6,39.6 L116.2,41.4 C119.4,34.4 120.8,25.4 120.2,15.8 C119.4,5.4 111.4,-1.6 100,-1.6 Z';
-const ponyBehind = front => `<path d="${BUN}" class="base"/><path d="${front ? HAIR_CAP_F : HAIR_CAP_B}" class="base"/><path d="M108.4,-5.4 C113.4,-8 115.4,-3.4 111.8,-.8 M91.2,-2.4 C87.2,-4 86.4,.8 89.4,2.8" ${WISP}/>`;
-const ponyFront = front => `<path d="M93.6,3.4 C94.4,-2.6 100.4,-6 105.8,-3.2 M96.4,6.8 C98.4,2.4 104.4,1 108,3.6 M101,-2.6 C99.4,-.6 99.6,2.2 101.6,3.8" ${HAIR_TX}/>` + (front
-  ? `<path d="M100,11.8 C99.6,8 99.4,5 99.8,1.6 M93.6,12.8 C94.2,8.6 95.6,5.6 97.4,2.8 M88.2,16.4 C88.8,11.4 91,6.8 94.4,3.8 M84,24 C84,16.4 86.4,9.4 91.6,5.4 M106.4,12.8 C105.8,8.6 104.4,5.6 102.6,2.8 M111.8,16.4 C111.2,11.4 109,6.8 105.6,3.8 M116,24 C116,16.4 113.6,9.4 108.4,5.4" ${HAIR_TX}/>
-    <path d="M84.2,22 C81.2,29.4 81.2,36.6 83.2,42.8 C84,45.4 83,48.2 81.2,49.6 M115.8,22 C118.8,29.6 118.6,36.8 116.4,43 M86.6,21.6 C85.2,26.6 85.8,31.4 87.4,34.4" ${WISP}/>`
-  : `<path d="M100,48 C99.6,34 99.4,20 99.8,6 M95.2,47 C94.6,33 95.4,19 97.6,6 M90.4,44.6 C89,32 90.6,18 95.4,6.4 M85.6,39.6 C83.6,28 85.4,16 92.6,7.4 M104.8,47 C105.4,33 104.6,19 102.4,6 M109.6,44.6 C111,32 109.4,18 104.6,6.4 M114.4,39.6 C116.4,28 114.6,16 107.4,7.4" ${HAIR_TX}/>
-    <path d="M92.4,44 C89,51 89.4,58 92.4,63.6 C93.4,65.8 92.4,68 90.6,69.2 M107.6,44.6 C111,51.4 110.6,58.6 107.6,63.8 M98.6,48 C97.6,53.6 98.2,58.6 99.8,62.4 M86.6,39.4 C84.4,45 84.6,50.6 86.4,55" ${WISP}/>`);
+// Hair is a shade darker than the body (so the hairline reads), with a soft sheen and tapered loose strands
+const hairPaint = d => `<path d="${d}" class="base"/><path d="${d}" fill="#000" fill-opacity=".34"/>`;
+function taper(pts, w){
+  const n = pts.length, L = [], Rt = [];
+  pts.forEach((p, i) => { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)], tx = b[0] - a[0], ty = b[1] - a[1], m = Math.hypot(tx, ty) || 1, h = w * (1 - i / (n - 1)) / 2;
+    L.push([R1(p[0] - ty / m * h), R1(p[1] + tx / m * h)]); Rt.push([R1(p[0] + ty / m * h), R1(p[1] - tx / m * h)]); });
+  return spline([...L, ...Rt.reverse().slice(1)]);
+}
+const strand = (pts, w) => hairPaint(taper(pts, w));
+const groove = (pts, w, o = .3) => `<path d="${taper(pts, w)}" fill="#000" fill-opacity="${o}"/>`;
+const sheen = d => `<path d="${d}" fill="#fff" fill-opacity=".08"/>`;
+const ponyBehind = front => front ? hairPaint(BUN) + strand([[108.6,-4.6],[112.6,-6.4],[114,-3.4],[111.6,-.6]], 1.6) : '';
+const ponyFront = front => front
+  ? hairPaint(HAIR_CAP_F) + sheen('M87.6,7.6 C91.8,2.4 98.6,.4 106,1.8 C99.6,3 94,5.4 90,10 Z')
+    + groove([[101,-6.4],[96.6,-4.4],[94,.4]], 1.4, .35) + groove([[108.6,0],[104.4,3],[100,4.4]], 1.2, .3)
+    + strand([[85.2,20],[83.2,27],[83,34],[84,40],[82.6,46.4]], 2.2) + strand([[114.8,20],[116.8,27.4],[117,34.4],[115.6,41.4]], 2)
+  : hairPaint(HAIR_CAP_B) + hairPaint(BUN) + strand([[108.6,-4.6],[112.6,-6.4],[114,-3.4],[111.6,-.6]], 1.6) + strand([[91.4,-1.8],[88,-3],[87.4,.6],[89.6,2.8]], 1.4)
+    + sheen('M86.6,12 C89,5 95,1.4 101,1.2 C96,3.6 91.6,8 89.6,14.6 Z') + sheen('M104,-6.8 C107.6,-6.6 110,-4.4 110.4,-1.6 C108.2,-4 106.2,-5.4 103.2,-5.6 Z')
+    + groove([[95,44],[94.6,32],[96.6,18],[99,8]], 1.6, .22) + groove([[105.4,43],[105.8,31],[103.8,18],[101.2,8]], 1.6, .22) + groove([[100,6.6],[96,4.6],[92.6,6.4]], 1.2, .3)
+    + strand([[91.6,44],[89.4,50],[89.8,56],[92.2,61.6],[91,66.4]], 2.4) + strand([[108.2,44.4],[110.6,50.6],[110.2,57],[107.8,62.4]], 2.2) + strand([[98.6,48],[98,53.6],[99,59]], 1.8);
 const femDefs = () => SKIN_DEFS.replace(/<clipPath id="gd(Body|Knit)">([\s\S]*?)<\/clipPath>/g, (_, id, inner) => `<clipPath id="gd${id}F">${warpSVG(inner)}</clipPath>`);
 let femDefsMemo = '';
 function bodySVG(col, {tap=false, labels=true, skin=null, fig:fg=null}={}){
